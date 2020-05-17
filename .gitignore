@@ -1,0 +1,12 @@
+.idea/
+.vscode/
+.DS_Store
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+*.orig.*
+design/*.sketch
+*.sqlite
+examples/
