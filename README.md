@@ -83,11 +83,19 @@ await db.close();
 
 > Relationships are not available for now. This is the next feature that will be added.
 
-## How to
+## Documentation
+
+- [First steps](#first-steps)
+- [Clients](#clients)
+  - [SQLite](#sqlite)
+  - [MySQL](#mysql)
+  - [PostgreSQL](#postgresql)
+
+### First steps
 
 Setting up your database with DenoDB is a four-step process:
 
-- **Create a database**, using `Database`:
+- **Create a database**, using `Database` (learn more [about clients](#clients)):
   ```typescript
   const db = new Database('postgres', {
     host: '...',
@@ -127,3 +135,47 @@ Setting up your database with DenoDB is a four-step process:
   await User.all();
   await User.deleteById('1');
   ```
+
+### Clients
+
+#### SQLite
+
+Based on [Deno SQLite](https://deno.land/x/sqlite).
+
+```typescript
+const db = new Database('sqlite3', {
+  filepath: './database.sqlite',
+});
+```
+
+#### MySQL
+
+Based on [deno_mysql](https://deno.land/x/mysql).
+
+```typescript
+const db = new Database('mysql', {
+  database: 'my-database',
+  host: 'https://url-to-db.com',
+  username: 'username',
+  password: 'password',
+  port: 64, // optional
+});
+```
+
+#### PostgreSQL
+
+Based on [deno-postgres](https://deno.land/x/postgres).
+
+```typescript
+const db = new Database('postgres', {
+  database: 'my-database',
+  host: 'https://url-to-db.com',
+  username: 'username',
+  password: 'password',
+  port: 64, // optional
+});
+```
+
+## License
+
+MIT License — [eveningkid](https://github.com/eveningkid)
