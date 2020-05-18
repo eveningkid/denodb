@@ -1,6 +1,7 @@
 import { ModelInitializer } from "./model-initializer.ts";
 import {
   QueryBuilder,
+  FieldAlias,
   FieldValue,
   FieldType,
   OrderDirection,
@@ -90,6 +91,32 @@ export class Model {
   private static async _runQuery(query: string) {
     this._currentQuery = this._queryBuilder.query();
     return this._database.query(query);
+  }
+
+  /** Return the table name followed by a field name. Can also rename a field using `nameAs`.
+   * 
+   *     Flight.field("departure") => "flights.departure"
+   *     
+   *     Flight.field("id", "flight_id") => { flight_id: "flights.id" }
+   */
+  static field(fieldName: string): string;
+  static field(fieldName: string, nameAs: string): FieldAlias;
+  static field(fieldName: string, nameAs?: string): string | FieldAlias {
+    if (!this.fields.hasOwnProperty(fieldName)) {
+      throw new Error(
+        `Tried to get the "${fieldName}" field , but it does not exist. Try with any of these: ${
+          Object.keys(this.fields).join(", ")
+        }.`,
+      );
+    }
+
+    const fullField = `${this.table}.${fieldName}`;
+
+    if (nameAs) {
+      return { [nameAs]: fullField };
+    }
+
+    return fullField;
   }
 
   /** Run the current query. */
@@ -277,6 +304,31 @@ export class Model {
     return this._runQuery(
       this._currentQuery.table(this.table).del().toString(),
     );
+  }
+
+  /** Join a table to the current query.
+   * 
+   *     await Flight.where(
+   *       Flight.field("departure"),
+   *       "Paris",
+   *     ).join(
+   *       Airport,
+   *       Airport.field("id"),
+   *       Flight.field("airportId"),
+   *     ).get()
+   */
+  static join(
+    joinTable: typeof Model,
+    originField: string,
+    targetField: string,
+  ) {
+    this._currentQuery = this._currentQuery.join(
+      joinTable.table,
+      originField,
+      "=",
+      targetField,
+    );
+    return this;
   }
 
   /** Count the number of fields or from a given field name.

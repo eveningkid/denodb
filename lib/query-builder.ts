@@ -18,6 +18,7 @@ export type FieldType = FieldTypeString | {
   length?: number;
   allowNull?: boolean;
 };
+export type FieldAlias = { [k: string]: string };
 
 export type Query = string;
 export type Operator = ">" | ">=" | "<" | "<=" | "=";
