@@ -41,7 +41,6 @@ export function addFieldToSchema(
     instruction = table[type](fieldOptions.name);
   }
 
-  console.log(fieldOptions);
   if (typeof fieldOptions.defaultValue !== "undefined") {
     instruction.defaultTo(fieldOptions.defaultValue);
   }
