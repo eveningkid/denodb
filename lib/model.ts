@@ -118,8 +118,11 @@ export class Model {
    *     
    *     await Flight.select(["id", "destination"]).get();
    */
-  static select(fieldOrFields: string | string[]) {
-    this._currentQuery = this._currentQuery.select(fieldOrFields);
+  static select(...fields: (string | FieldAlias)[]) {
+    for (const field of fields) {
+      this._currentQuery = this._currentQuery.select(field);
+    }
+
     return this;
   }
 

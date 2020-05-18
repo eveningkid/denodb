@@ -75,7 +75,7 @@ await Flight.select('destination').find('2');
 await Flight.count();
 // 1
 
-await Flight.select(['id', 'destination']).orderBy('id').get();
+await Flight.select('id', 'destination').orderBy('id').get();
 // [ { id: "2", destination: "San Francisco" } ]
 
 await db.close();
