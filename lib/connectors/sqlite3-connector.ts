@@ -1,5 +1,5 @@
 import { openSQLiteFile, saveSQLiteFile, SQLiteClient } from "../../deps.ts";
-import { Connector, ConnectorOptions } from "../connector.ts";
+import { Connector, ConnectorOptions } from "./connector.ts";
 import { FieldValue } from "../query-builder.ts";
 
 export interface SQLite3Options extends ConnectorOptions {

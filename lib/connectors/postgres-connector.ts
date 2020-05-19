@@ -1,5 +1,5 @@
 import { PostgresClient } from "../../deps.ts";
-import { Connector, ConnectorOptions } from "../connector.ts";
+import { Connector, ConnectorOptions } from "./connector.ts";
 
 export interface PostgresOptions extends ConnectorOptions {
   database: string;

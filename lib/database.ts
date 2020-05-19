@@ -1,4 +1,4 @@
-import { Connector } from "./connector.ts";
+import { Connector } from "./connectors/connector.ts";
 import { Model } from "./model.ts";
 import { ModelInitializer } from "./model-initializer.ts";
 import { Query, QueryBuilder } from "./query-builder.ts";

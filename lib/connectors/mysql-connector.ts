@@ -1,5 +1,5 @@
 import { MySQLClient } from "../../deps.ts";
-import { Connector, ConnectorOptions } from "../connector.ts";
+import { Connector, ConnectorOptions } from "./connector.ts";
 
 export interface MySQLOptions extends ConnectorOptions {
   database: string;
