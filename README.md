@@ -90,6 +90,7 @@ await db.close();
   - [SQLite](#sqlite)
   - [MySQL](#mysql)
   - [PostgreSQL](#postgresql)
+- [Model methods](#model-methods)
 
 ### First steps
 
@@ -174,6 +175,196 @@ const db = new Database('postgres', {
   password: 'password',
   port: 64, // optional
 });
+```
+
+### Model methods
+
+The following section only shows some examples for each method. The methods signatures can easily be found through your editor intellisense.
+
+- [all](#all)
+- [avg](#avg)
+- [count](#count)
+- [create](#create)
+- [delete](#delete)
+- [deleteById](#deleteById)
+- [field](#field)
+- [find](#find)
+- [first](#first)
+- [get](#get)
+- [join](#join)
+- [max](#max)
+- [min](#min)
+- [orderBy](#orderBy)
+- [select](#select)
+- [sum](#sum)
+- [take](#take)
+- [update](#update)
+- [where](#where)
+
+#### all
+
+Fetch all the model records. It works just as `get` but is more readable when you intend to fetch _all_ records for a model.
+
+```typescript
+Flight.all();
+Flight.select('departure').all();
+```
+
+#### avg
+
+Compute the average value of a field's values from all the selected records.
+
+```typescript
+await Flight.avg('flightDuration');
+await Flight.where('destination', 'San Francisco').avg('flightDuration');
+```
+
+#### count
+
+Count the number of records of a model or filtered by a field name.
+
+```typescript
+await Flight.count();
+await Flight.where('destination', 'Dublin').count();
+```
+
+#### create
+
+Create one or multiple records in the current model.
+
+```typescript
+Flight.create({ departure: "Paris", destination: "Tokyo" });
+Flight.create([{ ... }, { ... }]);
+```
+
+#### delete
+
+Delete selected records.
+
+```typescript
+await Flight.where('destination', 'Paris').delete();
+```
+
+#### deleteById
+
+Delete a record by a primary key value.
+
+```typescript
+await Flight.deleteById('1');
+```
+
+#### field
+
+Return the table name followed by a field name. Passing a second parameter works as the `AS` SQL keyword.
+
+```typescript
+Flight.select(Flight.field('departure', 'flight_departure')).all();
+```
+
+#### find
+
+Find one or multiple records based on the model primary key. The value type **must** match the primary key type.
+
+```typescript
+await Flight.find('64');
+// Find a flight where the `id` = '64' because the primary key is `id`
+```
+
+#### first
+
+Return the first record that matches the current query. Sugar version of `take(1)`.
+
+```typescript
+await Flight.where('id', '>', '1').first();
+```
+
+#### get
+
+Run the current query.
+
+```typescript
+Flight.select('departure').get();
+```
+
+#### join
+
+Join a table to the current query. You might need to use `field` in case field names are overlapping (which might happen with `id`s).
+
+```typescript
+await Flight.where(Flight.field('departure'), 'Paris')
+  .join(Airport, Airport.field('id'), Flight.field('airportId'))
+  .get();
+```
+
+#### max
+
+Find the maximum value of a field from all the selected records.
+
+```typescript
+await Flight.max('flightDuration');
+```
+
+#### min
+
+Find the minimum value of a field from all the selected records.
+
+```typescript
+await Flight.min('flightDuration');
+```
+
+#### orderBy
+
+Order query results based on a field name and an optional direction. It will order in ascending order by default.
+
+```typescript
+await Flight.orderBy('departure').all();
+await Flight.orderBy('departure', 'desc').all();
+await Flight.orderBy('departure', 'asc').all();
+```
+
+#### select
+
+Indicate which fields should be returned/selected from the query.
+
+```typescript
+Flight.select('id').all();
+Flight.select('id', 'destination').all();
+```
+
+#### sum
+
+Compute the sum of a field's values from all the selected records.
+
+```typescript
+await Flight.sum('flightDuration');
+```
+
+#### take
+
+Limit the number of results returned from the query.
+
+```typescript
+await Flight.take(10).get();
+```
+
+#### update
+
+Update one or multiple records. Also update `updated_at` if `timestamps` is `true`.
+
+```typescript
+await Flight.where('departure', 'Dublin').update('departure', 'Tokyo');
+await Flight.where('departure', 'Dublin').update({ destination: 'Tokyo' });
+await Flight.where('id', '64').update({ destination: 'Tokyo' });
+```
+
+#### where
+
+Add a `WHERE` clause to your query.
+
+```typescript
+await Flight.where('id', '1').get();
+await Flight.where('id', '>', '1').get();
+await Flight.where({ id: '1', departure: 'Paris' }).get();
 ```
 
 ## License
