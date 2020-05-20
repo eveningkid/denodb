@@ -206,8 +206,8 @@ The following section only shows some examples for each method. The methods sign
 Fetch all the model records. It works just as `get` but is more readable when you intend to fetch _all_ records for a model.
 
 ```typescript
-Flight.all();
-Flight.select('departure').all();
+await Flight.all();
+await Flight.select('departure').all();
 ```
 
 #### avg
@@ -233,8 +233,8 @@ await Flight.where('destination', 'Dublin').count();
 Create one or multiple records in the current model.
 
 ```typescript
-Flight.create({ departure: "Paris", destination: "Tokyo" });
-Flight.create([{ ... }, { ... }]);
+await Flight.create({ departure: "Paris", destination: "Tokyo" });
+await Flight.create([{ ... }, { ... }]);
 ```
 
 #### delete
@@ -258,7 +258,7 @@ await Flight.deleteById('1');
 Return the table name followed by a field name. Passing a second parameter works as the `AS` SQL keyword.
 
 ```typescript
-Flight.select(Flight.field('departure', 'flight_departure')).all();
+await Flight.select(Flight.field('departure', 'flight_departure')).all();
 ```
 
 #### find
@@ -283,7 +283,7 @@ await Flight.where('id', '>', '1').first();
 Run the current query.
 
 ```typescript
-Flight.select('departure').get();
+await Flight.select('departure').get();
 ```
 
 #### join
@@ -327,8 +327,8 @@ await Flight.orderBy('departure', 'asc').all();
 Indicate which fields should be returned/selected from the query.
 
 ```typescript
-Flight.select('id').all();
-Flight.select('id', 'destination').all();
+await Flight.select('id').all();
+await Flight.select('id', 'destination').all();
 ```
 
 #### sum
