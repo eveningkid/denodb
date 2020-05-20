@@ -28,7 +28,7 @@ export class MySQLConnector implements Connector {
     await this._client.connect({
       hostname: this._options.host,
       username: this._options.username,
-      db: this._options.username,
+      db: this._options.database,
       password: this._options.password,
       port: this._options.port ?? 3306,
     });
