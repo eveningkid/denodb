@@ -143,7 +143,7 @@ export class Model {
    * 
    *     await Flight.select("id").get();
    *     
-   *     await Flight.select(["id", "destination"]).get();
+   *     await Flight.select("id", "destination").get();
    */
   static select(...fields: (string | FieldAlias)[]) {
     for (const field of fields) {
@@ -331,7 +331,7 @@ export class Model {
     return this;
   }
 
-  /** Count the number of fields or from a given field name.
+  /** Count the number of records of a model or filtered by a field name.
    *     
    *     await Flight.count();
    *     
