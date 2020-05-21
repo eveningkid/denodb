@@ -1,5 +1,6 @@
 import { SQLQueryBuilder } from "../deps.ts";
 import { DatabaseDialect } from "./database.ts";
+import { FieldTypes } from "./data-types.ts";
 
 export type FieldValue = number | string | boolean | Date;
 export type FieldTypeString =
@@ -9,7 +10,9 @@ export type FieldTypeString =
   | "text"
   | "date"
   | "float";
-export type Fields = { [key: string]: FieldTypeString };
+export type Fields = {
+  [key in FieldTypes]: FieldTypeString;
+};
 export type Values = { [key: string]: FieldValue };
 export type FieldType = FieldTypeString | {
   type?: FieldTypeString;
