@@ -10,6 +10,9 @@ import {
 } from "./query-builder.ts";
 import { Database, SyncOptions } from "./database.ts";
 
+/** Represents a Model class, not an instance. */
+export type ModelSchema = typeof Model;
+
 export type ModelOptions = {
   queryBuilder: QueryBuilder;
   modelInitializer: ModelInitializer;
@@ -318,7 +321,7 @@ export class Model {
    *     ).get()
    */
   static join(
-    joinTable: typeof Model,
+    joinTable: ModelSchema,
     originField: string,
     targetField: string,
   ) {

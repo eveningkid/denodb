@@ -1,5 +1,5 @@
 import { Connector } from "./connectors/connector.ts";
-import { Model } from "./model.ts";
+import { ModelSchema } from "./model.ts";
 import { ModelInitializer } from "./model-initializer.ts";
 import { Query, QueryBuilder } from "./query-builder.ts";
 import {
@@ -30,7 +30,7 @@ export class Database {
   private _connector: Connector;
   private _queryBuilder: QueryBuilder;
   private _modelInitializer: ModelInitializer;
-  private _models: typeof Model[] = [];
+  private _models: ModelSchema[] = [];
   private _debug: boolean;
 
   /** Initialize database given a dialect and options.
@@ -96,7 +96,7 @@ export class Database {
   }
 
   /** Associate all the required information for a model to connect to a database. */
-  link(models: typeof Model[]) {
+  link(models: ModelSchema[]) {
     this._models = models;
 
     this._models.forEach((model) =>

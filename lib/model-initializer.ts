@@ -1,12 +1,12 @@
 import { Database, SyncOptions } from "./database.ts";
-import { Model } from "./model.ts";
+import { ModelSchema } from "./model.ts";
 import { QueryBuilder } from "./query-builder.ts";
 import { addFieldToSchema } from "./helpers/fields.ts";
 
 type ModelInitializationOptions = {
   database: Database;
   queryBuilder: QueryBuilder;
-  model: typeof Model;
+  model: ModelSchema;
   initOptions: SyncOptions;
 };
 
