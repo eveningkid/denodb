@@ -87,7 +87,7 @@ export class Database {
 
   /** Create the given models in the current database.
    * 
-   *     await db.sync([Flight, Airport]);
+   *     await db.sync({ drop: true });
    */
   async sync(options: SyncOptions = {}) {
     return Promise.all(
@@ -95,7 +95,10 @@ export class Database {
     );
   }
 
-  /** Associate all the required information for a model to connect to a database. */
+  /** Associate all the required information for a model to connect to a database.
+   *
+   *     await db.link([Flight, Airport]);
+   */
   link(models: ModelSchema[]) {
     this._models = models;
 
