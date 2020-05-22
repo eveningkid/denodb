@@ -1,7 +1,7 @@
 import { Connector } from "./connectors/connector.ts";
 import { ModelSchema } from "./model.ts";
 import { ModelInitializer } from "./model-initializer.ts";
-import { Query, QueryBuilder } from "./query-builder.ts";
+import { QueryBuilder, QueryDescription } from "./query-builder.ts";
 import {
   PostgresConnector,
   PostgresOptions,
@@ -56,7 +56,7 @@ export class Database {
       ? databaseOptionsOrDialect.debug ?? false
       : false;
 
-    this._queryBuilder = new QueryBuilder(this._dialect);
+    this._queryBuilder = new QueryBuilder();
     this._modelInitializer = new ModelInitializer();
 
     switch (this._dialect) {
@@ -116,7 +116,7 @@ export class Database {
    * 
    *     await db.query("SELECT * FROM `flights`");
    */
-  async query(query: Query) {
+  async query(query: QueryDescription) {
     if (this._debug) {
       console.log(query);
     }

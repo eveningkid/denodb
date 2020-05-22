@@ -1,5 +1,7 @@
-import { MySQLClient } from "../../deps.ts";
+import { MySQLClient, MySQLConnection } from "../../deps.ts";
 import { Connector, ConnectorOptions } from "./connector.ts";
+import { SQLTranslator } from "../translators/sql-translator.ts";
+import { QueryDescription } from "../query-builder.ts";
 
 export interface MySQLOptions extends ConnectorOptions {
   database: string;
@@ -12,12 +14,14 @@ export interface MySQLOptions extends ConnectorOptions {
 export class MySQLConnector implements Connector {
   _client: MySQLClient;
   _options: MySQLOptions;
+  _translator: SQLTranslator;
   _connected = false;
 
   /** Create a MySQL connection. */
   constructor(options: MySQLOptions) {
     this._options = options;
     this._client = new MySQLClient();
+    this._translator = new SQLTranslator("mysql");
   }
 
   async _makeConnection() {
@@ -36,10 +40,14 @@ export class MySQLConnector implements Connector {
     this._connected = true;
   }
 
-  async query(query: string, client?: any): Promise<any[]> {
+  async query(
+    queryDescription: QueryDescription,
+    client?: MySQLClient | MySQLConnection,
+  ): Promise<any[]> {
     await this._makeConnection();
 
     const queryClient = client ?? this._client;
+    const query = this._translator.translateToQuery(queryDescription);
 
     if (query.toLowerCase().startsWith("select")) {
       return queryClient.query(query);
@@ -48,13 +56,13 @@ export class MySQLConnector implements Connector {
     return queryClient.execute(query) as any;
   }
 
-  async transaction(queries: string[]): Promise<any[]> {
+  async transaction(queries: QueryDescription[]): Promise<any[]> {
     if (queries.length === 0) {
       return [];
     }
 
     const results = await this._client.transaction(async (transaction) => {
-      const lastQuery: string = queries.pop()!;
+      const lastQuery = queries.pop()!;
 
       for (const query of queries) {
         await this.query(query, transaction);

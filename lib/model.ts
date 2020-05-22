@@ -3,15 +3,19 @@ import {
   QueryBuilder,
   FieldAlias,
   FieldValue,
-  FieldType,
   OrderDirection,
   Values,
   Operator,
+  QueryDescription,
+  FieldType,
 } from "./query-builder.ts";
 import { Database, SyncOptions } from "./database.ts";
 
 /** Represents a Model class, not an instance. */
 export type ModelSchema = typeof Model;
+
+export type ModelFields = { [key: string]: FieldType };
+export type ModelDefaults = { [field: string]: FieldValue };
 
 export type ModelOptions = {
   queryBuilder: QueryBuilder;
@@ -28,10 +32,10 @@ export class Model {
   static timestamps = true;
 
   /** Model fields. */
-  static fields: { [field: string]: FieldType } = {};
+  static fields: ModelFields = {};
 
   /** Default values for the model fields. */
-  static defaults: { [field: string]: FieldValue } = {};
+  static defaults: ModelDefaults = {};
 
   /** If the model has been created in the database. */
   private static _isCreatedInDatabase: boolean = false;
@@ -46,7 +50,7 @@ export class Model {
   private static _primaryKey: string;
 
   /** Model current query being built. */
-  private static _currentQuery: any;
+  private static _currentQuery: QueryBuilder;
 
   /** Options this model was initialized with. */
   private static _options: ModelOptions;
@@ -91,7 +95,7 @@ export class Model {
   }
 
   /** Build the current query and run it on the associated database. */
-  private static async _runQuery(query: string) {
+  private static async _runQuery(query: QueryDescription) {
     this._currentQuery = this._queryBuilder.query();
     return this._database.query(query);
   }
@@ -102,18 +106,18 @@ export class Model {
    *     
    *     Flight.field("id", "flight_id") => { flight_id: "flights.id" }
    */
-  static field(fieldName: string): string;
-  static field(fieldName: string, nameAs: string): FieldAlias;
-  static field(fieldName: string, nameAs?: string): string | FieldAlias {
-    if (!this.fields.hasOwnProperty(fieldName)) {
+  static field(field: string): string;
+  static field(field: string, nameAs: string): FieldAlias;
+  static field(field: string, nameAs?: string): string | FieldAlias {
+    if (!this.fields.hasOwnProperty(field)) {
       throw new Error(
-        `Tried to get the "${fieldName}" field , but it does not exist. Try with any of these: ${
+        `Tried to get the "${field}" field , but it does not exist. Try with any of these: ${
           Object.keys(this.fields).join(", ")
         }.`,
       );
     }
 
-    const fullField = `${this.table}.${fieldName}`;
+    const fullField = `${this.table}.${field}`;
 
     if (nameAs) {
       return { [nameAs]: fullField };
@@ -125,7 +129,7 @@ export class Model {
   /** Run the current query. */
   static async get() {
     return this._runQuery(
-      this._currentQuery.table(this.table).toString(),
+      this._currentQuery.table(this.table).get().toDescription(),
     );
   }
 
@@ -136,10 +140,7 @@ export class Model {
    *     await Flight.select("id").all();
    */
   static async all() {
-    return this._runQuery(
-      this._currentQuery.from(this.table)
-        .toString(),
-    );
+    return this.get();
   }
 
   /** Indicate which fields should be returned/selected from the query.
@@ -149,10 +150,7 @@ export class Model {
    *     await Flight.select("id", "destination").get();
    */
   static select(...fields: (string | FieldAlias)[]) {
-    for (const field of fields) {
-      this._currentQuery = this._currentQuery.select(field);
-    }
-
+    this._currentQuery.select(...fields);
     return this;
   }
 
@@ -163,9 +161,10 @@ export class Model {
    *     await Flight.create([{ ... }, { ... }]);
    */
   static async create(values: Values | Values[]) {
+    const insertions = Array.isArray(values) ? values : [values];
+
     return this._runQuery(
-      this._currentQuery.table(this.table).insert(values)
-        .toString(),
+      this._currentQuery.table(this.table).create(insertions).toDescription(),
     );
   }
 
@@ -175,11 +174,10 @@ export class Model {
    */
   static async find(idOrIds: FieldValue | FieldValue[]) {
     return this._runQuery(
-      this._currentQuery.table(this.table).whereIn(
+      this._currentQuery.table(this.table).find(
         this._primaryKey,
         Array.isArray(idOrIds) ? idOrIds : [idOrIds],
-      )
-        .toString(),
+      ).toDescription(),
     );
   }
 
@@ -190,10 +188,10 @@ export class Model {
    *     await Flight.orderBy("departure", "desc").all();
    */
   static orderBy(
-    fieldName: string,
+    field: string,
     orderDirection: OrderDirection = "asc",
   ) {
-    this._currentQuery = this._currentQuery.orderBy(fieldName, orderDirection);
+    this._currentQuery.orderBy(field, orderDirection);
     return this;
   }
 
@@ -202,7 +200,7 @@ export class Model {
    *     await Flight.take(10).get();
    */
   static take(limit: number) {
-    this._currentQuery = this._currentQuery.limit(limit);
+    this._currentQuery.limit(limit);
     return this;
   }
 
@@ -225,7 +223,7 @@ export class Model {
    *     await Flight.where({ id: "1", departure: "Paris" }).get();
    */
   static where(
-    fieldNameOrFields: string | Values,
+    fieldOrFields: string | Values,
     operatorOrFieldValue?: Operator | FieldValue,
     fieldValue?: FieldValue,
   ) {
@@ -237,18 +235,17 @@ export class Model {
       ? fieldValue
       : operatorOrFieldValue as FieldValue;
 
-    if (typeof fieldNameOrFields === "string") {
-      this._currentQuery = this._currentQuery.where(
-        fieldNameOrFields,
-        whereOperator,
-        whereValue,
-      );
+    if (typeof fieldOrFields === "string") {
+      this._currentQuery.where(fieldOrFields, whereOperator, whereValue);
     } else {
       // TODO(eveningkid): cannot do multiple where with different operators
       // Need to find a great API for multiple where potentially with operators
       // .where({ name: 'John', age: { moreThan: 19 } })
       // and then format it using Knex .andWhere(...)
-      this._currentQuery = this._currentQuery.where(fieldNameOrFields);
+
+      Object.entries(fieldOrFields).forEach(([field, value]) => {
+        this._currentQuery.where(field, "=", value);
+      });
     }
 
     return this;
@@ -261,7 +258,7 @@ export class Model {
    *     await Flight.where("departure", "Dublin").update({ destination: "Tokyo" });
    */
   static async update(
-    fieldNameOrFields: string | Values,
+    fieldOrFields: string | Values,
     fieldValue?: FieldValue,
   ) {
     let fieldsToUpdate: Values = {};
@@ -270,19 +267,18 @@ export class Model {
       fieldsToUpdate.updated_at = new Date();
     }
 
-    if (typeof fieldNameOrFields === "string") {
-      fieldsToUpdate[fieldNameOrFields] = fieldValue!;
+    if (typeof fieldOrFields === "string") {
+      fieldsToUpdate[fieldOrFields] = fieldValue!;
     } else {
       fieldsToUpdate = {
         ...fieldsToUpdate,
-        ...fieldNameOrFields,
+        ...fieldOrFields,
       };
     }
 
     return this._runQuery(
-      this._currentQuery.table(this.table).update(
-        fieldsToUpdate,
-      ).toString(),
+      this._currentQuery.table(this.table).update([fieldsToUpdate])
+        .toDescription(),
     );
   }
 
@@ -294,8 +290,9 @@ export class Model {
     return this._runQuery(
       this._currentQuery.table(this.table).where(
         this._primaryKey,
+        "=",
         id,
-      ).del().toString(),
+      ).delete().toDescription(),
     );
   }
 
@@ -305,7 +302,7 @@ export class Model {
    */
   static async delete() {
     return this._runQuery(
-      this._currentQuery.table(this.table).del().toString(),
+      this._currentQuery.table(this.table).delete().toDescription(),
     );
   }
 
@@ -325,10 +322,9 @@ export class Model {
     originField: string,
     targetField: string,
   ) {
-    this._currentQuery = this._currentQuery.join(
+    this._currentQuery.join(
       joinTable.table,
       originField,
-      "=",
       targetField,
     );
     return this;
@@ -340,12 +336,11 @@ export class Model {
    *     
    *     await Flight.where("destination", "Dublin").count();
    */
-  static async count(fieldName: string = "*") {
+  static async count(field: string = "*") {
     const value = await this._runQuery(
       this._currentQuery.table(this.table).count(
-        fieldName,
-      )
-        .toString(),
+        field,
+      ).toDescription(),
     );
 
     return value[0].count;
@@ -355,12 +350,12 @@ export class Model {
    * 
    *     await Flight.min("flightDuration");
    */
-  static async min(fieldName: string) {
+  static async min(field: string) {
     const value = await this._runQuery(
       this._currentQuery.table(this.table).min(
-        fieldName,
+        field,
       )
-        .toString(),
+        .toDescription(),
     );
 
     return value[0].min;
@@ -370,12 +365,12 @@ export class Model {
    * 
    *     await Flight.max("flightDuration");
    */
-  static async max(fieldName: string) {
+  static async max(field: string) {
     const value = await this._runQuery(
       this._currentQuery.table(this.table).max(
-        fieldName,
+        field,
       )
-        .toString(),
+        .toDescription(),
     );
 
     return value[0].max;
@@ -385,12 +380,12 @@ export class Model {
    * 
    *     await Flight.sum("flightDuration");
    */
-  static async sum(fieldName: string) {
+  static async sum(field: string) {
     const value = await this._runQuery(
       this._currentQuery.table(this.table).sum(
-        fieldName,
+        field,
       )
-        .toString(),
+        .toDescription(),
     );
 
     return value[0].sum;
@@ -402,12 +397,12 @@ export class Model {
    *     
    *     await Flight.where("destination", "San Francisco").avg("flightDuration");
    */
-  static async avg(fieldName: string) {
+  static async avg(field: string) {
     const value = await this._runQuery(
       this._currentQuery.table(this.table).avg(
-        fieldName,
+        field,
       )
-        .toString(),
+        .toDescription(),
     );
 
     return value[0].avg;

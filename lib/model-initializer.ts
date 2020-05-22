@@ -1,7 +1,6 @@
 import { Database, SyncOptions } from "./database.ts";
 import { ModelSchema } from "./model.ts";
 import { QueryBuilder } from "./query-builder.ts";
-import { addFieldToSchema } from "./helpers/fields.ts";
 
 type ModelInitializationOptions = {
   database: Database;
@@ -20,38 +19,20 @@ export class ModelInitializer {
     // the following queries should be done within a transaction.
 
     if (initializationOptions.initOptions.drop) {
-      const dropQuery = initializationOptions.queryBuilder.query().schema
-        .dropTableIfExists(initializationOptions.model.table)
-        .toString();
+      const dropQuery = initializationOptions.queryBuilder.query().table(
+        initializationOptions.model.table,
+      ).dropIfExists().toDescription();
 
       await initializationOptions.database.query(dropQuery);
     }
 
-    const createQuery = initializationOptions.queryBuilder.query().schema
-      .createTable(
-        initializationOptions.model.table,
-        (table: any) => {
-          for (
-            const [fieldName, fieldType] of Object.entries(
-              initializationOptions.model.fields,
-            )
-          ) {
-            addFieldToSchema(
-              table,
-              {
-                name: fieldName,
-                type: fieldType,
-                defaultValue: initializationOptions.model.defaults[fieldName],
-              },
-            );
-          }
-
-          if (initializationOptions.model.timestamps) {
-            // Adds `createdAt` and `updatedAt` fields
-            table.timestamps(null, true);
-          }
-        },
-      ).toString();
+    const createQuery = initializationOptions.queryBuilder.query().table(
+      initializationOptions.model.table,
+    ).createTable(
+      initializationOptions.model.fields,
+      initializationOptions.model.defaults,
+      true,
+    ).toDescription();
 
     return initializationOptions.database.query(createQuery);
   }

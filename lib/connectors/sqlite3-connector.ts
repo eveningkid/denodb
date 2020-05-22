@@ -1,6 +1,7 @@
 import { openSQLiteFile, saveSQLiteFile, SQLiteClient } from "../../deps.ts";
 import { Connector, ConnectorOptions } from "./connector.ts";
-import { FieldValue } from "../query-builder.ts";
+import { FieldValue, QueryDescription } from "../query-builder.ts";
+import { SQLTranslator } from "../translators/sql-translator.ts";
 
 export interface SQLite3Options extends ConnectorOptions {
   filepath: string;
@@ -9,11 +10,13 @@ export interface SQLite3Options extends ConnectorOptions {
 export class SQLite3Connector implements Connector {
   _client!: SQLiteClient;
   _options: SQLite3Options;
+  _translator: SQLTranslator;
   _connected = false;
 
   /** Create a SQLite connection. */
   constructor(options: SQLite3Options) {
     this._options = options;
+    this._translator = new SQLTranslator("sqlite3");
   }
 
   async _makeConnection() {
@@ -25,8 +28,9 @@ export class SQLite3Connector implements Connector {
     this._connected = true;
   }
 
-  async query(query: string): Promise<any[]> {
+  async query(queryDescription: QueryDescription): Promise<any[]> {
     await this._makeConnection();
+    const query = this._translator.translateToQuery(queryDescription);
     const response = this._client!.query(query, []);
 
     if (query.toLowerCase().startsWith("select")) {

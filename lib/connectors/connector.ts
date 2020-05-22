@@ -1,3 +1,5 @@
+import { QueryDescription } from "../query-builder.ts";
+
 /** Default connector options. */
 export interface ConnectorOptions {}
 
@@ -19,10 +21,10 @@ export interface Connector {
   _makeConnection(): void;
 
   /** Execute a query on the external database instance. */
-  query(query: string): Promise<any[]>;
+  query(queryDescription: QueryDescription): Promise<any[]>;
 
   /** Execute queries within a transaction on the database instance. */
-  transaction?(queries: string[]): Promise<any[]>;
+  transaction?(queries: QueryDescription[]): Promise<any[]>;
 
   /** Disconnect from the external database instance. */
   close(): Promise<any>;

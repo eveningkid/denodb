@@ -1,5 +1,7 @@
 import { PostgresClient } from "../../deps.ts";
 import { Connector, ConnectorOptions } from "./connector.ts";
+import { SQLTranslator } from "../translators/sql-translator.ts";
+import { QueryDescription } from "../query-builder.ts";
 
 export interface PostgresOptions extends ConnectorOptions {
   database: string;
@@ -12,6 +14,7 @@ export interface PostgresOptions extends ConnectorOptions {
 export class PostgresConnector implements Connector {
   _client: PostgresClient;
   _options: PostgresOptions;
+  _translator: SQLTranslator;
   _connected = false;
 
   /** Create a PostgreSQL connection. */
@@ -24,6 +27,7 @@ export class PostgresConnector implements Connector {
       database: options.database,
       port: options.port ?? 5432,
     });
+    this._translator = new SQLTranslator("postgres");
   }
 
   async _makeConnection() {
@@ -35,8 +39,9 @@ export class PostgresConnector implements Connector {
     this._connected = true;
   }
 
-  async query(query: string): Promise<any[]> {
+  async query(queryDescription: QueryDescription): Promise<any[]> {
     await this._makeConnection();
+    const query = this._translator.translateToQuery(queryDescription);
     const results = await this._client.query(query);
     return results.rowsOfObjects();
   }
