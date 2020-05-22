@@ -35,7 +35,14 @@ export class SQLite3Connector implements Connector {
 
     if (query.toLowerCase().startsWith("select")) {
       const results = [];
-      const columns = response.columns();
+      let columns;
+
+      try {
+        columns = response.columns();
+      } catch (error) {
+        // If there are no matching records, .columns will throw an error
+        return [];
+      }
 
       for (const row of response) {
         const result: { [k: string]: FieldValue } = {};
