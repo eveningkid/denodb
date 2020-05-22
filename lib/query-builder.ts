@@ -76,7 +76,7 @@ export type QueryDescription = {
   fields?: ModelFields;
   fieldsDefaults?: ModelDefaults;
   timestamps?: boolean;
-  values?: Values[];
+  values?: Values | Values[];
 };
 
 export type QueryResult = {};
@@ -181,7 +181,7 @@ export class QueryBuilder {
     return this;
   }
 
-  update(values: Values[]) {
+  update(values: Values) {
     this._query.type = "update";
     this._query.values = values;
     return this;

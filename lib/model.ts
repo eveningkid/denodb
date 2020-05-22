@@ -277,7 +277,7 @@ export class Model {
     }
 
     return this._runQuery(
-      this._currentQuery.table(this.table).update([fieldsToUpdate])
+      this._currentQuery.table(this.table).update(fieldsToUpdate)
         .toDescription(),
     );
   }
