@@ -13,7 +13,18 @@ export class SQLTranslator implements Translator {
 
   translateToQuery(query: QueryDescription): Query {
     let queryBuilder = new (SQLQueryBuilder as any)(
-      { client: this._dialect, useNullAsDefault: this._dialect === "sqlite3" },
+      {
+        client: this._dialect,
+        useNullAsDefault: this._dialect === "sqlite3",
+        log: {
+          // NOTE(eveningkid): It shows a message whenever `createTableIfNotExists`
+          // is used. Knex deprecated it as part of its library but in our case,
+          // it actually makes sense. As this warning message should be ignored,
+          // we override the `log.warn` method so it doesn't show up.
+          warn(message: string) {
+          },
+        },
+      },
     );
 
     if (query.table && query.type !== "drop" && query.type !== "create") {
@@ -67,19 +78,25 @@ export class SQLTranslator implements Translator {
 
     switch (query.type) {
       case "drop":
-        if (query.ifExists) {
-          queryBuilder = queryBuilder.schema.dropTableIfExists(query.table);
-        } else {
-          queryBuilder = queryBuilder.schema.dropTable(query.table);
-        }
+        const dropTableHelper = query.ifExists
+          ? "dropTableIfExists"
+          : "dropTable";
+
+        queryBuilder = queryBuilder.schema[dropTableHelper](query.table);
         break;
 
       case "create":
         if (!query.fields) {
-          throw new Error();
+          throw new Error(
+            "Fields were not provided for creating a new instance.",
+          );
         }
 
-        queryBuilder = queryBuilder.schema.createTable(
+        const createTableHelper = query.ifExists
+          ? "createTable"
+          : "createTableIfNotExists";
+
+        queryBuilder = queryBuilder.schema[createTableHelper](
           query.table,
           (table: any) => {
             const fieldDefaults = query.fieldsDefaults ?? {};

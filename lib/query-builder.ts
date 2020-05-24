@@ -114,9 +114,16 @@ export class QueryBuilder {
   createTable(
     fields: ModelFields,
     fieldsDefaults: ModelDefaults,
-    withTimestamps: boolean,
+    {
+      withTimestamps,
+      ifNotExists,
+    }: {
+      withTimestamps: boolean;
+      ifNotExists: boolean;
+    },
   ) {
     this._query.type = "create";
+    this._query.ifExists = ifNotExists ? false : true;
     this._query.fields = fields;
     this._query.fieldsDefaults = fieldsDefaults;
     this._query.timestamps = withTimestamps;
