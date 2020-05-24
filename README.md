@@ -240,10 +240,17 @@ await Flight.where('destination', 'Dublin').count();
 #### create
 
 Create one or multiple records in the current model.
+Specify an optional options object to change behavior of create:
 
 ```typescript
-await Flight.create({ departure: "Paris", destination: "Tokyo" });
-await Flight.create([{ ... }, { ... }]);
+{
+  returnInsertedValue: true|false|string[], // Optional
+}
+```
+
+```typescript
+await Flight.create({ departure: "Paris", destination: "Tokyo" }, { returnInsertedValue: true|false|string[] });
+await Flight.create([{ ... }, { ... }], { returnInsertedValue: true|false|[...columns] });
 ```
 
 #### delete
