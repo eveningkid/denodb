@@ -31,7 +31,7 @@ export class ModelInitializer {
     ).createTable(
       initializationOptions.model.fields,
       initializationOptions.model.defaults,
-      true,
+      { withTimestamps: true, ifNotExists: true },
     ).toDescription();
 
     return initializationOptions.database.query(createQuery);
