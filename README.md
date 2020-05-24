@@ -174,7 +174,6 @@ const db = new Database('postgres', {
   username: 'username',
   password: 'password',
   port: 64, // Optional, defaults to 5432.
-  returnOnInsert: false, // Optional, defaults to false.
 });
 ```
 
