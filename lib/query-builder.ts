@@ -1,6 +1,7 @@
-import { SQLQueryBuilder } from "../deps.ts";
+import { ModelDefaults, ModelFields } from "./model.ts";
+
 import { FieldTypes } from "./data-types.ts";
-import { ModelFields, ModelDefaults } from "./model.ts";
+import { SQLQueryBuilder } from "../deps.ts";
 
 export type FieldValue = number | string | boolean | Date;
 export type FieldTypeString =
@@ -13,6 +14,10 @@ export type FieldTypeString =
 export type Fields = {
   [key in FieldTypes]: FieldTypeString;
 };
+
+export type ReturnOnInsertOption = boolean | string[];
+export type OptionsValue = number | string | boolean | ReturnOnInsertOption;
+export type Options = { [key: string]: OptionsValue };
 
 export type Values = { [key: string]: FieldValue };
 export type FieldType = FieldTypeString | {
@@ -78,6 +83,7 @@ export type QueryDescription = {
   fieldsDefaults?: ModelDefaults;
   timestamps?: boolean;
   values?: Values | Values[];
+  options?: Options;
 };
 
 export type QueryResult = {};
@@ -134,9 +140,10 @@ export class QueryBuilder {
     return this;
   }
 
-  create(values: Values[]) {
+  create(values: Values[], options?: Options) {
     this._query.type = "insert";
     this._query.values = values;
+    this._query.options = options;
     return this;
   }
 

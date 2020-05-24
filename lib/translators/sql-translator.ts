@@ -1,7 +1,8 @@
-import { Translator } from "./translator.ts";
+import { Query, QueryDescription } from "../query-builder.ts";
+
 import { DatabaseDialect } from "../database.ts";
 import { SQLQueryBuilder } from "../../deps.ts";
-import { Query, QueryDescription } from "../query-builder.ts";
+import { Translator } from "./translator.ts";
 import { addFieldToSchema } from "../helpers/fields.ts";
 
 export class SQLTranslator implements Translator {
@@ -112,7 +113,32 @@ export class SQLTranslator implements Translator {
           );
         }
 
-        queryBuilder = queryBuilder.insert(query.values);
+        if (!query.options) {
+          queryBuilder = queryBuilder.insert(query.values);
+          break;
+        }
+
+        if (query.options.returnInsertedValue) {
+          let returnAll = true;
+
+          if (
+            query.options.returnInsertedValue instanceof Array &&
+            query.options.returnInsertedValue.every((item) =>
+              typeof item === "string"
+            )
+          ) {
+            returnAll = false;
+          }
+
+          if (returnAll) {
+            queryBuilder = queryBuilder.returning("*").insert(query.values);
+          } else {
+            queryBuilder = queryBuilder.returning(
+              query.options.returnInsertedValue,
+            ).insert(query.values);
+          }
+        }
+
         break;
 
       case "update":

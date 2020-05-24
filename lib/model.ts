@@ -1,15 +1,17 @@
-import { ModelInitializer } from "./model-initializer.ts";
-import {
-  QueryBuilder,
-  FieldAlias,
-  FieldValue,
-  OrderDirection,
-  Values,
-  Operator,
-  QueryDescription,
-  FieldType,
-} from "./query-builder.ts";
 import { Database, SyncOptions } from "./database.ts";
+import {
+  FieldAlias,
+  FieldType,
+  FieldValue,
+  Operator,
+  Options,
+  OrderDirection,
+  QueryBuilder,
+  QueryDescription,
+  Values,
+} from "./query-builder.ts";
+
+import { ModelInitializer } from "./model-initializer.ts";
 
 /** Represents a Model class, not an instance. */
 export type ModelSchema = typeof Model;
@@ -160,11 +162,12 @@ export class Model {
    *     
    *     await Flight.create([{ ... }, { ... }]);
    */
-  static async create(values: Values | Values[]) {
+  static async create(values: Values | Values[], options?: Options) {
     const insertions = Array.isArray(values) ? values : [values];
 
     return this._runQuery(
-      this._currentQuery.table(this.table).create(insertions).toDescription(),
+      this._currentQuery.table(this.table).create(insertions, options)
+        .toDescription(),
     );
   }
 
