@@ -1,7 +1,8 @@
-import { PostgresClient } from "../../deps.ts";
 import { Connector, ConnectorOptions } from "./connector.ts";
-import { SQLTranslator } from "../translators/sql-translator.ts";
+
+import { PostgresClient } from "../../deps.ts";
 import { QueryDescription } from "../query-builder.ts";
+import { SQLTranslator } from "../translators/sql-translator.ts";
 
 export interface PostgresOptions extends ConnectorOptions {
   database: string;
@@ -9,12 +10,14 @@ export interface PostgresOptions extends ConnectorOptions {
   username: string;
   password: string;
   port?: number;
+  returnOnInsert?: boolean;
 }
 
 export class PostgresConnector implements Connector {
   _client: PostgresClient;
   _options: PostgresOptions;
   _translator: SQLTranslator;
+  _returnOnInsert: boolean;
   _connected = false;
 
   /** Create a PostgreSQL connection. */
@@ -28,6 +31,7 @@ export class PostgresConnector implements Connector {
       port: options.port ?? 5432,
     });
     this._translator = new SQLTranslator("postgres");
+    this._returnOnInsert = options.returnOnInsert ?? false;
   }
 
   async _makeConnection() {
@@ -41,7 +45,12 @@ export class PostgresConnector implements Connector {
 
   async query(queryDescription: QueryDescription): Promise<any[]> {
     await this._makeConnection();
-    const query = this._translator.translateToQuery(queryDescription);
+    let query = this._translator.translateToQuery(queryDescription);
+
+    if (queryDescription.type === "insert" && this._returnOnInsert) {
+      query = `${query} returning *`;
+    }
+
     const results = await this._client.query(query);
     return results.rowsOfObjects();
   }
