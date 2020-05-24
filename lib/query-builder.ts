@@ -18,6 +18,7 @@ export type Values = { [key: string]: FieldValue };
 export type FieldType = FieldTypeString | {
   type?: FieldTypeString;
   primaryKey?: boolean;
+  unique?: boolean;
   autoIncrement?: boolean;
   length?: number;
   allowNull?: boolean;
