@@ -34,6 +34,10 @@ export function addFieldToSchema(
       instruction = instruction.primary();
     }
 
+    if (fieldOptions.type.unique) {
+      instruction = instruction.unique();
+    }
+
     if (!fieldOptions.type.allowNull) {
       instruction = instruction.notNullable();
     }
