@@ -159,7 +159,7 @@ const db = new Database('mysql', {
   host: 'https://url-to-db.com',
   username: 'username',
   password: 'password',
-  port: 64, // optional
+  port: 64, // Optional, defaults to 3306.
 });
 ```
 
@@ -173,7 +173,8 @@ const db = new Database('postgres', {
   host: 'https://url-to-db.com',
   username: 'username',
   password: 'password',
-  port: 64, // optional
+  port: 64, // Optional, defaults to 5432.
+  returnOnInsert: false, // Optional, defaults to false.
 });
 ```
 
@@ -181,25 +182,34 @@ const db = new Database('postgres', {
 
 The following section only shows some examples for each method. The methods signatures can easily be found through your editor intellisense.
 
-- [all](#all)
-- [avg](#avg)
-- [count](#count)
-- [create](#create)
-- [delete](#delete)
-- [deleteById](#deleteById)
-- [field](#field)
-- [find](#find)
-- [first](#first)
-- [get](#get)
-- [join](#join)
-- [max](#max)
-- [min](#min)
-- [orderBy](#orderBy)
-- [select](#select)
-- [sum](#sum)
-- [take](#take)
-- [update](#update)
-- [where](#where)
+- [DenoDB](#denodb)
+  - [Documentation](#documentation)
+    - [First steps](#first-steps)
+    - [Clients](#clients)
+      - [SQLite](#sqlite)
+      - [MySQL](#mysql)
+      - [PostgreSQL](#postgresql)
+    - [Model methods](#model-methods)
+      - [all](#all)
+      - [avg](#avg)
+      - [count](#count)
+      - [create](#create)
+      - [delete](#delete)
+      - [deleteById](#deletebyid)
+      - [field](#field)
+      - [find](#find)
+      - [first](#first)
+      - [get](#get)
+      - [join](#join)
+      - [max](#max)
+      - [min](#min)
+      - [orderBy](#orderby)
+      - [select](#select)
+      - [sum](#sum)
+      - [take](#take)
+      - [update](#update)
+      - [where](#where)
+  - [License](#license)
 
 #### all
 
