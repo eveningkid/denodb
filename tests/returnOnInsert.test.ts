@@ -37,10 +37,14 @@ Deno.test("No return on insert", async () => {
   const username: string = "test";
   const password: string = "test";
 
-  await UserModel.create({
+  const insertedUser = await UserModel.create({
     username,
     password,
   });
+
+  if (insertedUser.length > 0) {
+    throw Error("Returned user documents should be empty.");
+  }
 
   await database.close();
 });
