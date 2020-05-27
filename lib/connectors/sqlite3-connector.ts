@@ -33,6 +33,14 @@ export class SQLite3Connector implements Connector {
     const query = this._translator.translateToQuery(queryDescription);
     const response = this._client!.query(query, []);
 
+    if (
+      !["select", "count", "min", "max", "avg", "sum"].includes(
+        queryDescription.type!,
+      )
+    ) {
+      await saveSQLiteFile(this._client!);
+    }
+
     if (query.toLowerCase().startsWith("select")) {
       const results = [];
       let columns;
