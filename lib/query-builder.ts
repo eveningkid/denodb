@@ -9,6 +9,7 @@ export type FieldTypeString =
   | "boolean"
   | "text"
   | "date"
+  | "timestamp"
   | "float";
 export type Fields = {
   [key in FieldTypes]: FieldTypeString;
