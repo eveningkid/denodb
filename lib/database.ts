@@ -90,9 +90,9 @@ export class Database {
    *     await db.sync({ drop: true });
    */
   async sync(options: SyncOptions = {}) {
-    return Promise.all(
-      this._models.map((model) => model._createInDatabase(options)),
-    );
+    for (const model of this._models) {
+      await model._createInDatabase(options);
+    }
   }
 
   /** Associate all the required information for a model to connect to a database.
