@@ -18,10 +18,24 @@ export function addFieldToSchema(
   let instruction;
 
   if (typeof fieldOptions.type === "object") {
-    const fieldNameArgs: [string | number] = [fieldOptions.name];
+    const fieldNameArgs: [string | number | (string | number)[]] = [
+      fieldOptions.name,
+    ];
 
     if (fieldOptions.type.length) {
       fieldNameArgs.push(fieldOptions.type.length);
+    }
+
+    if (fieldOptions.type.precision) {
+      fieldNameArgs.push(fieldOptions.type.precision);
+    }
+
+    if (fieldOptions.type.scale) {
+      fieldNameArgs.push(fieldOptions.type.scale);
+    }
+
+    if (fieldOptions.type.values) {
+      fieldNameArgs.push(fieldOptions.type.values);
     }
 
     if (fieldOptions.type.autoIncrement) {

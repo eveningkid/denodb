@@ -1,20 +1,8 @@
 import { SQLQueryBuilder } from "../deps.ts";
-import { FieldTypes } from "./data-types.ts";
+import { FieldTypeString } from "./data-types.ts";
 import { ModelFields, ModelDefaults } from "./model.ts";
 
 export type FieldValue = number | string | boolean | Date;
-export type FieldTypeString =
-  | "integer"
-  | "string"
-  | "boolean"
-  | "text"
-  | "date"
-  | "timestamp"
-  | "float";
-export type Fields = {
-  [key in FieldTypes]: FieldTypeString;
-};
-
 export type Values = { [key: string]: FieldValue };
 export type FieldType = FieldTypeString | {
   type?: FieldTypeString;
@@ -23,6 +11,9 @@ export type FieldType = FieldTypeString | {
   autoIncrement?: boolean;
   length?: number;
   allowNull?: boolean;
+  precision?: number;
+  scale?: number;
+  values?: (number | string)[];
 };
 export type FieldAlias = { [k: string]: string };
 
