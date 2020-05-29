@@ -31,11 +31,11 @@ export function addFieldToSchema(
     }
 
     if (fieldOptions.type.primaryKey) {
-      instruction = instruction.primary();
+      instruction = instruction.primary(fieldOptions.name);
     }
 
     if (fieldOptions.type.unique) {
-      instruction = instruction.unique();
+      instruction = instruction.unique(fieldOptions.name);
     }
 
     if (!fieldOptions.type.allowNull) {
