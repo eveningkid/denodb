@@ -6,6 +6,7 @@ export type FieldTypes =
   | "BOOLEAN"
   | "STRING"
   | "TEXT"
+  | "TIMESTAMP"
   | "DATETIME";
 
 /** Available fields data types. */
@@ -19,4 +20,5 @@ export const DATA_TYPES: Fields = {
   TEXT: "text",
 
   DATETIME: "date",
+  TIMESTAMP: "timestamp",
 };
