@@ -31,57 +31,66 @@ export class SQLite3Connector implements Connector {
   async query(queryDescription: QueryDescription): Promise<any[]> {
     await this._makeConnection();
     const query = this._translator.translateToQuery(queryDescription);
-    const response = this._client!.query(query, []);
+    const subqueries = query.split(";");
+    const results = await subqueries.map(async (subquery, index) => {
+      const response = this._client!.query(subquery + ";", []);
 
-    if (
-      !["select", "count", "min", "max", "avg", "sum"].includes(
-        queryDescription.type!,
-      )
-    ) {
-      await saveSQLiteFile(this._client!);
-    }
-
-    if (query.toLowerCase().startsWith("select")) {
-      const results = [];
-      let columns;
-
-      try {
-        columns = response.columns();
-      } catch (error) {
-        // If there are no matching records, .columns will throw an error
-        return [];
+      if (
+        !["select", "count", "min", "max", "avg", "sum"].includes(
+          queryDescription.type!,
+        )
+      ) {
+        await saveSQLiteFile(this._client!);
       }
 
-      for (const row of response) {
-        const result: { [k: string]: FieldValue } = {};
-
-        let i = 0;
-        for (const column of row!) {
-          const columnName = columns[i].name;
-          if (columnName === ("count(*)")) {
-            result.count = column;
-          } else if (columnName.startsWith("max(")) {
-            result.max = column;
-          } else if (columnName.startsWith("min(")) {
-            result.min = column;
-          } else if (columnName.startsWith("sum(")) {
-            result.sum = column;
-          } else if (columnName.startsWith("avg(")) {
-            result.avg = column;
-          } else {
-            result[columns[i].name] = column;
-          }
-
-          i++;
+      if (query.toLowerCase().startsWith("select")) {
+        if (index < subqueries.length - 1) {
+          response.done();
+          return [];
         }
 
-        results.push(result);
+        const results = [];
+        let columns;
+
+        try {
+          columns = response.columns();
+        } catch (error) {
+          // If there are no matching records, .columns will throw an error
+          return [];
+        }
+
+        for (const row of response) {
+          const result: { [k: string]: FieldValue } = {};
+
+          let i = 0;
+          for (const column of row!) {
+            const columnName = columns[i].name;
+            if (columnName === ("count(*)")) {
+              result.count = column;
+            } else if (columnName.startsWith("max(")) {
+              result.max = column;
+            } else if (columnName.startsWith("min(")) {
+              result.min = column;
+            } else if (columnName.startsWith("sum(")) {
+              result.sum = column;
+            } else if (columnName.startsWith("avg(")) {
+              result.avg = column;
+            } else {
+              result[columns[i].name] = column;
+            }
+
+            i++;
+          }
+
+          results.push(result);
+        }
+
+        return results;
       }
 
-      return results;
-    }
-
-    return [];
+      return [];
+    });
+    return results[results.length - 1];
   }
 
   async close() {
