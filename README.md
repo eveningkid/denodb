@@ -118,6 +118,12 @@ Setting up your database with DenoDB is a four-step process:
         autoIncrement: true,
       },
       name: DATA_TYPES.STRING,
+      email: {
+        type: DATA_TYPES.STRING,
+        unique: true,
+        allowNull: false,
+        length: 50
+      }
     };
   }
   ```
