@@ -90,6 +90,8 @@ await db.close();
   - [SQLite](#sqlite)
   - [MySQL](#mysql)
   - [PostgreSQL](#postgresql)
+- [Data types](#data-types)
+- [Fields descriptors](#fields-descriptors)
 - [Model methods](#model-methods)
 
 ### First steps
@@ -122,8 +124,8 @@ Setting up your database with DenoDB is a four-step process:
         type: DATA_TYPES.STRING,
         unique: true,
         allowNull: false,
-        length: 50
-      }
+        length: 50,
+      },
     };
   }
   ```
@@ -182,6 +184,45 @@ const db = new Database('postgres', {
   port: 64, // optional
 });
 ```
+
+### Fields types
+
+| Type        | `DATA_TYPES.?` | Example                                                             |
+| ----------- | -------------- | ------------------------------------------------------------------- |
+| Big Integer | `BIG_INTEGER`  | `account: DATA_TYPES.BIG_INTEGER`                                   |
+| Integer     | `INTEGER`      | `id: DATA_TYPES.INTEGER`                                            |
+| Decimal     | `DECIMAL`      | `balance: { type: DATA_TYPES.DECIMAL, precision?: 2, scale?: 4 }`   |
+| Float       | `FLOAT`        | `balance: DATA_TYPES.FLOAT`                                         |
+| Uuid        | `UUID`         | `id: DATA_TYPES.UUID`                                               |
+| Boolean     | `BOOLEAN`      | `isActive: DATA_TYPES.BOOLEAN`                                      |
+| Binary      | `BINARY`       | `isActive: DATA_TYPES.BINARY`                                       |
+| Enum        | `ENUM`         | `status: { type: DATA_TYPES.ENUM, values: ["active", "canceled"] }` |
+| String      | `STRING`       | `name: { type: DATA_TYPES.STRING, lengh: 20 }`                      |
+| Text        | `TEXT`         | `description: DATA_TYPES.TEXT`                                      |
+| Date        | `DATE`         | `registeredAt: DATA_TYPES.DATE`                                     |
+| Datetime    | `DATETIME`     | `registeredAt: DATA_TYPES.DATETIME`                                 |
+| Time        | `TIME`         | `registeredAt: DATA_TYPES.TIME`                                     |
+| Timestamp   | `TIMESTAMP`    | `registeredAt: DATA_TYPES.TIMESTAMP`                                |
+| JSON        | `JSON`         | `credentials: DATA_TYPES.JSON`                                      |
+| JSONB       | `JSONB`        | `credentials: DATA_TYPES.JSONB`                                     |
+
+### Fields descriptors
+
+A field can simply be defined as such: `field: DATA_TYPES.TYPE`, but in some cases you might need a primary key or a given length for this field.
+
+Here is a list of all the field descriptors available:
+
+| Descriptor               | Object attribute | Example                          |
+| ------------------------ | ---------------- | -------------------------------- |
+| Type                     | `type`           | `type: DATA_TYPES.STRING`        |
+| Primary key              | `primaryKey`     | `primaryKey: true`               |
+| Unique                   | `unique`         | `unique: true`                   |
+| Auto increment           | `autoIncrement`  | `autoIncrement: true`            |
+| Length                   | `length`         | `length: 64`                     |
+| Allow null/is nullable   | `allowNull`      | `allowNull: false`               |
+| Precision (for decimals) | `precision`      | `precision: 3`                   |
+| Scale (for decimals)     | `scale`          | `scale: 2`                       |
+| Values (for enums)       | `values`         | `values: ["active", "canceled"]` |
 
 ### Model methods
 
