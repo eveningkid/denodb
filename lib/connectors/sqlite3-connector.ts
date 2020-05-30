@@ -32,7 +32,7 @@ export class SQLite3Connector implements Connector {
     await this._makeConnection();
     const query = this._translator.translateToQuery(queryDescription);
     const subqueries = query.split(";");
-    const results = await subqueries.map(async (subquery, index) => {
+    const results = subqueries.map(async (subquery, index) => {
       const response = this._client.query(subquery + ";", []);
 
       if (query.toLowerCase().startsWith("select")) {
