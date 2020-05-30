@@ -1,4 +1,4 @@
-import { openSQLiteFile, saveSQLiteFile, SQLiteClient } from "../../deps.ts";
+import { SQLiteClient } from "../../deps.ts";
 import { Connector, ConnectorOptions } from "./connector.ts";
 import { FieldValue, QueryDescription } from "../query-builder.ts";
 import { SQLTranslator } from "../translators/sql-translator.ts";
@@ -8,7 +8,7 @@ export interface SQLite3Options extends ConnectorOptions {
 }
 
 export class SQLite3Connector implements Connector {
-  _client!: SQLiteClient;
+  _client: SQLiteClient;
   _options: SQLite3Options;
   _translator: SQLTranslator;
   _connected = false;
@@ -16,6 +16,7 @@ export class SQLite3Connector implements Connector {
   /** Create a SQLite connection. */
   constructor(options: SQLite3Options) {
     this._options = options;
+    this._client = new SQLiteClient(this._options.filepath);
     this._translator = new SQLTranslator("sqlite3");
   }
 
@@ -24,7 +25,6 @@ export class SQLite3Connector implements Connector {
       return;
     }
 
-    this._client = await openSQLiteFile(this._options.filepath);
     this._connected = true;
   }
 
@@ -32,16 +32,8 @@ export class SQLite3Connector implements Connector {
     await this._makeConnection();
     const query = this._translator.translateToQuery(queryDescription);
     const subqueries = query.split(";");
-    const results = await subqueries.map(async (subquery, index) => {
-      const response = this._client!.query(subquery + ";", []);
-
-      if (
-        !["select", "count", "min", "max", "avg", "sum"].includes(
-          queryDescription.type!,
-        )
-      ) {
-        await saveSQLiteFile(this._client!);
-      }
+    const results = subqueries.map(async (subquery, index) => {
+      const response = this._client.query(subquery + ";", []);
 
       if (query.toLowerCase().startsWith("select")) {
         if (index < subqueries.length - 1) {
@@ -98,8 +90,7 @@ export class SQLite3Connector implements Connector {
       return;
     }
 
-    await saveSQLiteFile(this._client!);
-    this._client!.close();
+    this._client.close();
     this._connected = false;
   }
 }

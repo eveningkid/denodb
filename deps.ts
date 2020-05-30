@@ -8,8 +8,4 @@ export {
   Connection as MySQLConnection,
 } from "https://deno.land/x/mysql/mod.ts";
 
-export {
-  open as openSQLiteFile,
-  save as saveSQLiteFile,
-  DB as SQLiteClient,
-} from "https://deno.land/x/sqlite/mod.ts";
+export { DB as SQLiteClient } from "https://deno.land/x/sqlite@v2.0.0/mod.ts";
