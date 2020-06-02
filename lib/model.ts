@@ -10,12 +10,14 @@ import {
   FieldType,
 } from "./query-builder.ts";
 import { Database, SyncOptions } from "./database.ts";
+import { PivotModelSchema } from "./model-pivot.ts";
 
 /** Represents a Model class, not an instance. */
 export type ModelSchema = typeof Model;
 
 export type ModelFields = { [key: string]: FieldType };
 export type ModelDefaults = { [field: string]: FieldValue };
+export type ModelPivotModels = { [modelName: string]: PivotModelSchema };
 
 export type ModelOptions = {
   queryBuilder: QueryBuilder;
@@ -36,6 +38,9 @@ export class Model {
 
   /** Default values for the model fields. */
   static defaults: ModelDefaults = {};
+
+  /** Pivot table to use for a given model. */
+  static pivot: ModelPivotModels = {};
 
   /** If the model has been created in the database. */
   private static _isCreatedInDatabase: boolean = false;
@@ -62,7 +67,7 @@ export class Model {
     this._options = options;
     this._database = options.database;
     this._queryBuilder = options.queryBuilder;
-    this._currentQuery = this._queryBuilder.query();
+    this._currentQuery = this._queryBuilder.queryForSchema(this);
     this._primaryKey = this._findPrimaryKey();
   }
 
@@ -96,8 +101,17 @@ export class Model {
 
   /** Build the current query and run it on the associated database. */
   private static async _runQuery(query: QueryDescription) {
-    this._currentQuery = this._queryBuilder.query();
+    this._currentQuery = this._queryBuilder.queryForSchema(this);
     return this._database.query(query);
+  }
+
+  /** Return the model computed primary key. */
+  static getComputedPrimaryKey() {
+    if (!this._primaryKey) {
+      this._findPrimaryKey();
+    }
+
+    return this._primaryKey;
   }
 
   /** Return the table name followed by a field name. Can also rename a field using `nameAs`.
@@ -149,7 +163,10 @@ export class Model {
    *     
    *     await Flight.select("id", "destination").get();
    */
-  static select(...fields: (string | FieldAlias)[]) {
+  static select<T extends typeof Model>(
+    this: T,
+    ...fields: (string | FieldAlias)[]
+  ) {
     this._currentQuery.select(...fields);
     return this;
   }
@@ -175,7 +192,7 @@ export class Model {
   static async find(idOrIds: FieldValue | FieldValue[]) {
     return this._runQuery(
       this._currentQuery.table(this.table).find(
-        this._primaryKey,
+        this.getComputedPrimaryKey(),
         Array.isArray(idOrIds) ? idOrIds : [idOrIds],
       ).toDescription(),
     );
@@ -187,7 +204,8 @@ export class Model {
    *     
    *     await Flight.orderBy("departure", "desc").all();
    */
-  static orderBy(
+  static orderBy<T extends typeof Model>(
+    this: T,
     field: string,
     orderDirection: OrderDirection = "asc",
   ) {
@@ -199,7 +217,7 @@ export class Model {
    * 
    *     await Flight.take(10).get();
    */
-  static take(limit: number) {
+  static take<T extends typeof Model>(this: T, limit: number) {
     this._currentQuery.limit(limit);
     return this;
   }
@@ -222,7 +240,8 @@ export class Model {
    *     
    *     await Flight.where({ id: "1", departure: "Paris" }).get();
    */
-  static where(
+  static where<T extends typeof Model>(
+    this: T,
     fieldOrFields: string | Values,
     operatorOrFieldValue?: Operator | FieldValue,
     fieldValue?: FieldValue,
@@ -289,7 +308,7 @@ export class Model {
   static async deleteById(id: FieldValue) {
     return this._runQuery(
       this._currentQuery.table(this.table).where(
-        this._primaryKey,
+        this.getComputedPrimaryKey(),
         "=",
         id,
       ).delete().toDescription(),
@@ -317,7 +336,8 @@ export class Model {
    *       Flight.field("airportId"),
    *     ).get()
    */
-  static join(
+  static join<T extends typeof Model>(
+    this: T,
     joinTable: ModelSchema,
     originField: string,
     targetField: string,
@@ -406,5 +426,97 @@ export class Model {
     );
 
     return value[0].avg;
+  }
+
+  /** Find associated values for the given model for one-to-many and many-to-many relationships. 
+   * 
+   *     class Airport {
+   *       static flights() {
+   *         return this.hasMany(Flight);
+   *       }
+   *     }
+   *     
+   *     Airport.where("id", "1").flights();
+   */
+  static hasMany<T extends typeof Model>(
+    this: T,
+    model: ModelSchema,
+  ): Promise<any[]> {
+    const currentWhereValue = this._findCurrentQueryWhereClause();
+
+    if (model.name in this.pivot) {
+      const pivot = this.pivot[model.name];
+      const pivotField = pivot._pivotsFields[this.name];
+      const pivotOtherModel = pivot._pivotsModels[model.name];
+      const pivotOtherModelField = pivot._pivotsFields[model.name];
+
+      return pivot.where(pivot.field(pivotField), currentWhereValue).join(
+        pivotOtherModel,
+        pivotOtherModel.field(pivotOtherModel.getComputedPrimaryKey()),
+        pivot.field(pivotOtherModelField),
+      ).get();
+    }
+
+    const foreignKeyName = this._findModelForeignKeyField(model);
+    this._currentQuery = this._queryBuilder.queryForSchema(this);
+    return model.where(foreignKeyName, currentWhereValue).all();
+  }
+
+  /** Find associated values for the given model for one-to-one and one-to-many relationships. */
+  static async hasOne<T extends typeof Model>(this: T, model: ModelSchema) {
+    const currentWhereValue = this._findCurrentQueryWhereClause();
+    const FKName = this._findModelForeignKeyField(model);
+
+    if (!FKName) {
+      const currentModelFKName = this._findModelForeignKeyField(this, model);
+      const currentModelValue = await this.where(
+        this.getComputedPrimaryKey(),
+        currentWhereValue,
+      ).first();
+      const currentModelFKValue = currentModelValue[currentModelFKName];
+      return model.where(model.getComputedPrimaryKey(), currentModelFKValue)
+        .first();
+    }
+
+    return model.where(FKName, currentWhereValue).first();
+  }
+
+  /** Look for the current query's where clause for this model's primary key. */
+  private static _findCurrentQueryWhereClause() {
+    if (!this._currentQuery._query.wheres) {
+      throw new Error("The current query does not have any where clause.");
+    }
+
+    const where = this._currentQuery._query.wheres.find((where) => {
+      return where.field === this.getComputedPrimaryKey();
+    });
+
+    if (!where) {
+      throw new Error(
+        "The current query does not have any where clause for this model primary key.",
+      );
+    }
+
+    return where.value;
+  }
+
+  /** Look for a `fieldName: Relationships.belongsTo(forModel)` field for a given `model`. */
+  private static _findModelForeignKeyField(
+    model: ModelSchema,
+    forModel: ModelSchema = this,
+  ): string {
+    const modelFK: [string, FieldType] | undefined = Object.entries(
+      model.fields,
+    ).find(([, type]) => {
+      return (typeof type === "object")
+        ? type.relationship?.model === forModel
+        : false;
+    });
+
+    if (!modelFK) {
+      return "";
+    }
+
+    return modelFK[0];
   }
 }
