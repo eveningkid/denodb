@@ -9,7 +9,7 @@
 > DenoDB relies extensively on the available database clients. DenoDB works as an abstract API based on top of these clients. Better support for more databases will come whenever new third-party clients are released.
 
 ```typescript
-import { DATA_TYPES, Database, Model } from 'https://deno.land/x/denodb/mod.ts';
+import { DataTypes, Database, Model } from 'https://deno.land/x/denodb/mod.ts';
 
 const db = new Database('postgres', {
   host: '...',
@@ -27,9 +27,9 @@ class Flight extends Model {
       primaryKey: true,
       autoIncrement: true,
     },
-    departure: DATA_TYPES.STRING,
-    destination: DATA_TYPES.STRING,
-    flightDuration: DATA_TYPES.FLOAT,
+    departure: DataTypes.STRING,
+    destination: DataTypes.STRING,
+    flightDuration: DataTypes.FLOAT,
   };
 
   static defaults = {
@@ -81,8 +81,6 @@ await Flight.select('id', 'destination').orderBy('id').get();
 await db.close();
 ```
 
-> Relationships are not available for now. This is the next feature that will be added.
-
 ## Documentation
 
 - [First steps](#first-steps)
@@ -93,6 +91,11 @@ await db.close();
 - [Data types](#data-types)
 - [Fields descriptors](#fields-descriptors)
 - [Model methods](#model-methods)
+- [Relationships](#relationships)
+  - [Belongs To](#belongs-to)
+  - [One-to-one](#one-to-one)
+  - [One-to-many](#one-to-many)
+  - [Many-to-many](#many-to-many)
 
 ### First steps
 
@@ -119,9 +122,9 @@ Setting up your database with DenoDB is a four-step process:
         primaryKey: true,
         autoIncrement: true,
       },
-      name: DATA_TYPES.STRING,
+      name: DataTypes.STRING,
       email: {
-        type: DATA_TYPES.STRING,
+        type: DataTypes.STRING,
         unique: true,
         allowNull: false,
         length: 50,
@@ -187,34 +190,34 @@ const db = new Database('postgres', {
 
 ### Fields types
 
-| Type        | `DATA_TYPES.?` | Example                                                             |
-| ----------- | -------------- | ------------------------------------------------------------------- |
-| Big Integer | `BIG_INTEGER`  | `account: DATA_TYPES.BIG_INTEGER`                                   |
-| Integer     | `INTEGER`      | `id: DATA_TYPES.INTEGER`                                            |
-| Decimal     | `DECIMAL`      | `balance: { type: DATA_TYPES.DECIMAL, precision?: 2, scale?: 4 }`   |
-| Float       | `FLOAT`        | `balance: DATA_TYPES.FLOAT`                                         |
-| Uuid        | `UUID`         | `id: DATA_TYPES.UUID`                                               |
-| Boolean     | `BOOLEAN`      | `isActive: DATA_TYPES.BOOLEAN`                                      |
-| Binary      | `BINARY`       | `isActive: DATA_TYPES.BINARY`                                       |
-| Enum        | `ENUM`         | `status: { type: DATA_TYPES.ENUM, values: ["active", "canceled"] }` |
-| String      | `STRING`       | `name: { type: DATA_TYPES.STRING, lengh: 20 }`                      |
-| Text        | `TEXT`         | `description: DATA_TYPES.TEXT`                                      |
-| Date        | `DATE`         | `registeredAt: DATA_TYPES.DATE`                                     |
-| Datetime    | `DATETIME`     | `registeredAt: DATA_TYPES.DATETIME`                                 |
-| Time        | `TIME`         | `registeredAt: DATA_TYPES.TIME`                                     |
-| Timestamp   | `TIMESTAMP`    | `registeredAt: DATA_TYPES.TIMESTAMP`                                |
-| JSON        | `JSON`         | `credentials: DATA_TYPES.JSON`                                      |
-| JSONB       | `JSONB`        | `credentials: DATA_TYPES.JSONB`                                     |
+| Type        | `DataTypes.?` | Example                                                            |
+| ----------- | ------------- | ------------------------------------------------------------------ |
+| Big Integer | `BIG_INTEGER` | `account: DataTypes.BIG_INTEGER`                                   |
+| Integer     | `INTEGER`     | `id: DataTypes.INTEGER`                                            |
+| Decimal     | `DECIMAL`     | `balance: { type: DataTypes.DECIMAL, precision?: 2, scale?: 4 }`   |
+| Float       | `FLOAT`       | `balance: DataTypes.FLOAT`                                         |
+| Uuid        | `UUID`        | `id: DataTypes.UUID`                                               |
+| Boolean     | `BOOLEAN`     | `isActive: DataTypes.BOOLEAN`                                      |
+| Binary      | `BINARY`      | `isActive: DataTypes.BINARY`                                       |
+| Enum        | `ENUM`        | `status: { type: DataTypes.ENUM, values: ["active", "canceled"] }` |
+| String      | `STRING`      | `name: { type: DataTypes.STRING, lengh: 20 }`                      |
+| Text        | `TEXT`        | `description: DataTypes.TEXT`                                      |
+| Date        | `DATE`        | `registeredAt: DataTypes.DATE`                                     |
+| Datetime    | `DATETIME`    | `registeredAt: DataTypes.DATETIME`                                 |
+| Time        | `TIME`        | `registeredAt: DataTypes.TIME`                                     |
+| Timestamp   | `TIMESTAMP`   | `registeredAt: DataTypes.TIMESTAMP`                                |
+| JSON        | `JSON`        | `credentials: DataTypes.JSON`                                      |
+| JSONB       | `JSONB`       | `credentials: DataTypes.JSONB`                                     |
 
 ### Fields descriptors
 
-A field can simply be defined as such: `field: DATA_TYPES.TYPE`, but in some cases you might need a primary key or a given length for this field.
+A field can simply be defined as such: `field: DataTypes.TYPE`, but in some cases you might need a primary key or a given length for this field.
 
 Here is a list of all the field descriptors available:
 
 | Descriptor               | Object attribute | Example                          |
 | ------------------------ | ---------------- | -------------------------------- |
-| Type                     | `type`           | `type: DATA_TYPES.STRING`        |
+| Type                     | `type`           | `type: DataTypes.STRING`         |
 | Primary key              | `primaryKey`     | `primaryKey: true`               |
 | Unique                   | `unique`         | `unique: true`                   |
 | Auto increment           | `autoIncrement`  | `autoIncrement: true`            |
@@ -412,6 +415,333 @@ Add a `WHERE` clause to your query.
 await Flight.where('id', '1').get();
 await Flight.where('id', '>', '1').get();
 await Flight.where({ id: '1', departure: 'Paris' }).get();
+```
+
+### Relationships
+
+#### Belongs To
+
+```typescript
+import {
+  Database,
+  DataTypes,
+  Model,
+  Relationships,
+} from 'https://deno.land/x/denodb/mod.ts';
+
+const db = new Database('sqlite3', {
+  filepath: './database.sqlite',
+});
+
+class Owner extends Model {
+  static table = 'owners';
+
+  static fields = {
+    id: {
+      type: DataTypes.STRING,
+      primaryKey: true,
+    },
+    name: DataTypes.STRING,
+  };
+
+  // Fetch a business binded to this owner
+  static business() {
+    return this.hasOne(Business);
+  }
+}
+
+class Business extends Model {
+  static table = 'businesses';
+
+  static fields = {
+    id: {
+      type: DataTypes.STRING,
+      primaryKey: true,
+    },
+    name: DataTypes.STRING,
+
+    // Convention is "modelName" followed by "Id"
+    ownerId: Relationships.belongsTo(Owner),
+  };
+}
+
+db.link([Business, Owner]);
+
+await db.sync({ drop: true });
+
+await Owner.create({
+  id: '1',
+  name: 'John',
+});
+
+await Business.create({
+  id: '1',
+  name: 'Parisian Café',
+  ownerId: '1',
+});
+
+await Owner.where('id', '1').business();
+// { id: "1", name: "Parisian Café", ownerId: 1 }
+
+await db.close();
+```
+
+#### One-to-one
+
+```typescript
+import {
+  Database,
+  DataTypes,
+  Model,
+  Relationships,
+} from 'https://deno.land/x/denodb/mod.ts';
+
+const db = new Database('sqlite3', {
+  filepath: './database.sqlite',
+});
+
+class Owner extends Model {
+  static table = 'owners';
+
+  static fields = {
+    id: {
+      type: DataTypes.STRING,
+      primaryKey: true,
+    },
+    name: DataTypes.STRING,
+  };
+
+  // Fetch a business binded to this owner
+  static business() {
+    return this.hasOne(Business);
+  }
+}
+
+class Business extends Model {
+  static table = 'businesses';
+
+  static fields = {
+    id: {
+      type: DataTypes.STRING,
+      primaryKey: true,
+    },
+    name: DataTypes.STRING,
+  };
+
+  // Fetch an owner binded to this business
+  static owner() {
+    return this.hasOne(Owner);
+  }
+}
+
+// Will automatically:
+// - Add a `businessId` field to Owner
+// - Add an `ownerId` field to Business
+Relationships.oneToOne(Business, Owner);
+
+db.link([Owner, Business]);
+
+await db.sync({ drop: true });
+
+await Owner.create({
+  id: '1',
+  name: 'John',
+});
+
+await Business.create({
+  id: '1',
+  name: 'Parisian Café',
+  ownerId: '1',
+});
+
+// Bind the owner to this business
+await Owner.where('id', '1').update({ businessId: '1' });
+
+await Business.where('id', '1').owner();
+// { id: "1", name: "John", businessId: 1 }
+
+await Owner.where('id', '1').business();
+// { id: "1", name: "Parisian Café", ownerId: 1 }
+
+await db.close();
+```
+
+#### One-to-many
+
+```typescript
+import {
+  Database,
+  DataTypes,
+  Model,
+  Relationships,
+} from 'https://deno.land/x/denodb/mod.ts';
+
+const db = new Database('sqlite3', {
+  filepath: './database.sqlite',
+});
+
+class Owner extends Model {
+  static table = 'owners';
+
+  static fields = {
+    id: {
+      type: DataTypes.STRING,
+      primaryKey: true,
+    },
+    name: DataTypes.STRING,
+  };
+
+  static businesses() {
+    return this.hasMany(Business);
+  }
+}
+
+class Business extends Model {
+  static table = 'businesses';
+
+  static fields = {
+    id: {
+      type: DataTypes.STRING,
+      primaryKey: true,
+    },
+    name: DataTypes.STRING,
+    ownerId: Relationships.belongsTo(Owner),
+  };
+
+  static owner() {
+    return this.hasOne(Owner);
+  }
+}
+
+db.link([Owner, Business]);
+
+await db.sync({ drop: true });
+
+await Owner.create({
+  id: '1',
+  name: 'John',
+});
+
+await Business.create({
+  id: '1',
+  name: 'Parisian Café',
+  ownerId: '1',
+});
+
+await Business.create({
+  id: '2',
+  name: 'Something About Us',
+  ownerId: '1',
+});
+
+await Owner.where('id', '1').businesses();
+// [
+//   { id: "1", name: "Parisian Café", ownerId: 1 },
+//   { id: "2", name: "Something About Us", ownerId: 1 }
+// ]
+
+await Business.where('id', '1').owner();
+// { id: "1", name: "John" }
+
+await Business.where('id', '2').owner();
+// { id: "1", name: "John" }
+
+await db.close();
+```
+
+#### Many-to-many
+
+```typescript
+import {
+  Database,
+  DataTypes,
+  Model,
+  Relationships,
+} from 'https://deno.land/x/denodb/mod.ts';
+
+const db = new Database('sqlite3', {
+  filepath: './database.sqlite',
+});
+
+class Owner extends Model {
+  static table = 'owners';
+
+  static fields = {
+    id: {
+      type: DataTypes.STRING,
+      primaryKey: true,
+    },
+    name: DataTypes.STRING,
+  };
+
+  static businesses() {
+    return this.hasMany(Business);
+  }
+}
+
+class Business extends Model {
+  static table = 'businesses';
+
+  static fields = {
+    id: {
+      type: DataTypes.STRING,
+      primaryKey: true,
+    },
+    name: DataTypes.STRING,
+  };
+
+  static owners() {
+    return this.hasMany(Owner);
+  }
+}
+
+const BusinessOwner = Relationships.manyToMany(Business, Owner);
+
+db.link([BusinessOwner, Business, Owner]);
+
+await db.sync({ drop: true });
+
+await Owner.create([
+  {
+    id: '1',
+    name: 'John',
+  },
+  {
+    id: '2',
+    name: 'Sarah',
+  },
+]);
+
+await Business.create([
+  {
+    id: '1',
+    name: 'Parisian Café',
+  },
+  {
+    id: '2',
+    name: 'Something About Us',
+  },
+]);
+
+await BusinessOwner.create([
+  { businessId: '1', ownerId: '1' },
+  { businessId: '1', ownerId: '2' },
+  { businessId: '2', ownerId: '1' },
+]);
+
+console.log(await Owner.where('id', '1').businesses());
+// [
+//   { id: "1", businessId: 1, ownerId: 1, name: "Parisian Café" },
+//   { id: "2", businessId: 2, ownerId: 1, name: "Something About Us" }
+// ]
+
+console.log(await Owner.where('id', '2').businesses());
+// [ { id: "1", businessId: 1, ownerId: 2, name: "Parisian Café" } ]
+
+console.log(await Business.where('id', '2').owners());
+// [ { id: "1", businessId: 2, ownerId: 1, name: "John" } ]
+
+await db.close();
 ```
 
 ## License

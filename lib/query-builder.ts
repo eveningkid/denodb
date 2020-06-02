@@ -1,6 +1,7 @@
 import { SQLQueryBuilder } from "../deps.ts";
 import { FieldTypeString } from "./data-types.ts";
-import { ModelFields, ModelDefaults } from "./model.ts";
+import { ModelFields, ModelDefaults, ModelSchema } from "./model.ts";
+import { Relationship } from "./relationships.ts";
 
 export type FieldValue = number | string | boolean | Date;
 export type Values = { [key: string]: FieldValue };
@@ -14,6 +15,7 @@ export type FieldType = FieldTypeString | {
   precision?: number;
   scale?: number;
   values?: (number | string)[];
+  relationship?: Relationship;
 };
 export type FieldAlias = { [k: string]: string };
 
@@ -56,6 +58,7 @@ export type OrderByClause = {
 };
 
 export type QueryDescription = {
+  schema?: ModelSchema;
   type?: QueryType;
   table?: string;
   orderBy?: OrderByClause;
@@ -81,8 +84,13 @@ export class QueryBuilder {
   _query: QueryDescription = {};
 
   /** Create a fresh new query. */
-  query(): QueryBuilder {
-    return new QueryBuilder();
+  queryForSchema(schema: ModelSchema): QueryBuilder {
+    return new QueryBuilder().schema(schema);
+  }
+
+  schema(schema: ModelSchema) {
+    this._query.schema = schema;
+    return this;
   }
 
   toDescription(): QueryDescription {
@@ -172,11 +180,21 @@ export class QueryBuilder {
       this._query.wheres = [];
     }
 
-    this._query.wheres.push({
+    const whereClause = {
       field,
       operator,
       value,
-    });
+    };
+
+    const existingWhereForFieldIndex = this._query.wheres.findIndex((where) =>
+      where.field === field
+    );
+
+    if (existingWhereForFieldIndex === -1) {
+      this._query.wheres.push(whereClause);
+    } else {
+      this._query.wheres[existingWhereForFieldIndex] = whereClause;
+    }
 
     return this;
   }

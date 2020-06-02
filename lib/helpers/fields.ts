@@ -18,6 +18,20 @@ export function addFieldToSchema(
   let instruction;
 
   if (typeof fieldOptions.type === "object") {
+    if (fieldOptions.type.relationship) {
+      const relationshipPKName = fieldOptions.type.relationship.model
+        .getComputedPrimaryKey();
+
+      table.integer(fieldOptions.name);
+      table.foreign(fieldOptions.name).references(
+        fieldOptions.type.relationship.model.field(
+          relationshipPKName,
+        ),
+      ).onDelete("CASCADE");
+
+      return;
+    }
+
     const fieldNameArgs: [string | number | (string | number)[]] = [
       fieldOptions.name,
     ];

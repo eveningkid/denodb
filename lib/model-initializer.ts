@@ -19,14 +19,18 @@ export class ModelInitializer {
     // the following queries should be done within a transaction.
 
     if (initializationOptions.initOptions.drop) {
-      const dropQuery = initializationOptions.queryBuilder.query().table(
+      const dropQuery = initializationOptions.queryBuilder.queryForSchema(
+        initializationOptions.model,
+      ).table(
         initializationOptions.model.table,
       ).dropIfExists().toDescription();
 
       await initializationOptions.database.query(dropQuery);
     }
 
-    const createQuery = initializationOptions.queryBuilder.query().table(
+    const createQuery = initializationOptions.queryBuilder.queryForSchema(
+      initializationOptions.model,
+    ).table(
       initializationOptions.model.table,
     ).createTable(
       initializationOptions.model.fields,

@@ -61,3 +61,5 @@ export const DATA_TYPES: Fields = {
   JSON: "json",
   JSONB: "jsonb",
 };
+
+export const DataTypes = DATA_TYPES;
