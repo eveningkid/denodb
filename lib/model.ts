@@ -31,7 +31,7 @@ export class Model {
   static table = "";
 
   /** Should this model have `created_at` and `updated_at` fields by default. */
-  static timestamps = true;
+  static timestamps = false;
 
   /** Model fields. */
   static fields: ModelFields = {};
