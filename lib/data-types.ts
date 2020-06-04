@@ -34,9 +34,21 @@ export type FieldTypes =
   | "JSON"
   | "JSONB";
 
-export type Fields = {
-  [key in FieldTypes]: FieldTypeString;
-};
+export type Fields =
+  & {
+    [key in FieldTypes]: FieldTypeString;
+  }
+  & {
+    decimal: (precision: number, scale?: number) => {
+      type: FieldTypeString;
+      precision: number;
+      scale?: number;
+    };
+    string: (length: number) => { type: FieldTypeString; length: number };
+    enum: (
+      values: (number | string)[],
+    ) => { type: FieldTypeString; values: (number | string)[] };
+  };
 
 /** Available fields data types. */
 export const DATA_TYPES: Fields = {
@@ -60,6 +72,28 @@ export const DATA_TYPES: Fields = {
 
   JSON: "json",
   JSONB: "jsonb",
+
+  decimal(precision: number, scale?: number) {
+    return {
+      type: this.DECIMAL,
+      precision,
+      scale,
+    };
+  },
+
+  string(length: number) {
+    return {
+      type: this.STRING,
+      length,
+    };
+  },
+
+  enum(values: (number | string)[]) {
+    return {
+      type: this.ENUM,
+      values,
+    };
+  },
 };
 
 export const DataTypes = DATA_TYPES;
