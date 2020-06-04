@@ -3,7 +3,7 @@ import { FieldTypeString } from "./data-types.ts";
 import { ModelFields, ModelDefaults, ModelSchema, Model } from "./model.ts";
 import { Relationship } from "./relationships.ts";
 
-export type FieldValue = number | string | boolean | Date;
+export type FieldValue = number | string | boolean | Date | null;
 export type Values = { [key: string]: FieldValue };
 export type FieldType = FieldTypeString | {
   type?: FieldTypeString;
