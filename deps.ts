@@ -1,5 +1,7 @@
 export { default as ConsoleColor } from "https://deno.land/x/color/index.ts";
 
+export { default as SQLQueryBuilder } from "https://deno.land/x/dex/mod.ts";
+
 export { Client as PostgresClient } from "https://deno.land/x/postgres/mod.ts";
 
 export {
