@@ -190,12 +190,14 @@ export class Model {
    *     await Flight.find("1");
    */
   static async find(idOrIds: FieldValue | FieldValue[]) {
-    return this._runQuery(
+    const results = await this._runQuery(
       this._currentQuery.table(this.table).find(
         this.getComputedPrimaryKey(),
         Array.isArray(idOrIds) ? idOrIds : [idOrIds],
       ).toDescription(),
     );
+
+    return Array.isArray(idOrIds) ? results : results[0];
   }
 
   /** Order query results based on a field name and an optional direction.
