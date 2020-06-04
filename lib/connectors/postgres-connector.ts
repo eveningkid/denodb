@@ -41,9 +41,16 @@ export class PostgresConnector implements Connector {
 
   async query(queryDescription: QueryDescription): Promise<any[]> {
     await this._makeConnection();
+
     const query = this._translator.translateToQuery(queryDescription);
-    const results = await this._client.query(query);
-    return results.rowsOfObjects();
+    const response = await this._client.query(query);
+    const results = response.rowsOfObjects();
+
+    if (queryDescription.type === "insert") {
+      return results.length === 1 ? results[0] : results;
+    }
+
+    return results;
   }
 
   async close() {

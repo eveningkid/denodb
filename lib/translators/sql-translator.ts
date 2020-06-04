@@ -129,7 +129,7 @@ export class SQLTranslator implements Translator {
           );
         }
 
-        queryBuilder = queryBuilder.insert(query.values);
+        queryBuilder = queryBuilder.returning("*").insert(query.values);
         break;
 
       case "update":

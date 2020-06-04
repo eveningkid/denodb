@@ -1,6 +1,6 @@
 import { SQLQueryBuilder } from "../deps.ts";
 import { FieldTypeString } from "./data-types.ts";
-import { ModelFields, ModelDefaults, ModelSchema } from "./model.ts";
+import { ModelFields, ModelDefaults, ModelSchema, Model } from "./model.ts";
 import { Relationship } from "./relationships.ts";
 
 export type FieldValue = number | string | boolean | Date;
@@ -58,7 +58,7 @@ export type OrderByClause = {
 };
 
 export type QueryDescription = {
-  schema?: ModelSchema;
+  schema: ModelSchema;
   type?: QueryType;
   table?: string;
   orderBy?: OrderByClause;
@@ -81,7 +81,7 @@ export type Builder = typeof SQLQueryBuilder;
 
 /** Create queries descriptions. */
 export class QueryBuilder {
-  _query: QueryDescription = {};
+  _query: QueryDescription = { schema: Model };
 
   /** Create a fresh new query. */
   queryForSchema(schema: ModelSchema): QueryBuilder {

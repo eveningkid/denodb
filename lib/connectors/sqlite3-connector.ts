@@ -35,53 +35,67 @@ export class SQLite3Connector implements Connector {
     const results = subqueries.map(async (subquery, index) => {
       const response = this._client.query(subquery + ";", []);
 
-      if (query.toLowerCase().startsWith("select")) {
-        if (index < subqueries.length - 1) {
-          response.done();
-          return [];
-        }
-
-        const results = [];
-        let columns;
-
-        try {
-          columns = response.columns();
-        } catch (error) {
-          // If there are no matching records, .columns will throw an error
-          return [];
-        }
-
-        for (const row of response) {
-          const result: { [k: string]: FieldValue } = {};
-
-          let i = 0;
-          for (const column of row!) {
-            const columnName = columns[i].name;
-            if (columnName === ("count(*)")) {
-              result.count = column;
-            } else if (columnName.startsWith("max(")) {
-              result.max = column;
-            } else if (columnName.startsWith("min(")) {
-              result.min = column;
-            } else if (columnName.startsWith("sum(")) {
-              result.sum = column;
-            } else if (columnName.startsWith("avg(")) {
-              result.avg = column;
-            } else {
-              result[columns[i].name] = column;
-            }
-
-            i++;
-          }
-
-          results.push(result);
-        }
-
-        return results;
+      if (index < subqueries.length - 1) {
+        response.done();
+        return [];
       }
 
-      return [];
+      const results = [];
+      let columns;
+
+      try {
+        columns = response.columns();
+      } catch (error) {
+        // If there are no matching records, .columns will throw an error
+
+        if (
+          (queryDescription.type === "insert" ||
+            queryDescription.type === "update") && queryDescription.values
+        ) {
+          if (Array.isArray(queryDescription.values)) {
+            return await Promise.all(
+              queryDescription.values.map((values) =>
+                queryDescription.schema.where(values).first()
+              ),
+            );
+          }
+
+          return queryDescription.schema.where(queryDescription.values)
+            .first();
+        }
+
+        return [];
+      }
+
+      for (const row of response) {
+        const result: { [k: string]: FieldValue } = {};
+
+        let i = 0;
+        for (const column of row!) {
+          const columnName = columns[i].name;
+          if (columnName === ("count(*)")) {
+            result.count = column;
+          } else if (columnName.startsWith("max(")) {
+            result.max = column;
+          } else if (columnName.startsWith("min(")) {
+            result.min = column;
+          } else if (columnName.startsWith("sum(")) {
+            result.sum = column;
+          } else if (columnName.startsWith("avg(")) {
+            result.avg = column;
+          } else {
+            result[columns[i].name] = column;
+          }
+
+          i++;
+        }
+
+        results.push(result);
+      }
+
+      return results;
     });
+
     return results[results.length - 1];
   }
 
