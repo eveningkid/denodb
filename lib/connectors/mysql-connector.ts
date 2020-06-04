@@ -43,7 +43,7 @@ export class MySQLConnector implements Connector {
   async query(
     queryDescription: QueryDescription,
     client?: MySQLClient | MySQLConnection,
-  ): Promise<any[]> {
+  ): Promise<any | any[]> {
     await this._makeConnection();
 
     const queryClient = client ?? this._client;
@@ -56,7 +56,7 @@ export class MySQLConnector implements Connector {
     return queryClient.execute(query) as any;
   }
 
-  async transaction(queries: QueryDescription[]): Promise<any[]> {
+  async transaction(queries: QueryDescription[]): Promise<any | any[]> {
     if (queries.length === 0) {
       return [];
     }

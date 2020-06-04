@@ -21,10 +21,10 @@ export interface Connector {
   _makeConnection(): void;
 
   /** Execute a query on the external database instance. */
-  query(queryDescription: QueryDescription): Promise<any[]>;
+  query(queryDescription: QueryDescription): Promise<any | any[]>;
 
   /** Execute queries within a transaction on the database instance. */
-  transaction?(queries: QueryDescription[]): Promise<any[]>;
+  transaction?(queries: QueryDescription[]): Promise<any | any[]>;
 
   /** Disconnect from the external database instance. */
   close(): Promise<any>;

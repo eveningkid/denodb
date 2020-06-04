@@ -28,7 +28,7 @@ export class SQLite3Connector implements Connector {
     this._connected = true;
   }
 
-  async query(queryDescription: QueryDescription): Promise<any[]> {
+  async query(queryDescription: QueryDescription): Promise<any | any[]> {
     await this._makeConnection();
     const query = this._translator.translateToQuery(queryDescription);
     const subqueries = query.split(";");
