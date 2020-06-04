@@ -163,7 +163,7 @@ export class Model {
    *     
    *     await Flight.select("id", "destination").get();
    */
-  static select<T extends typeof Model>(
+  static select<T extends ModelSchema>(
     this: T,
     ...fields: (string | FieldAlias)[]
   ) {
@@ -206,7 +206,7 @@ export class Model {
    *     
    *     await Flight.orderBy("departure", "desc").all();
    */
-  static orderBy<T extends typeof Model>(
+  static orderBy<T extends ModelSchema>(
     this: T,
     field: string,
     orderDirection: OrderDirection = "asc",
@@ -219,7 +219,7 @@ export class Model {
    * 
    *     await Flight.take(10).get();
    */
-  static take<T extends typeof Model>(this: T, limit: number) {
+  static take<T extends ModelSchema>(this: T, limit: number) {
     this._currentQuery.limit(limit);
     return this;
   }
@@ -242,7 +242,7 @@ export class Model {
    *     
    *     await Flight.where({ id: "1", departure: "Paris" }).get();
    */
-  static where<T extends typeof Model>(
+  static where<T extends ModelSchema>(
     this: T,
     fieldOrFields: string | Values,
     operatorOrFieldValue?: Operator | FieldValue,
@@ -338,7 +338,7 @@ export class Model {
    *       Flight.field("airportId"),
    *     ).get()
    */
-  static join<T extends typeof Model>(
+  static join<T extends ModelSchema>(
     this: T,
     joinTable: ModelSchema,
     originField: string,
@@ -440,7 +440,7 @@ export class Model {
    *     
    *     Airport.where("id", "1").flights();
    */
-  static hasMany<T extends typeof Model>(
+  static hasMany<T extends ModelSchema>(
     this: T,
     model: ModelSchema,
   ): Promise<any[]> {
@@ -465,7 +465,7 @@ export class Model {
   }
 
   /** Find associated values for the given model for one-to-one and one-to-many relationships. */
-  static async hasOne<T extends typeof Model>(this: T, model: ModelSchema) {
+  static async hasOne<T extends ModelSchema>(this: T, model: ModelSchema) {
     const currentWhereValue = this._findCurrentQueryWhereClause();
     const FKName = this._findModelForeignKeyField(model);
 
