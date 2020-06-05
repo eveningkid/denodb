@@ -52,16 +52,15 @@ export type WhereInClause = {
   possibleValues: FieldValue[];
 };
 
-export type OrderByClause = {
-  field: string;
-  orderDirection: OrderDirection;
+export type OrderByClauses = {
+  [field: string]: OrderDirection;
 };
 
 export type QueryDescription = {
   schema: ModelSchema;
   type?: QueryType;
   table?: string;
-  orderBy?: OrderByClause;
+  orderBy?: OrderByClauses;
   select?: (string | FieldAlias)[];
   wheres?: WhereClause[];
   whereIn?: WhereInClause;
@@ -159,10 +158,10 @@ export class QueryBuilder {
     field: string,
     orderDirection: OrderDirection,
   ) {
-    this._query.orderBy = {
-      field,
-      orderDirection,
-    };
+    if (!this._query.orderBy) {
+      this._query.orderBy = {};
+    }
+    this._query.orderBy[field] = orderDirection;
     return this;
   }
 

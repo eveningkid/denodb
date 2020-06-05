@@ -8,6 +8,7 @@ import {
   Operator,
   QueryDescription,
   FieldType,
+  OrderByClauses,
 } from "./query-builder.ts";
 import { Database, SyncOptions } from "./database.ts";
 import { PivotModelSchema } from "./model-pivot.ts";
@@ -205,13 +206,24 @@ export class Model {
    *     await Flight.orderBy("departure").all();
    *     
    *     await Flight.orderBy("departure", "desc").all();
+   * 
+   *     await Flight.orderBy({ departure: "desc", destination: "asc" }).all();
    */
   static orderBy<T extends ModelSchema>(
     this: T,
-    field: string,
+    fieldOrFields: string | OrderByClauses,
     orderDirection: OrderDirection = "asc",
   ) {
-    this._currentQuery.orderBy(field, orderDirection);
+    if (typeof fieldOrFields === "string") {
+      this._currentQuery.orderBy(fieldOrFields, orderDirection);
+    } else {
+      for (
+        const [field, orderDirectionField] of Object.entries(fieldOrFields)
+      ) {
+        this._currentQuery.orderBy(field, orderDirectionField);
+      }
+    }
+
     return this;
   }
 

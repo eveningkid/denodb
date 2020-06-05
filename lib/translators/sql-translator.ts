@@ -46,8 +46,10 @@ export class SQLTranslator implements Translator {
 
     if (query.orderBy) {
       queryBuilder = queryBuilder.orderBy(
-        query.orderBy.field,
-        query.orderBy.orderDirection,
+        Object.entries(query.orderBy).map(([field, orderDirection]) => ({
+          column: field,
+          order: orderDirection,
+        })),
       );
     }
 
