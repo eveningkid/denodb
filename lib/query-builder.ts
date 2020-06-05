@@ -60,8 +60,9 @@ export type QueryDescription = {
   schema: ModelSchema;
   type?: QueryType;
   table?: string;
-  orderBy?: OrderByClauses;
   select?: (string | FieldAlias)[];
+  orderBy?: OrderByClauses;
+  groupBy?: string;
   wheres?: WhereClause[];
   whereIn?: WhereInClause;
   joins?: JoinClause[];
@@ -162,6 +163,11 @@ export class QueryBuilder {
       this._query.orderBy = {};
     }
     this._query.orderBy[field] = orderDirection;
+    return this;
+  }
+
+  groupBy(field: string) {
+    this._query.groupBy = field;
     return this;
   }
 

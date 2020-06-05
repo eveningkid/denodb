@@ -227,6 +227,15 @@ export class Model {
     return this;
   }
 
+  /** Group rows by a given field.
+   * 
+   *     await Flight.groupBy('departure').all();
+   */
+  static groupBy<T extends ModelSchema>(this: T, field: string) {
+    this._currentQuery.groupBy(field);
+    return this;
+  }
+
   /** Limit the number of results returned from the query.
    * 
    *     await Flight.take(10).get();
