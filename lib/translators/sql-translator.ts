@@ -53,6 +53,10 @@ export class SQLTranslator implements Translator {
       );
     }
 
+    if (query.groupBy) {
+      queryBuilder = queryBuilder.groupBy(query.groupBy);
+    }
+
     if (query.limit) {
       queryBuilder = queryBuilder.limit(query.limit);
     }
