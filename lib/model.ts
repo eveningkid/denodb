@@ -306,7 +306,7 @@ export class Model {
     let fieldsToUpdate: Values = {};
 
     if (this.timestamps) {
-      fieldsToUpdate.updated_at = new Date();
+      fieldsToUpdate.updatedAt = new Date();
     }
 
     if (typeof fieldOrFields === "string") {
