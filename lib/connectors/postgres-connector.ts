@@ -1,7 +1,7 @@
 import { PostgresClient } from "../../deps.ts";
 import { Connector, ConnectorOptions } from "./connector.ts";
 import { SQLTranslator } from "../translators/sql-translator.ts";
-import { QueryDescription } from "../query-builder.ts";
+import { QueryDescription, Values } from "../query-builder.ts";
 
 export interface PostgresOptions extends ConnectorOptions {
   database: string;
@@ -44,7 +44,9 @@ export class PostgresConnector implements Connector {
 
     const query = this._translator.translateToQuery(queryDescription);
     const response = await this._client.query(query);
-    const results = response.rowsOfObjects();
+    const results = this._translator.formatDatabaseResultsToClient(
+      response.rowsOfObjects(),
+    ) as Values[];
 
     if (queryDescription.type === "insert") {
       return results.length === 1 ? results[0] : results;

@@ -30,8 +30,10 @@ export class SQLite3Connector implements Connector {
 
   async query(queryDescription: QueryDescription): Promise<any | any[]> {
     await this._makeConnection();
+
     const query = this._translator.translateToQuery(queryDescription);
     const subqueries = query.split(";");
+
     const results = subqueries.map(async (subquery, index) => {
       const response = this._client.query(subquery + ";", []);
 
@@ -93,7 +95,7 @@ export class SQLite3Connector implements Connector {
         results.push(result);
       }
 
-      return results;
+      return this._translator.formatDatabaseResultsToClient(results);
     });
 
     return results[results.length - 1];

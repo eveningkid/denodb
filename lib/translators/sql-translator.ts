@@ -1,7 +1,12 @@
 import { Translator } from "./translator.ts";
 import { DatabaseDialect } from "../database.ts";
-import { SQLQueryBuilder } from "../../deps.ts";
-import { Query, QueryDescription } from "../query-builder.ts";
+import { SQLQueryBuilder, camelCase, snakeCase } from "../../deps.ts";
+import {
+  Query,
+  QueryDescription,
+  FieldAlias,
+  Values,
+} from "../query-builder.ts";
 import { addFieldToSchema } from "../helpers/fields.ts";
 
 export class SQLTranslator implements Translator {
@@ -33,13 +38,15 @@ export class SQLTranslator implements Translator {
 
     if (query.select) {
       query.select.forEach((field) => {
-        queryBuilder = queryBuilder.select(field);
+        queryBuilder = queryBuilder.select(
+          this.formatFieldNameToDatabase(field),
+        );
       });
     }
 
     if (query.whereIn) {
       queryBuilder = queryBuilder.whereIn(
-        query.whereIn.field,
+        this.formatFieldNameToDatabase(query.whereIn.field),
         query.whereIn.possibleValues,
       );
     }
@@ -47,14 +54,16 @@ export class SQLTranslator implements Translator {
     if (query.orderBy) {
       queryBuilder = queryBuilder.orderBy(
         Object.entries(query.orderBy).map(([field, orderDirection]) => ({
-          column: field,
+          column: this.formatFieldNameToDatabase(field),
           order: orderDirection,
         })),
       );
     }
 
     if (query.groupBy) {
-      queryBuilder = queryBuilder.groupBy(query.groupBy);
+      queryBuilder = queryBuilder.groupBy(
+        this.formatFieldNameToDatabase(query.groupBy),
+      );
     }
 
     if (query.limit) {
@@ -64,7 +73,7 @@ export class SQLTranslator implements Translator {
     if (query.wheres) {
       query.wheres.forEach((where) => {
         queryBuilder = queryBuilder.where(
-          where.field,
+          this.formatFieldNameToDatabase(where.field),
           where.operator,
           where.value,
         );
@@ -75,9 +84,9 @@ export class SQLTranslator implements Translator {
       query.joins.forEach((join) => {
         queryBuilder = queryBuilder.join(
           join.joinTable,
-          join.originField,
+          this.formatFieldNameToDatabase(join.originField),
           "=",
-          join.targetField,
+          this.formatFieldNameToDatabase(join.targetField),
         );
       });
     }
@@ -113,7 +122,7 @@ export class SQLTranslator implements Translator {
               addFieldToSchema(
                 table,
                 {
-                  name: field,
+                  name: this.formatFieldNameToDatabase(field) as string,
                   type: fieldType,
                   defaultValue: fieldDefaults[field],
                 },
@@ -135,7 +144,9 @@ export class SQLTranslator implements Translator {
           );
         }
 
-        queryBuilder = queryBuilder.returning("*").insert(query.values);
+        queryBuilder = queryBuilder.returning("*").insert(
+          this.formatClientValuesToDatabase(query.values),
+        );
         break;
 
       case "update":
@@ -145,7 +156,9 @@ export class SQLTranslator implements Translator {
           );
         }
 
-        queryBuilder = queryBuilder.update(query.values);
+        queryBuilder = queryBuilder.update(
+          this.formatClientValuesToDatabase(query.values),
+        );
         break;
 
       case "delete":
@@ -153,26 +166,105 @@ export class SQLTranslator implements Translator {
         break;
 
       case "count":
-        queryBuilder = queryBuilder.count(query.aggregatorField ?? "*");
+        queryBuilder = queryBuilder.count(
+          query.aggregatorField
+            ? this.formatFieldNameToDatabase(query.aggregatorField)
+            : "*",
+        );
         break;
 
       case "avg":
-        queryBuilder = queryBuilder.avg(query.aggregatorField);
+        queryBuilder = queryBuilder.avg(
+          query.aggregatorField
+            ? this.formatFieldNameToDatabase(query.aggregatorField)
+            : "*",
+        );
         break;
 
       case "min":
-        queryBuilder = queryBuilder.min(query.aggregatorField);
+        queryBuilder = queryBuilder.min(
+          query.aggregatorField
+            ? this.formatFieldNameToDatabase(query.aggregatorField)
+            : "*",
+        );
         break;
 
       case "max":
-        queryBuilder = queryBuilder.max(query.aggregatorField);
+        queryBuilder = queryBuilder.max(
+          query.aggregatorField
+            ? this.formatFieldNameToDatabase(query.aggregatorField)
+            : "*",
+        );
         break;
 
       case "sum":
-        queryBuilder = queryBuilder.sum(query.aggregatorField);
+        queryBuilder = queryBuilder.sum(
+          query.aggregatorField
+            ? this.formatFieldNameToDatabase(query.aggregatorField)
+            : "*",
+        );
         break;
     }
 
     return queryBuilder.toString();
+  }
+
+  formatFieldNameToDatabase(
+    fieldName: string | FieldAlias,
+  ): string | FieldAlias {
+    if (typeof fieldName === "string") {
+      const dotIndex = fieldName.indexOf(".");
+
+      // Table.fieldName
+      if (dotIndex !== -1) {
+        return fieldName.slice(0, dotIndex + 1) +
+          snakeCase(fieldName.slice(dotIndex + 1));
+      }
+
+      return snakeCase(fieldName);
+    } else {
+      return Object.entries(fieldName).reduce((prev, [alias, fullName]) => {
+        return {
+          ...prev,
+          [alias]: this.formatFieldNameToDatabase(fullName),
+        };
+      }, {});
+    }
+  }
+
+  formatFieldNameToClient(fieldName: string) {
+    return camelCase(fieldName);
+  }
+
+  formatClientValuesToDatabase(values: Values | Values[]): Values[] {
+    const valuesAsList = Array.isArray(values) ? values : [values];
+
+    return valuesAsList.map((values) =>
+      Object.entries(values).reduce(
+        (prev, [fieldName, fieldValue]) => {
+          return {
+            ...prev,
+            [this.formatFieldNameToDatabase(fieldName) as string]: fieldValue,
+          };
+        },
+        {},
+      )
+    );
+  }
+
+  formatDatabaseResultsToClient(results: Values | Values[]): Values | Values[] {
+    if (Array.isArray(results)) {
+      return results.map((result) =>
+        this.formatDatabaseResultsToClient(result) as Values
+      );
+    }
+
+    const formattedResults: Values = {};
+
+    for (const column in results) {
+      formattedResults[this.formatFieldNameToClient(column)] = results[column];
+    }
+
+    return formattedResults;
   }
 }
