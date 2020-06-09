@@ -12,3 +12,9 @@ export {
 } from "https://deno.land/x/mysql/mod.ts";
 
 export { DB as SQLiteClient } from "https://deno.land/x/sqlite@v2.0.0/mod.ts";
+
+export {
+  MongoClient as MongoDBClient,
+  ClientOptions as MongoDBClientOptions,
+  Database as MongoDBDatabase,
+} from "https://deno.land/x/mongo@v0.8.0/mod.ts";
