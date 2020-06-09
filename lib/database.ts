@@ -11,6 +11,10 @@ import {
   SQLite3Options,
 } from "./connectors/sqlite3-connector.ts";
 import { MySQLOptions, MySQLConnector } from "./connectors/mysql-connector.ts";
+import {
+  MongoDBOptions,
+  MongoDBConnector,
+} from "./connectors/mongodb-connector.ts";
 
 type DatabaseOptions = DatabaseDialect | {
   dialect: DatabaseDialect;
@@ -22,7 +26,7 @@ export type SyncOptions = {
   drop?: boolean;
 };
 
-export type DatabaseDialect = "postgres" | "sqlite3" | "mysql";
+export type DatabaseDialect = "postgres" | "sqlite3" | "mysql" | "mongo";
 
 /** Database client which interacts with an external database instance. */
 export class Database {
@@ -46,7 +50,11 @@ export class Database {
    */
   constructor(
     databaseOptionsOrDialect: DatabaseOptions,
-    connectionOptions: PostgresOptions | SQLite3Options | MySQLOptions,
+    connectionOptions:
+      | PostgresOptions
+      | SQLite3Options
+      | MySQLOptions
+      | MongoDBOptions,
   ) {
     this._dialect = typeof databaseOptionsOrDialect === "object"
       ? databaseOptionsOrDialect.dialect
@@ -75,6 +83,12 @@ export class Database {
       case "mysql":
         this._connector = new MySQLConnector(
           connectionOptions as MySQLOptions,
+        );
+        break;
+
+      case "mongo":
+        this._connector = new MongoDBConnector(
+          connectionOptions as MongoDBOptions,
         );
         break;
 
