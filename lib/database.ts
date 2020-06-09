@@ -22,7 +22,7 @@ type DatabaseOptions = DatabaseDialect | {
 };
 
 export type SyncOptions = {
-  /** If tables be dropped if they exist. */
+  /** If tables should be dropped if they exist. */
   drop?: boolean;
 };
 
