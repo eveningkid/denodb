@@ -2,7 +2,7 @@
 
 # DenoDB
 
-- 🗣Supports PostgreSQL, MySQL (5.5) and SQLite3
+- 🗣Supports PostgreSQL, MySQL, SQLite and MongoDB
 - 🔥Simple, typed API
 - 🦕Deno-ready
 - [Read the documentation](https://eveningkid.github.io/denodb-docs)
