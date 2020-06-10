@@ -542,4 +542,77 @@ export class Model {
 
     return modelFK[0];
   }
+
+  /** Return the instance current value for its primary key. */
+  private _getCurrentPrimaryKey() {
+    const model = this.constructor as ModelSchema;
+    return (this as any)[model.getComputedPrimaryKey()] as string;
+  }
+
+  /** Create a new record for the model.
+   * 
+   *     const flight = new Flight();
+   *     flight.departure = "Toronto";
+   *     flight.destination = "Paris";
+   *     await flight.save();
+   */
+  async save() {
+    const model = this.constructor as ModelSchema;
+
+    const values: Values = {};
+    for (const field of Object.keys(model.fields)) {
+      if (this.hasOwnProperty(field)) {
+        values[field] = (this as any)[field];
+      } else if (model.defaults.hasOwnProperty(field)) {
+        values[field] = model.defaults[field];
+      }
+    }
+
+    const createdInstance = (await model.create(values))[0];
+    for (const field in createdInstance) {
+      (this as any)[field] = createdInstance[field];
+    }
+
+    return this;
+  }
+
+  /** Update this record using its current field values.
+   * 
+   *     flight.destination = "London";
+   *     await flight.update();
+   */
+  async update() {
+    const model = this.constructor as ModelSchema;
+    const modelPK = model.getComputedPrimaryKey();
+
+    const values: Values = {};
+    for (const field of Object.keys(model.fields)) {
+      if (this.hasOwnProperty(field) && field !== modelPK) {
+        values[field] = (this as any)[field];
+      }
+    }
+
+    await model.where(modelPK, this._getCurrentPrimaryKey()).update(values);
+
+    return this;
+  }
+
+  /** Delete this record from the database.
+   *  
+   *     await flight.delete();
+   */
+  async delete() {
+    const model = this.constructor as ModelSchema;
+    const PKCurrentValue = this._getCurrentPrimaryKey();
+
+    if (PKCurrentValue === undefined) {
+      throw new Error(
+        "This instance does not have a value for its primary key. It cannot be deleted.",
+      );
+    }
+
+    await model.deleteById(PKCurrentValue);
+
+    return this;
+  }
 }
