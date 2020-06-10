@@ -22,10 +22,7 @@ class Flight extends Model {
   static timestamps = true;
 
   static fields = {
-    id: {
-      primaryKey: true,
-      autoIncrement: true,
-    },
+    id: { primaryKey: true, autoIncrement: true },
     departure: DataTypes.STRING,
     destination: DataTypes.STRING,
     flightDuration: DataTypes.FLOAT,
@@ -40,42 +37,33 @@ db.link([Flight]);
 
 await db.sync({ drop: true });
 
-await Flight.create([
-  {
-    departure: 'Paris',
-    destination: 'Tokyo',
-  },
-  {
-    departure: 'London',
-    destination: 'San Francisco',
-  },
-]);
+await Flight.create({
+  departure: 'Paris',
+  destination: 'Tokyo',
+});
+
+// or
+
+const flight = new Flight();
+flight.departure = 'London';
+flight.destination = 'San Francisco';
+await flight.save();
 
 await Flight.select('destination').all();
 // [ { destination: "Tokyo" }, { destination: "San Francisco" } ]
 
 await Flight.where('destination', 'Tokyo').delete();
 
-await Flight.all();
-// [
-//  {
-//    id: 2,
-//    departure: "London",
-//    destination: "San Francisco",
-//    flightDuration: 2.5,
-//    created_at: 2020-05-17T13:16:32.333Z,
-//    updated_at: 2020-05-17T13:16:32.333Z
-//   }
-// ]
-
-await Flight.select('destination').find('2');
-// [ { destination: "San Francisco" } ]
+const sfFlight = await Flight.select('destination').find(2);
+// { destination: "San Francisco" }
 
 await Flight.count();
 // 1
 
 await Flight.select('id', 'destination').orderBy('id').get();
 // [ { id: "2", destination: "San Francisco" } ]
+
+await sfFlight.delete();
 
 await db.close();
 ```
