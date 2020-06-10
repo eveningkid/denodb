@@ -15,6 +15,7 @@ import {
   MongoDBOptions,
   MongoDBConnector,
 } from "./connectors/mongodb-connector.ts";
+import { formatResultToModelInstance } from "./helpers/results.ts";
 
 type DatabaseOptions = DatabaseDialect | {
   dialect: DatabaseDialect;
@@ -133,12 +134,18 @@ export class Database {
    * 
    *     await db.query("SELECT * FROM `flights`");
    */
-  async query(query: QueryDescription) {
+  async query(query: QueryDescription): Promise<any> {
     if (this._debug) {
       console.log(query);
     }
 
-    return this._connector.query(query);
+    const results = await this._connector.query(query);
+
+    return Array.isArray(results)
+      ? results.map((result) =>
+        formatResultToModelInstance(query.schema, result)
+      )
+      : formatResultToModelInstance(query.schema, results);
   }
 
   /** Close the current database connection. */
