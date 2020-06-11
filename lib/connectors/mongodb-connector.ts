@@ -1,14 +1,26 @@
 import {
   MongoDBClient,
   MongoDBDatabase,
+  MongoDBClientOptions,
 } from "../../deps.ts";
 import { Connector, ConnectorOptions } from "./connector.ts";
 import { QueryDescription } from "../query-builder.ts";
 
-export interface MongoDBOptions extends ConnectorOptions {
-  uri: string;
+type MongoDBOptionsBase = {
   database: string;
-}
+};
+
+type MongoDBOptionsWithURI = {
+  uri: string;
+};
+
+export type MongoDBOptions =
+  & ConnectorOptions
+  & (
+    | MongoDBOptionsWithURI
+    | MongoDBClientOptions
+  )
+  & MongoDBOptionsBase;
 
 export class MongoDBConnector implements Connector {
   _client: MongoDBClient;
@@ -27,7 +39,12 @@ export class MongoDBConnector implements Connector {
       return;
     }
 
-    this._client.connectWithUri(this._options.uri);
+    if (this._options.hasOwnProperty("uri")) {
+      this._client.connectWithUri((this._options as MongoDBOptionsWithURI).uri);
+    } else {
+      this._client.connectWithOptions(this._options as MongoDBClientOptions);
+    }
+
     this._database = this._client.database(this._options.database);
     this._connected = true;
   }
