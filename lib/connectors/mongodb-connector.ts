@@ -204,6 +204,10 @@ export class MongoDBConnector implements Connector {
           selectFields.push({ $limit: queryDescription.limit });
         }
 
+        if (queryDescription.offset) {
+          selectFields.push({ $skip: queryDescription.offset });
+        }
+
         results = await collection.aggregate(selectFields);
         break;
 

@@ -236,11 +236,19 @@ export class Model {
     return this;
   }
 
-  /** Limit the number of results returned from the query.
+  /** Similar to `limit`, limit the number of results returned from the query.
    * 
    *     await Flight.take(10).get();
    */
   static take<T extends ModelSchema>(this: T, limit: number) {
+    return this.limit(limit);
+  }
+
+  /** Limit the number of results returned from the query.
+   * 
+   *     await Flight.limit(10).get();
+   */
+  static limit<T extends ModelSchema>(this: T, limit: number) {
     this._currentQuery.limit(limit);
     return this;
   }
@@ -253,6 +261,27 @@ export class Model {
     this.take(1);
     const results = await this.get();
     return results[0];
+  }
+
+  /** Skip n values in the results.
+   * 
+   *     await Flight.offset(10).get();
+   *     
+   *     await Flight.offset(10).limit(2).get();
+   */
+  static offset<T extends ModelSchema>(this: T, offset: number) {
+    this._currentQuery.offset(offset);
+    return this;
+  }
+
+  /** Similar to `offset`, skip n values in the results.
+   * 
+   *     await Flight.skip(10).get();
+   *     
+   *     await Flight.skip(10).take(2).get();
+   */
+  static skip<T extends ModelSchema>(this: T, offset: number) {
+    return this.offset(offset);
   }
 
   /** Add a `where` clause to your query.

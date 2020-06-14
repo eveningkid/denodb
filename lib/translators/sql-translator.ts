@@ -70,6 +70,10 @@ export class SQLTranslator implements Translator {
       queryBuilder = queryBuilder.limit(query.limit);
     }
 
+    if (query.offset) {
+      queryBuilder = queryBuilder.offset(query.offset);
+    }
+
     if (query.wheres) {
       query.wheres.forEach((where) => {
         queryBuilder = queryBuilder.where(
