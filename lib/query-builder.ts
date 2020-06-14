@@ -68,6 +68,7 @@ export type QueryDescription = {
   joins?: JoinClause[];
   aggregatorField?: string;
   limit?: number;
+  offset?: number;
   ifExists?: boolean;
   fields?: ModelFields;
   fieldsDefaults?: ModelDefaults;
@@ -174,6 +175,11 @@ export class QueryBuilder {
 
   limit(limit: number) {
     this._query.limit = limit;
+    return this;
+  }
+
+  offset(offset: number) {
+    this._query.offset = offset;
     return this;
   }
 
