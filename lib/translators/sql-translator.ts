@@ -1,18 +1,14 @@
 import { Translator } from "./translator.ts";
 import { DatabaseDialect } from "../database.ts";
-import { SQLQueryBuilder, camelCase, snakeCase } from "../../deps.ts";
-import {
-  Query,
-  QueryDescription,
-  FieldAlias,
-  Values,
-} from "../query-builder.ts";
+import { SQLQueryBuilder, snakeCase } from "../../deps.ts";
+import { Query, QueryDescription, FieldAlias } from "../query-builder.ts";
 import { addFieldToSchema } from "../helpers/fields.ts";
 
-export class SQLTranslator implements Translator {
+export class SQLTranslator extends Translator {
   _dialect: DatabaseDialect;
 
   constructor(dialect: DatabaseDialect) {
+    super();
     this._dialect = dialect;
   }
 
@@ -38,15 +34,13 @@ export class SQLTranslator implements Translator {
 
     if (query.select) {
       query.select.forEach((field) => {
-        queryBuilder = queryBuilder.select(
-          this.formatFieldNameToDatabase(field),
-        );
+        queryBuilder = queryBuilder.select(field);
       });
     }
 
     if (query.whereIn) {
       queryBuilder = queryBuilder.whereIn(
-        this.formatFieldNameToDatabase(query.whereIn.field),
+        query.whereIn.field,
         query.whereIn.possibleValues,
       );
     }
@@ -54,16 +48,14 @@ export class SQLTranslator implements Translator {
     if (query.orderBy) {
       queryBuilder = queryBuilder.orderBy(
         Object.entries(query.orderBy).map(([field, orderDirection]) => ({
-          column: this.formatFieldNameToDatabase(field),
+          column: field,
           order: orderDirection,
         })),
       );
     }
 
     if (query.groupBy) {
-      queryBuilder = queryBuilder.groupBy(
-        this.formatFieldNameToDatabase(query.groupBy),
-      );
+      queryBuilder = queryBuilder.groupBy(query.groupBy);
     }
 
     if (query.limit) {
@@ -77,7 +69,7 @@ export class SQLTranslator implements Translator {
     if (query.wheres) {
       query.wheres.forEach((where) => {
         queryBuilder = queryBuilder.where(
-          this.formatFieldNameToDatabase(where.field),
+          where.field,
           where.operator,
           where.value,
         );
@@ -88,9 +80,9 @@ export class SQLTranslator implements Translator {
       query.joins.forEach((join) => {
         queryBuilder = queryBuilder.join(
           join.joinTable,
-          this.formatFieldNameToDatabase(join.originField),
+          join.originField,
           "=",
-          this.formatFieldNameToDatabase(join.targetField),
+          join.targetField,
         );
       });
     }
@@ -126,7 +118,7 @@ export class SQLTranslator implements Translator {
               addFieldToSchema(
                 table,
                 {
-                  name: this.formatFieldNameToDatabase(field) as string,
+                  name: field,
                   type: fieldType,
                   defaultValue: fieldDefaults[field],
                 },
@@ -148,9 +140,7 @@ export class SQLTranslator implements Translator {
           );
         }
 
-        queryBuilder = queryBuilder.returning("*").insert(
-          this.formatClientValuesToDatabase(query.values),
-        );
+        queryBuilder = queryBuilder.returning("*").insert(query.values);
         break;
 
       case "update":
@@ -160,9 +150,7 @@ export class SQLTranslator implements Translator {
           );
         }
 
-        queryBuilder = queryBuilder.update(
-          this.formatClientValuesToDatabase(query.values),
-        );
+        queryBuilder = queryBuilder.update(query.values);
         break;
 
       case "delete":
@@ -171,45 +159,36 @@ export class SQLTranslator implements Translator {
 
       case "count":
         queryBuilder = queryBuilder.count(
-          query.aggregatorField
-            ? this.formatFieldNameToDatabase(query.aggregatorField)
-            : "*",
+          query.aggregatorField ? query.aggregatorField : "*",
         );
         break;
 
       case "avg":
         queryBuilder = queryBuilder.avg(
-          query.aggregatorField
-            ? this.formatFieldNameToDatabase(query.aggregatorField)
-            : "*",
+          query.aggregatorField ? query.aggregatorField : "*",
         );
         break;
 
       case "min":
         queryBuilder = queryBuilder.min(
-          query.aggregatorField
-            ? this.formatFieldNameToDatabase(query.aggregatorField)
-            : "*",
+          query.aggregatorField ? query.aggregatorField : "*",
         );
         break;
 
       case "max":
         queryBuilder = queryBuilder.max(
-          query.aggregatorField
-            ? this.formatFieldNameToDatabase(query.aggregatorField)
-            : "*",
+          query.aggregatorField ? query.aggregatorField : "*",
         );
         break;
 
       case "sum":
         queryBuilder = queryBuilder.sum(
-          query.aggregatorField
-            ? this.formatFieldNameToDatabase(query.aggregatorField)
-            : "*",
+          query.aggregatorField ? query.aggregatorField : "*",
         );
         break;
     }
 
+    console.log(queryBuilder.toString());
     return queryBuilder.toString();
   }
 
@@ -234,41 +213,5 @@ export class SQLTranslator implements Translator {
         };
       }, {});
     }
-  }
-
-  formatFieldNameToClient(fieldName: string) {
-    return camelCase(fieldName);
-  }
-
-  formatClientValuesToDatabase(values: Values | Values[]): Values[] {
-    const valuesAsList = Array.isArray(values) ? values : [values];
-
-    return valuesAsList.map((values) =>
-      Object.entries(values).reduce(
-        (prev, [fieldName, fieldValue]) => {
-          return {
-            ...prev,
-            [this.formatFieldNameToDatabase(fieldName) as string]: fieldValue,
-          };
-        },
-        {},
-      )
-    );
-  }
-
-  formatDatabaseResultsToClient(results: Values | Values[]): Values | Values[] {
-    if (Array.isArray(results)) {
-      return results.map((result) =>
-        this.formatDatabaseResultsToClient(result) as Values
-      );
-    }
-
-    const formattedResults: Values = {};
-
-    for (const column in results) {
-      formattedResults[this.formatFieldNameToClient(column)] = results[column];
-    }
-
-    return formattedResults;
   }
 }
