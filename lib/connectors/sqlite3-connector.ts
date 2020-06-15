@@ -95,7 +95,7 @@ export class SQLite3Connector implements Connector {
         results.push(result);
       }
 
-      return this._translator.formatDatabaseResultsToClient(results);
+      return results;
     });
 
     return results[results.length - 1];

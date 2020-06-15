@@ -44,9 +44,7 @@ export class PostgresConnector implements Connector {
 
     const query = this._translator.translateToQuery(queryDescription);
     const response = await this._client.query(query);
-    const results = this._translator.formatDatabaseResultsToClient(
-      response.rowsOfObjects(),
-    ) as Values[];
+    const results = response.rowsOfObjects() as Values[];
 
     if (queryDescription.type === "insert") {
       return results.length === 1 ? results[0] : results;

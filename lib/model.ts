@@ -12,6 +12,7 @@ import {
 } from "./query-builder.ts";
 import { Database, SyncOptions } from "./database.ts";
 import { PivotModelSchema } from "./model-pivot.ts";
+import { camelCase } from "../deps.ts";
 
 /** Represents a Model class, not an instance. */
 export type ModelSchema = typeof Model;
@@ -19,6 +20,7 @@ export type ModelSchema = typeof Model;
 export type ModelFields = { [key: string]: FieldType };
 export type ModelDefaults = { [field: string]: FieldValue };
 export type ModelPivotModels = { [modelName: string]: PivotModelSchema };
+export type FieldMatchingTable = { [clientField: string]: string };
 
 export type ModelOptions = {
   queryBuilder: QueryBuilder;
@@ -55,6 +57,15 @@ export class Model {
   /** Model primary key. Manually found through `_findPrimaryKey()`. */
   private static _primaryKey: string;
 
+  /** Model field matching, from database to client and vice versa. */
+  private static _fieldMatching: {
+    toDatabase: FieldMatchingTable;
+    toClient: FieldMatchingTable;
+  } = {
+    toDatabase: {},
+    toClient: {},
+  };
+
   /** Model current query being built. */
   private static _currentQuery: QueryBuilder;
 
@@ -68,6 +79,12 @@ export class Model {
     this._options = options;
     this._database = options.database;
     this._queryBuilder = options.queryBuilder;
+
+    this._fieldMatching = this._database._computeModelFieldMatchings(
+      this.name,
+      this.fields,
+    );
+
     this._currentQuery = this._queryBuilder.queryForSchema(this);
     this._primaryKey = this._findPrimaryKey();
   }
@@ -97,7 +114,7 @@ export class Model {
       fieldType.primaryKey
     );
 
-    return field ? field[0] : "";
+    return field ? this.formatFieldToDatabase(field[0]) as string : "";
   }
 
   /** Build the current query and run it on the associated database. */
@@ -115,6 +132,37 @@ export class Model {
     return this._primaryKey;
   }
 
+  /** Format a field or an object of fields, following a field matching table.
+   * Defaulting to `defaultCase` or `field` otherwise. */
+  private static _formatField(
+    fieldMatching: FieldMatchingTable,
+    field: string | { [fieldName: string]: any },
+    defaultCase?: (field: string) => string,
+  ): string | { [fieldName: string]: any } {
+    if (typeof field !== "string") {
+      return Object.entries(field).reduce((prev, [fieldName, value]) => ({
+        ...prev,
+        [this._formatField(fieldMatching, fieldName) as string]: value,
+      }), {}) as { [fieldName: string]: any };
+    }
+
+    if (field in fieldMatching) {
+      return fieldMatching[field];
+    }
+
+    return defaultCase ? defaultCase(field) : field;
+  }
+
+  /** Format field or an object of fields from client to database.  */
+  static formatFieldToDatabase(field: string | Object) {
+    return this._formatField(this._fieldMatching.toDatabase, field);
+  }
+
+  /** Format field or an object of fields from database to client. */
+  static formatFieldToClient(field: string | Object) {
+    return this._formatField(this._fieldMatching.toClient, field, camelCase);
+  }
+
   /** Return the table name followed by a field name. Can also rename a field using `nameAs`.
    * 
    *     Flight.field("departure") => "flights.departure"
@@ -124,15 +172,9 @@ export class Model {
   static field(field: string): string;
   static field(field: string, nameAs: string): FieldAlias;
   static field(field: string, nameAs?: string): string | FieldAlias {
-    if (!this.fields.hasOwnProperty(field)) {
-      throw new Error(
-        `Tried to get the "${field}" field , but it does not exist. Try with any of these: ${
-          Object.keys(this.fields).join(", ")
-        }.`,
-      );
-    }
-
-    const fullField = `${this.table}.${field}`;
+    const fullField = this.formatFieldToDatabase(
+      `${this.table}.${field}`,
+    ) as string;
 
     if (nameAs) {
       return { [nameAs]: fullField };
@@ -168,7 +210,9 @@ export class Model {
     this: T,
     ...fields: (string | FieldAlias)[]
   ) {
-    this._currentQuery.select(...fields);
+    this._currentQuery.select(
+      ...fields.map((field) => this.formatFieldToDatabase(field)),
+    );
     return this;
   }
 
@@ -182,7 +226,11 @@ export class Model {
     const insertions = Array.isArray(values) ? values : [values];
 
     return this._runQuery(
-      this._currentQuery.table(this.table).create(insertions).toDescription(),
+      this._currentQuery.table(this.table).create(
+        insertions.map((field) =>
+          this.formatFieldToDatabase(field)
+        ) as Values[],
+      ).toDescription(),
     );
   }
 
@@ -215,12 +263,18 @@ export class Model {
     orderDirection: OrderDirection = "asc",
   ) {
     if (typeof fieldOrFields === "string") {
-      this._currentQuery.orderBy(fieldOrFields, orderDirection);
+      this._currentQuery.orderBy(
+        this.formatFieldToDatabase(fieldOrFields) as string,
+        orderDirection,
+      );
     } else {
       for (
         const [field, orderDirectionField] of Object.entries(fieldOrFields)
       ) {
-        this._currentQuery.orderBy(field, orderDirectionField);
+        this._currentQuery.orderBy(
+          this.formatFieldToDatabase(field) as string,
+          orderDirectionField,
+        );
       }
     }
 
@@ -232,7 +286,7 @@ export class Model {
    *     await Flight.groupBy('departure').all();
    */
   static groupBy<T extends ModelSchema>(this: T, field: string) {
-    this._currentQuery.groupBy(field);
+    this._currentQuery.groupBy(this.formatFieldToDatabase(field) as string);
     return this;
   }
 
@@ -298,25 +352,39 @@ export class Model {
     operatorOrFieldValue?: Operator | FieldValue,
     fieldValue?: FieldValue,
   ) {
-    const whereOperator: Operator = typeof fieldValue !== "undefined"
-      ? operatorOrFieldValue as Operator
-      : "=";
-
-    const whereValue: FieldValue = typeof fieldValue !== "undefined"
-      ? fieldValue
-      : operatorOrFieldValue as FieldValue;
-
     if (typeof fieldOrFields === "string") {
-      this._currentQuery.where(fieldOrFields, whereOperator, whereValue);
+      const whereOperator: Operator = typeof fieldValue !== "undefined"
+        ? operatorOrFieldValue as Operator
+        : "=";
+
+      const whereValue: FieldValue = typeof fieldValue !== "undefined"
+        ? fieldValue
+        : operatorOrFieldValue as FieldValue;
+
+      if (whereValue !== undefined) {
+        this._currentQuery.where(
+          this.formatFieldToDatabase(fieldOrFields) as string,
+          whereOperator,
+          whereValue,
+        );
+      }
     } else {
       // TODO(eveningkid): cannot do multiple where with different operators
       // Need to find a great API for multiple where potentially with operators
       // .where({ name: 'John', age: { moreThan: 19 } })
       // and then format it using Knex .andWhere(...)
 
-      Object.entries(fieldOrFields).forEach(([field, value]) => {
-        this._currentQuery.where(field, "=", value);
-      });
+      for (const [field, value] of Object.entries(fieldOrFields)) {
+        if (value === undefined) {
+          continue;
+        }
+
+        this._currentQuery.where(
+          this.formatFieldToDatabase(field) as string,
+          "=",
+          value,
+        );
+      }
     }
 
     return this;
@@ -339,11 +407,14 @@ export class Model {
     }
 
     if (typeof fieldOrFields === "string") {
-      fieldsToUpdate[fieldOrFields] = fieldValue!;
+      fieldsToUpdate[this.formatFieldToDatabase(fieldOrFields) as string] =
+        fieldValue!;
     } else {
       fieldsToUpdate = {
         ...fieldsToUpdate,
-        ...fieldOrFields,
+        ...this.formatFieldToDatabase(fieldOrFields) as {
+          [fieldName: string]: any;
+        },
       };
     }
 
@@ -396,8 +467,8 @@ export class Model {
   ) {
     this._currentQuery.join(
       joinTable.table,
-      originField,
-      targetField,
+      joinTable.formatFieldToDatabase(originField) as string,
+      this.formatFieldToDatabase(targetField) as string,
     );
     return this;
   }
@@ -411,7 +482,7 @@ export class Model {
   static async count(field: string = "*") {
     const value = await this._runQuery(
       this._currentQuery.table(this.table).count(
-        field,
+        this.formatFieldToDatabase(field) as string,
       ).toDescription(),
     );
 
@@ -425,7 +496,7 @@ export class Model {
   static async min(field: string) {
     const value = await this._runQuery(
       this._currentQuery.table(this.table).min(
-        field,
+        this.formatFieldToDatabase(field) as string,
       )
         .toDescription(),
     );
@@ -440,7 +511,7 @@ export class Model {
   static async max(field: string) {
     const value = await this._runQuery(
       this._currentQuery.table(this.table).max(
-        field,
+        this.formatFieldToDatabase(field) as string,
       )
         .toDescription(),
     );
@@ -455,7 +526,7 @@ export class Model {
   static async sum(field: string) {
     const value = await this._runQuery(
       this._currentQuery.table(this.table).sum(
-        field,
+        this.formatFieldToDatabase(field) as string,
       )
         .toDescription(),
     );
@@ -472,7 +543,7 @@ export class Model {
   static async avg(field: string) {
     const value = await this._runQuery(
       this._currentQuery.table(this.table).avg(
-        field,
+        this.formatFieldToDatabase(field) as string,
       )
         .toDescription(),
     );
@@ -498,9 +569,13 @@ export class Model {
 
     if (model.name in this.pivot) {
       const pivot = this.pivot[model.name];
-      const pivotField = pivot._pivotsFields[this.name];
+      const pivotField = this.formatFieldToDatabase(
+        pivot._pivotsFields[this.name],
+      ) as string;
       const pivotOtherModel = pivot._pivotsModels[model.name];
-      const pivotOtherModelField = pivot._pivotsFields[model.name];
+      const pivotOtherModelField = pivotOtherModel.formatFieldToDatabase(
+        pivot._pivotsFields[model.name],
+      ) as string;
 
       return pivot.where(pivot.field(pivotField), currentWhereValue).join(
         pivotOtherModel,
@@ -598,6 +673,7 @@ export class Model {
     }
 
     const createdInstance = (await model.create(values))[0];
+
     for (const field in createdInstance) {
       (this as any)[field] = createdInstance[field];
     }

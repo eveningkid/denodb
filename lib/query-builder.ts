@@ -7,6 +7,7 @@ export type FieldValue = number | string | boolean | Date | null;
 export type Values = { [key: string]: FieldValue };
 export type FieldType = FieldTypeString | {
   type?: FieldTypeString;
+  as?: string;
   primaryKey?: boolean;
   unique?: boolean;
   autoIncrement?: boolean;

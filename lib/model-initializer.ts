@@ -1,5 +1,5 @@
 import { Database, SyncOptions } from "./database.ts";
-import { ModelSchema } from "./model.ts";
+import { ModelSchema, ModelFields, ModelDefaults } from "./model.ts";
 import { QueryBuilder } from "./query-builder.ts";
 
 type ModelInitializationOptions = {
@@ -18,29 +18,27 @@ export class ModelInitializer {
     // TODO(eveningkid): Once we have transactions working across all databases
     // the following queries should be done within a transaction.
 
-    if (initializationOptions.initOptions.drop) {
-      const dropQuery = initializationOptions.queryBuilder.queryForSchema(
-        initializationOptions.model,
-      ).table(
-        initializationOptions.model.table,
+    const { database, initOptions, model, queryBuilder } =
+      initializationOptions;
+
+    if (initOptions.drop) {
+      const dropQuery = queryBuilder.queryForSchema(model).table(
+        model.table,
       ).dropIfExists().toDescription();
 
-      await initializationOptions.database.query(dropQuery);
+      await database.query(dropQuery);
     }
 
-    const createQuery = initializationOptions.queryBuilder.queryForSchema(
-      initializationOptions.model,
-    ).table(
-      initializationOptions.model.table,
-    ).createTable(
-      initializationOptions.model.fields,
-      initializationOptions.model.defaults,
-      {
-        withTimestamps: initializationOptions.model.timestamps,
-        ifNotExists: true,
-      },
-    ).toDescription();
+    const createQuery = queryBuilder.queryForSchema(model).table(model.table)
+      .createTable(
+        model.formatFieldToDatabase(model.fields) as ModelFields,
+        model.formatFieldToDatabase(model.defaults) as ModelDefaults,
+        {
+          withTimestamps: model.timestamps,
+          ifNotExists: true,
+        },
+      ).toDescription();
 
-    return initializationOptions.database.query(createQuery);
+    return database.query(createQuery);
   }
 }

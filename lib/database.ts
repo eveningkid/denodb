@@ -1,5 +1,5 @@
 import { Connector } from "./connectors/connector.ts";
-import { ModelSchema } from "./model.ts";
+import { ModelSchema, FieldMatchingTable, ModelFields } from "./model.ts";
 import { ModelInitializer } from "./model-initializer.ts";
 import { QueryBuilder, QueryDescription } from "./query-builder.ts";
 import {
@@ -16,6 +16,8 @@ import {
   MongoDBConnector,
 } from "./connectors/mongodb-connector.ts";
 import { formatResultToModelInstance } from "./helpers/results.ts";
+import { Translator } from "./translators/translator.ts";
+import { SQLTranslator } from "./translators/sql-translator.ts";
 
 type DatabaseOptions = DatabaseDialect | {
   dialect: DatabaseDialect;
@@ -100,6 +102,16 @@ export class Database {
     }
   }
 
+  /** Get the database dialect. */
+  getDialect() {
+    return this._dialect;
+  }
+
+  /* Get the database connector. */
+  getConnector() {
+    return this._connector;
+  }
+
   /** Create the given models in the current database.
    * 
    *     await db.sync({ drop: true });
@@ -146,6 +158,45 @@ export class Database {
         formatResultToModelInstance(query.schema, result)
       )
       : formatResultToModelInstance(query.schema, results);
+  }
+
+  /** Compute field matchings tables for model usage. */
+  _computeModelFieldMatchings(table: string, fields: ModelFields): {
+    toClient: FieldMatchingTable;
+    toDatabase: FieldMatchingTable;
+  } {
+    const databaseDialect = this.getDialect();
+    const translator = databaseDialect === "mongo"
+      ? new Translator()
+      : new SQLTranslator(databaseDialect);
+
+    const toDatabase: FieldMatchingTable = Object.entries(fields).reduce(
+      (prev, [clientFieldName, fieldType]) => {
+        const databaseFieldName =
+          (typeof fieldType !== "string" && fieldType.as)
+            ? fieldType.as
+            : translator.formatFieldNameToDatabase(
+              clientFieldName,
+            ) as string;
+
+        return {
+          ...prev,
+          [clientFieldName]: databaseFieldName,
+          [`${table}.${clientFieldName}`]: `${table}.${databaseFieldName}`,
+        };
+      },
+      {},
+    );
+
+    const toClient: FieldMatchingTable = Object.entries(toDatabase).reduce(
+      (prev, [clientFieldName, databaseFieldName]) => ({
+        ...prev,
+        [databaseFieldName]: clientFieldName,
+      }),
+      {},
+    );
+
+    return { toDatabase, toClient };
   }
 
   /** Close the current database connection. */
