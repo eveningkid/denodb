@@ -188,7 +188,6 @@ export class SQLTranslator extends Translator {
         break;
     }
 
-    console.log(queryBuilder.toString());
     return queryBuilder.toString();
   }
 
