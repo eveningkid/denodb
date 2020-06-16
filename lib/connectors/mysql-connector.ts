@@ -48,12 +48,18 @@ export class MySQLConnector implements Connector {
 
     const queryClient = client ?? this._client;
     const query = this._translator.translateToQuery(queryDescription);
+    const subqueries = query.split(";");
+    const queryMethod = query.toLowerCase().startsWith("select")
+      ? "query"
+      : "execute";
 
-    if (query.toLowerCase().startsWith("select")) {
-      return queryClient.query(query);
+    for (let i = 0; i < subqueries.length; i++) {
+      const result = await queryClient[queryMethod](subqueries[i]);
+
+      if (i === subqueries.length - 1) {
+        return result;
+      }
     }
-
-    return queryClient.execute(query) as any;
   }
 
   async transaction(queries: QueryDescription[]): Promise<any | any[]> {

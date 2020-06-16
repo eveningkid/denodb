@@ -1,4 +1,3 @@
-import { ModelInitializer } from "./model-initializer.ts";
 import {
   QueryBuilder,
   FieldAlias,
@@ -10,7 +9,7 @@ import {
   FieldType,
   OrderByClauses,
 } from "./query-builder.ts";
-import { Database, SyncOptions } from "./database.ts";
+import { Database } from "./database.ts";
 import { PivotModelSchema } from "./model-pivot.ts";
 import { camelCase } from "../deps.ts";
 
@@ -24,7 +23,6 @@ export type FieldMatchingTable = { [clientField: string]: string };
 
 export type ModelOptions = {
   queryBuilder: QueryBuilder;
-  modelInitializer: ModelInitializer;
   database: Database;
 };
 
@@ -90,20 +88,34 @@ export class Model {
     this._primaryKey = this._findPrimaryKey();
   }
 
-  /** Create a model in a database. Should not be called from a child model. */
-  static async _createInDatabase(initOptions: SyncOptions = {}) {
+  /** Drop a model in the database. */
+  static async drop() {
+    const dropQuery = this._options.queryBuilder.queryForSchema(this).table(
+      this.table,
+    ).dropIfExists().toDescription();
+
+    return this._options.database.query(dropQuery);
+  }
+
+  /** Create a model in the database. Should not be called from a child model. */
+  static async createTable() {
     if (this._isCreatedInDatabase) {
       throw new Error("This model has already been initialized.");
     }
 
-    await this._options.modelInitializer.init(
-      {
-        database: this._options.database,
-        queryBuilder: this._options.queryBuilder,
-        model: this,
-        initOptions,
-      },
-    );
+    const createQuery = this._options.queryBuilder.queryForSchema(this).table(
+      this.table,
+    )
+      .createTable(
+        this.formatFieldToDatabase(this.fields) as ModelFields,
+        this.formatFieldToDatabase(this.defaults) as ModelDefaults,
+        {
+          withTimestamps: this.timestamps,
+          ifNotExists: true,
+        },
+      ).toDescription();
+
+    await this._options.database.query(createQuery);
 
     this._isCreatedInDatabase = true;
   }

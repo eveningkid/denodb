@@ -1,6 +1,5 @@
 import { Connector } from "./connectors/connector.ts";
 import { ModelSchema, FieldMatchingTable, ModelFields } from "./model.ts";
-import { ModelInitializer } from "./model-initializer.ts";
 import { QueryBuilder, QueryDescription } from "./query-builder.ts";
 import {
   PostgresConnector,
@@ -36,7 +35,6 @@ export class Database {
   private _dialect: DatabaseDialect;
   private _connector: Connector;
   private _queryBuilder: QueryBuilder;
-  private _modelInitializer: ModelInitializer;
   private _models: ModelSchema[] = [];
   private _debug: boolean;
 
@@ -68,7 +66,6 @@ export class Database {
       : false;
 
     this._queryBuilder = new QueryBuilder();
-    this._modelInitializer = new ModelInitializer();
 
     switch (this._dialect) {
       case "postgres":
@@ -117,8 +114,14 @@ export class Database {
    *     await db.sync({ drop: true });
    */
   async sync(options: SyncOptions = {}) {
+    if (options.drop) {
+      for (const model of this._models) {
+        await model.drop();
+      }
+    }
+
     for (const model of this._models) {
-      await model._createInDatabase(options);
+      await model.createTable();
     }
   }
 
@@ -130,13 +133,10 @@ export class Database {
     this._models = models;
 
     this._models.forEach((model) =>
-      model._link(
-        {
-          queryBuilder: this._queryBuilder,
-          modelInitializer: this._modelInitializer,
-          database: this,
-        },
-      )
+      model._link({
+        queryBuilder: this._queryBuilder,
+        database: this,
+      })
     );
 
     return this;

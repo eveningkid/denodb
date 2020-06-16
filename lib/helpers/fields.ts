@@ -22,7 +22,7 @@ export function addFieldToSchema(
       const relationshipPKName = fieldOptions.type.relationship.model
         .getComputedPrimaryKey();
 
-      table.integer(fieldOptions.name);
+      table.string(fieldOptions.name);
       table.foreign(fieldOptions.name).references(
         fieldOptions.type.relationship.model.field(
           relationshipPKName,
