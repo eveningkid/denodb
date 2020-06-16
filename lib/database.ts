@@ -161,7 +161,11 @@ export class Database {
   }
 
   /** Compute field matchings tables for model usage. */
-  _computeModelFieldMatchings(table: string, fields: ModelFields): {
+  _computeModelFieldMatchings(
+    table: string,
+    fields: ModelFields,
+    withTimestamps: boolean,
+  ): {
     toClient: FieldMatchingTable;
     toDatabase: FieldMatchingTable;
   } {
@@ -170,7 +174,13 @@ export class Database {
       ? new Translator()
       : new SQLTranslator(databaseDialect);
 
-    const toDatabase: FieldMatchingTable = Object.entries(fields).reduce(
+    const modelFields = { ...fields };
+    if (withTimestamps) {
+      modelFields.updatedAt = "";
+      modelFields.createdAt = "";
+    }
+
+    const toDatabase: FieldMatchingTable = Object.entries(modelFields).reduce(
       (prev, [clientFieldName, fieldType]) => {
         const databaseFieldName =
           (typeof fieldType !== "string" && fieldType.as)

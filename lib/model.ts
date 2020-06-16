@@ -83,6 +83,7 @@ export class Model {
     this._fieldMatching = this._database._computeModelFieldMatchings(
       this.name,
       this.fields,
+      this.timestamps,
     );
 
     this._currentQuery = this._queryBuilder.queryForSchema(this);
@@ -403,7 +404,8 @@ export class Model {
     let fieldsToUpdate: Values = {};
 
     if (this.timestamps) {
-      fieldsToUpdate.updatedAt = new Date();
+      fieldsToUpdate[this.formatFieldToDatabase("updatedAt") as string] =
+        new Date();
     }
 
     if (typeof fieldOrFields === "string") {
