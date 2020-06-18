@@ -713,9 +713,9 @@ export class Model {
       }
     }
 
-    await model.where(modelPK, this._getCurrentPrimaryKey()).update(values);
-
-    return this;
+    return model.where(modelPK, this._getCurrentPrimaryKey()).update(
+      values,
+    );
   }
 
   /** Delete this record from the database.
@@ -732,8 +732,6 @@ export class Model {
       );
     }
 
-    await model.deleteById(PKCurrentValue);
-
-    return this;
+    return model.deleteById(PKCurrentValue);
   }
 }
