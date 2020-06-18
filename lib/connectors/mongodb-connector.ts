@@ -1,8 +1,3 @@
-import {
-  MongoDBClient,
-  MongoDBDatabase,
-  MongoDBClientOptions,
-} from "../../deps.ts";
 import { Connector, ConnectorOptions } from "./connector.ts";
 import { QueryDescription } from "../query-builder.ts";
 
@@ -14,6 +9,74 @@ type MongoDBOptionsWithURI = {
   uri: string;
 };
 
+type MongoDBClientOptions = {
+  hosts: string[];
+  appName?: string;
+  connectTimeout?: number;
+  username?: string;
+  password?: string;
+  directConnection?: boolean;
+  heartbeatFreq?: number;
+  maxIdleTime?: number;
+  maxPoolSize?: number;
+  minPoolSize?: number;
+  replSetName?: string;
+  serverSelectionTimeout?: number;
+  waitQueueTimeout?: number;
+};
+
+type FindOptions = {
+  findOne?: boolean;
+  skip?: number;
+  limit?: number;
+};
+
+type UpdateResult = {
+  matchedCount: number;
+  modifiedCount: number;
+  upsertedId: Object | null;
+};
+
+type MongoDBCollection = {
+  count(filter?: Object): Promise<number>;
+  findOne(filter?: Object): Promise<any>;
+  find(filter?: Object, options?: FindOptions): Promise<any>;
+  insertOne(doc: Object): Promise<any>;
+  insertMany(docs: Object[]): Promise<any>;
+  deleteOne(query: Object): Promise<number>;
+  deleteMany(query: Object): Promise<number>;
+  updateOne(query: Object, update: Object): Promise<UpdateResult>;
+  updateMany(query: Object, update: Object): Promise<UpdateResult>;
+  aggregate<T = any>(pipeline: Object[]): Promise<T[]>;
+  createIndexes(
+    models: {
+      keys: Object;
+      options?: {
+        background?: boolean;
+        unique?: boolean;
+        name?: string;
+        partialFilterExpression?: Object;
+        sparse?: boolean;
+        expireAfterSeconds?: number;
+        storageEngine?: Object;
+      };
+    }[],
+  ): Promise<string[]>;
+};
+
+type MongoDBDatabase = {
+  listCollectionNames(): Promise<string[]>;
+  collection(name: string): MongoDBCollection;
+};
+
+type MongoDBClient = {
+  clientId: number;
+  connectWithUri(uri: string): void;
+  connectWithOptions(options: MongoDBClientOptions): void;
+  listDatabases(): Promise<string[]>;
+  database(name: string): MongoDBDatabase;
+};
+
 export type MongoDBOptions =
   & ConnectorOptions
   & (
@@ -23,20 +86,26 @@ export type MongoDBOptions =
   & MongoDBOptionsBase;
 
 export class MongoDBConnector implements Connector {
-  _client: MongoDBClient;
+  _client!: MongoDBClient;
+  _database!: MongoDBDatabase;
   _options: MongoDBOptions;
   _connected = false;
-  _database!: MongoDBDatabase;
 
   /** Create a MongoDB connection. */
   constructor(options: MongoDBOptions) {
     this._options = options;
-    this._client = new MongoDBClient();
   }
 
   async _makeConnection() {
     if (this._connected) {
       return;
+    }
+
+    if (!this._client) {
+      const { MongoDBClient, MONGODB_PLUGIN_RELEASE_URL, initMongoDBPlugin } =
+        await import("../../unstable_deps.ts");
+      await initMongoDBPlugin(MONGODB_PLUGIN_RELEASE_URL);
+      this._client = new MongoDBClient();
     }
 
     if (this._options.hasOwnProperty("uri")) {
