@@ -94,7 +94,9 @@ export class Model {
       this.table,
     ).dropIfExists().toDescription();
 
-    return this._options.database.query(dropQuery);
+    await this._options.database.query(dropQuery);
+
+    this._isCreatedInDatabase = false;
   }
 
   /** Create a model in the database. Should not be called from a child model. */
