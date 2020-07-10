@@ -12,6 +12,14 @@ export type RelationshipType = {
   relationship: Relationship;
 };
 
+type OneToOneRelationshipType = {
+  modelA: ModelSchema;
+  modelB: ModelSchema;
+  primaryKey?: string;
+  foreignKey?: string;
+  through?: string;
+}
+
 export const Relationships = {
   /** Define a one-to-one or one-to-many relationship for a given model. */
   belongsTo(model: ModelSchema): RelationshipType {
@@ -25,9 +33,10 @@ export const Relationships = {
   },
 
   /** Add corresponding fields to each model for a one-to-one relationship. */
-  oneToOne(modelA: ModelSchema, modelB: ModelSchema) {
-    modelA.fields[`${modelB.name.toLowerCase()}Id`] = this.belongsTo(modelB);
-    modelB.fields[`${modelA.name.toLowerCase()}Id`] = this.belongsTo(modelA);
+  oneToOne(options: OneToOneRelationshipType) {
+    const { modelA, modelB, primaryKey, foreignKey } = options;
+    modelA.fields[primaryKey || `${modelB.name.toLowerCase()}Id`] = this.belongsTo(modelB);
+    modelB.fields[foreignKey || `${modelA.name.toLowerCase()}Id`] = this.belongsTo(modelA);
   },
 
   /** Generate a many-to-many pivot model for two given models.
