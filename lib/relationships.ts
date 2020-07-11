@@ -12,12 +12,9 @@ export type RelationshipType = {
   relationship: Relationship;
 };
 
-type OneToOneRelationshipType = {
-  modelA: ModelSchema;
-  modelB: ModelSchema;
+type OneToOneRelationshipOptions = {
   primaryKey?: string;
   foreignKey?: string;
-  through?: string;
 }
 
 export const Relationships = {
@@ -33,8 +30,8 @@ export const Relationships = {
   },
 
   /** Add corresponding fields to each model for a one-to-one relationship. */
-  oneToOne(options: OneToOneRelationshipType) {
-    const { modelA, modelB, primaryKey, foreignKey } = options;
+  oneToOne(modelA: ModelSchema, modelB: ModelSchema, options: OneToOneRelationshipOptions) {
+    const { primaryKey, foreignKey } = options;
     modelA.fields[primaryKey || `${modelB.name.toLowerCase()}Id`] = this.belongsTo(modelB);
     modelB.fields[foreignKey || `${modelA.name.toLowerCase()}Id`] = this.belongsTo(modelA);
   },
