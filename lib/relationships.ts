@@ -12,7 +12,7 @@ export type RelationshipType = {
   relationship: Relationship;
 };
 
-type OneToOneRelationshipOptions = {
+type RelationshipOptions = {
   primaryKey?: string;
   foreignKey?: string;
 }
@@ -30,7 +30,7 @@ export const Relationships = {
   },
 
   /** Add corresponding fields to each model for a one-to-one relationship. */
-  oneToOne(modelA: ModelSchema, modelB: ModelSchema, options: OneToOneRelationshipOptions) {
+  oneToOne(modelA: ModelSchema, modelB: ModelSchema, options: RelationshipOptions) {
     const { primaryKey, foreignKey } = options;
     modelA.fields[primaryKey || `${modelB.name.toLowerCase()}Id`] = this.belongsTo(modelB);
     modelB.fields[foreignKey || `${modelA.name.toLowerCase()}Id`] = this.belongsTo(modelA);
@@ -40,10 +40,11 @@ export const Relationships = {
    * 
    *     const AirportFlight = Relationships.manyToMany(Airport, Flight);
    */
-  manyToMany(modelA: ModelSchema, modelB: ModelSchema): ModelSchema {
+  manyToMany(modelA: ModelSchema, modelB: ModelSchema, options: RelationshipOptions): ModelSchema {
+    const { primaryKey, foreignKey } = options;
     const pivotClassName = `${modelA.table}_${modelB.table}`;
-    const modelAFieldName = `${modelA.name.toLowerCase()}Id`;
-    const modelBFieldName = `${modelB.name.toLowerCase()}Id`;
+    const modelAFieldName = `${primaryKey || modelA.name.toLowerCase()}Id`;
+    const modelBFieldName = `${foreignKey || modelB.name.toLowerCase()}Id`;
 
     class PivotClass extends PivotModel {
       static table = pivotClassName;
