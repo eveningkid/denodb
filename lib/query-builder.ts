@@ -1,24 +1,6 @@
 import { SQLQueryBuilder } from "../deps.ts";
-import { FieldTypeString } from "./data-types.ts";
+import { FieldValue, FieldAlias, Values } from "./data-types.ts";
 import { ModelFields, ModelDefaults, ModelSchema, Model } from "./model.ts";
-import { Relationship } from "./relationships.ts";
-
-export type FieldValue = number | string | boolean | Date | null;
-export type Values = { [key: string]: FieldValue };
-export type FieldType = FieldTypeString | {
-  type?: FieldTypeString;
-  as?: string;
-  primaryKey?: boolean;
-  unique?: boolean;
-  autoIncrement?: boolean;
-  length?: number;
-  allowNull?: boolean;
-  precision?: number;
-  scale?: number;
-  values?: (number | string)[];
-  relationship?: Relationship;
-};
-export type FieldAlias = { [k: string]: string };
 
 export type Query = string;
 export type Operator = ">" | ">=" | "<" | "<=" | "=";
