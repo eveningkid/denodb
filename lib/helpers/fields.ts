@@ -19,7 +19,7 @@ export function addFieldToSchema(
 
       const relationshipPKType: FieldTypeString = fieldOptions.type.relationship.model
         .getComputedPrimaryType();
-
+        
       table[relationshipPKType](fieldOptions.name);
 
       table
