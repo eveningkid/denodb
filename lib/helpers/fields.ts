@@ -13,19 +13,20 @@ export function addFieldToSchema(
 
   if (typeof fieldOptions.type === "object") {
     if (fieldOptions.type.relationship) {
-      const relationshipPKField = fieldOptions.type.relationship.model
+
+      const relationshipPKName: string = fieldOptions.type.relationship.model
         .getComputedPrimaryKey();
 
-      const pkFieldType: FieldTypeString = fieldOptions.type.relationship.model
+      const relationshipPKType: FieldTypeString = fieldOptions.type.relationship.model
         .getComputedPrimaryType();
         
-      table[pkFieldType || DataTypes.STRING](fieldOptions.name);
+      table[relationshipPKType](fieldOptions.name);
 
       table
         .foreign(fieldOptions.name)
         .references(
             fieldOptions.type.relationship.model
-              .field(relationshipPKField)
+              .field(relationshipPKName)
           )
         .onDelete("CASCADE");
 
