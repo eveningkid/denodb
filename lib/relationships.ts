@@ -4,9 +4,9 @@ import { PivotModel } from "./model-pivot.ts";
 
 export const Relationships = {
   /** Define a one-to-one or one-to-many relationship for a given model. */
-  belongsTo(model: ModelSchema, dataType?: FieldTypeString): RelationshipType {
+  belongsTo(model: ModelSchema): RelationshipType {
     return {
-      type: dataType || DataTypes.INTEGER,
+      type: DataTypes.INTEGER,
       relationship: {
         kind: "single",
         model,
