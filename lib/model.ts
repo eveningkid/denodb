@@ -129,8 +129,8 @@ export class Model {
 
     return {
       name: field ? field[0] : "",
-      type: field ? field[1] : DataTypes.STRING,
-      defaultValue: "",
+      type: field ? field[1] : DataTypes.INTEGER,
+      defaultValue: 0,
     }
   }
 
@@ -144,7 +144,7 @@ export class Model {
   /** Return the model computed primary key. */
   static getComputedPrimaryKey(): string {
     if (!this._primaryKey) {
-      this._findPrimaryKey();
+      this._primaryKey = this._findPrimaryKey();
     }
 
     return this._primaryKey;
@@ -154,9 +154,9 @@ export class Model {
   static getComputedPrimaryType(): FieldTypeString {
     const field = this._findPrimaryField();
 
-    return field.type === "object" 
-        ? (field.type as any).type || DataTypes.STRING 
-        : field.type;
+    return typeof field.type === "object" 
+        ? (field.type as any).type ?? DataTypes.INTEGER 
+        : field.type ?? DataTypes.INTEGER;
   }
 
   /** Build the current query and run it on the associated database. */
