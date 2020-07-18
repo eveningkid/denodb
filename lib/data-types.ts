@@ -1,3 +1,6 @@
+import { ModelSchema } from './model.ts';
+
+/* Field Types */
 export type FieldTypeString =
   | "bigInteger"
   | "integer"
@@ -49,6 +52,43 @@ export type Fields =
       values: (number | string)[],
     ) => { type: FieldTypeString; values: (number | string)[] };
   };
+
+export type FieldType = FieldTypeString | {
+  type?: FieldTypeString;
+  as?: string;
+  primaryKey?: boolean;
+  unique?: boolean;
+  autoIncrement?: boolean;
+  length?: number;
+  allowNull?: boolean;
+  precision?: number;
+  scale?: number;
+  values?: (number | string)[];
+  relationship?: Relationship;
+};
+
+export type FieldAlias = { [k: string]: string };
+export type FieldValue = number | string | boolean | Date | null;
+export type FieldOptions = {
+  name: string;
+  type: FieldType;
+  defaultValue: FieldValue;
+};
+// Field Types
+
+export type Values = { [key: string]: FieldValue };
+
+/* Relationship Types */
+export type Relationship = {
+  kind: "single" | "multiple";
+  model: ModelSchema;
+};
+
+export type RelationshipType = {
+  type: FieldTypeString;
+  relationship: Relationship;
+};
+// Relationship Types
 
 /** Available fields data types. */
 export const DATA_TYPES: Fields = {

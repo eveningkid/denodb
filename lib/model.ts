@@ -1,17 +1,14 @@
 import {
   QueryBuilder,
-  FieldAlias,
-  FieldValue,
   OrderDirection,
-  Values,
   Operator,
   QueryDescription,
-  FieldType,
   OrderByClauses,
 } from "./query-builder.ts";
 import { Database } from "./database.ts";
 import { PivotModelSchema } from "./model-pivot.ts";
 import { camelCase } from "../deps.ts";
+import { FieldAlias, FieldValue, FieldType, Values, FieldOptions, FieldTypeString, DataTypes } from "./data-types.ts";
 
 /** Represents a Model class, not an instance. */
 export type ModelSchema = typeof Model;
@@ -122,14 +119,44 @@ export class Model {
     this._isCreatedInDatabase = true;
   }
 
-  /** Manually find the primary key by going through the schema fields. */
-  private static _findPrimaryKey(): string {
-    const field = Object.entries(this.fields).find(([_, fieldType]) =>
-      typeof fieldType === "object" &&
-      fieldType.primaryKey
+  /** Manually find the primary field by going through the schema fields. */
+  private static _findPrimaryField(): FieldOptions {
+    const field = Object
+      .entries(this.fields)
+      .find(([_, fieldType]) => 
+        typeof fieldType === "object" && fieldType.primaryKey
     );
 
-    return field ? this.formatFieldToDatabase(field[0]) as string : "";
+    return {
+      name: field ? field[0] : "",
+      type: field ? field[1] : DataTypes.STRING,
+      defaultValue: "",
+    }
+  }
+
+  /** Manually find the primary key by going through the schema fields. */
+  private static _findPrimaryKey(): string {
+    const field: FieldOptions = this._findPrimaryField();
+
+    return field.name;
+  }
+
+  /** Return the model computed primary key. */
+  static getComputedPrimaryKey(): string {
+    if (!this._primaryKey) {
+      this._findPrimaryKey();
+    }
+
+    return this._primaryKey;
+  }
+
+  /** Returns the FieldType of the Primary Key. Always returns a FieldTypeString */
+  static getComputedPrimaryType(): FieldTypeString {
+    const field = this._findPrimaryField();
+
+    return field.type === "object" 
+        ? (field.type as any).type || DataTypes.STRING 
+        : field.type;
   }
 
   /** Build the current query and run it on the associated database. */
@@ -138,14 +165,6 @@ export class Model {
     return this._database.query(query);
   }
 
-  /** Return the model computed primary key. */
-  static getComputedPrimaryKey() {
-    if (!this._primaryKey) {
-      this._findPrimaryKey();
-    }
-
-    return this._primaryKey;
-  }
 
   /** Format a field or an object of fields, following a field matching table.
    * Defaulting to `defaultCase` or `field` otherwise. */
