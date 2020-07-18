@@ -154,7 +154,7 @@ export class Model {
   static getComputedPrimaryType(): FieldTypeString {
     const field = this._findPrimaryField();
 
-    return typeof field.type === "object" 
+    return field.type === "object" 
         ? (field.type as any).type ?? DataTypes.INTEGER 
         : field.type ?? DataTypes.INTEGER;
   }
