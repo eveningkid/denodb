@@ -118,6 +118,17 @@ export class MongoDBConnector implements Connector {
     this._connected = true;
   }
 
+  async ping() {
+    await this._makeConnection();
+
+    try {
+      const dbs = await this._client.listDatabases()
+      return dbs.includes(this._options.database)
+    } catch (error) {
+      return false
+    }
+  }
+
   async query(queryDescription: QueryDescription): Promise<any | any[]> {
     await this._makeConnection();
 

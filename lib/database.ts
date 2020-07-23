@@ -99,6 +99,11 @@ export class Database {
     }
   }
 
+  /** Tests database connection. */
+  ping() {
+    return this._connector.ping();
+  }
+
   /** Get the database dialect. */
   getDialect() {
     return this._dialect;

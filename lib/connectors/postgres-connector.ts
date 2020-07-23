@@ -39,6 +39,17 @@ export class PostgresConnector implements Connector {
     this._connected = true;
   }
 
+  async ping() {
+    await this._makeConnection();
+
+    try {
+      const [ { result } ] = (await this._client.query('SELECT 1 + 1 as result')).rowsOfObjects()
+      return result === 2
+    } catch (error) {
+      return false
+    }
+  }
+
   async query(queryDescription: QueryDescription): Promise<any | any[]> {
     await this._makeConnection();
 

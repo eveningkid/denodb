@@ -28,6 +28,21 @@ export class SQLite3Connector implements Connector {
     this._connected = true;
   }
 
+  async ping() {
+    await this._makeConnection();
+
+    try {
+      let connected = false
+
+      for (const [result] of this._client.query("SELECT 1 + 1"))
+        connected = result === 2;
+      
+      return connected
+    } catch (error) {
+      return false
+    }
+  }
+
   async query(queryDescription: QueryDescription): Promise<any | any[]> {
     await this._makeConnection();
 
