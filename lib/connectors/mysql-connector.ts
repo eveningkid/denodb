@@ -44,16 +44,16 @@ export class MySQLConnector implements Connector {
     await this._makeConnection();
 
     try {
-      const [ { result } ] = await this._client.query('SELECT 1 + 1 as result')
-      return result === 2
+      const [{ result }] = await this._client.query("SELECT 1 + 1 as result");
+      return result === 2;
     } catch (error) {
-      return false
+      return false;
     }
   }
 
   async query(
     queryDescription: QueryDescription,
-    client?: MySQLClient | MySQLConnection,
+    client?: MySQLClient | MySQLConnection
   ): Promise<any | any[]> {
     await this._makeConnection();
 

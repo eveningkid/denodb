@@ -17,7 +17,7 @@ export interface Connector {
   /** Is the client connected to an external instance. */
   _connected: boolean;
 
-  /** Tests connection */
+  /** Test connection. */
   ping(): Promise<boolean>;
 
   /** Connect to an external database instance. */

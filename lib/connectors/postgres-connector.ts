@@ -43,10 +43,12 @@ export class PostgresConnector implements Connector {
     await this._makeConnection();
 
     try {
-      const [ { result } ] = (await this._client.query('SELECT 1 + 1 as result')).rowsOfObjects()
-      return result === 2
+      const [{ result }] = (
+        await this._client.query("SELECT 1 + 1 as result")
+      ).rowsOfObjects();
+      return result === 2;
     } catch (error) {
-      return false
+      return false;
     }
   }
 
