@@ -28,6 +28,22 @@ export class SQLite3Connector implements Connector {
     this._connected = true;
   }
 
+  async ping() {
+    await this._makeConnection();
+
+    try {
+      let connected = false;
+
+      for (const [result] of this._client.query("SELECT 1 + 1")) {
+        connected = result === 2;
+      }
+
+      return connected;
+    } catch (error) {
+      return false;
+    }
+  }
+
   async query(queryDescription: QueryDescription): Promise<any | any[]> {
     await this._makeConnection();
 
@@ -52,18 +68,18 @@ export class SQLite3Connector implements Connector {
 
         if (
           (queryDescription.type === "insert" ||
-            queryDescription.type === "update") && queryDescription.values
+            queryDescription.type === "update") &&
+          queryDescription.values
         ) {
           if (Array.isArray(queryDescription.values)) {
             return await Promise.all(
               queryDescription.values.map((values) =>
                 queryDescription.schema.where(values).first()
-              ),
+              )
             );
           }
 
-          return queryDescription.schema.where(queryDescription.values)
-            .first();
+          return queryDescription.schema.where(queryDescription.values).first();
         }
 
         return [];
@@ -75,7 +91,7 @@ export class SQLite3Connector implements Connector {
         let i = 0;
         for (const column of row!) {
           const columnName = columns[i].name;
-          if (columnName === ("count(*)")) {
+          if (columnName === "count(*)") {
             result.count = column;
           } else if (columnName.startsWith("max(")) {
             result.max = column;
