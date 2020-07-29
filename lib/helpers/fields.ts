@@ -14,12 +14,12 @@ export function addFieldToSchema(
   if (typeof fieldOptions.type === "object") {
     if (fieldOptions.type.relationship) {
 
-      const relationshipPKName: string = fieldOptions.type.relationship.model
+      const relationshipPKName = fieldOptions.type.relationship.model
         .getComputedPrimaryKey();
 
       const relationshipPKType: FieldTypeString = fieldOptions.type.relationship.model
         .getComputedPrimaryType();
-        
+      
       table[relationshipPKType](fieldOptions.name);
 
       table

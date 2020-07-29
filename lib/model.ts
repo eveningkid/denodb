@@ -136,9 +136,7 @@ export class Model {
 
   /** Manually find the primary key by going through the schema fields. */
   private static _findPrimaryKey(): string {
-    const field: FieldOptions = this._findPrimaryField();
-
-    return field.name;
+    return this._findPrimaryField().name;
   }
 
   /** Return the model computed primary key. */
@@ -150,13 +148,13 @@ export class Model {
     return this._primaryKey;
   }
 
-  /** Returns the FieldType of the Primary Key. Always returns a FieldTypeString */
+  /** Return the field type of the primary key. */
   static getComputedPrimaryType(): FieldTypeString {
     const field = this._findPrimaryField();
 
     return typeof field.type === "object" 
-        ? (field.type as any).type ?? DataTypes.INTEGER 
-        : field.type ?? DataTypes.INTEGER;
+        ? (field.type as any).type 
+        : field.type;
   }
 
   /** Build the current query and run it on the associated database. */

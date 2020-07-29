@@ -1,6 +1,6 @@
 import { ModelSchema } from './model.ts';
 
-/* Field Types */
+/** Field Types. */
 export type FieldTypeString =
   | "bigInteger"
   | "integer"
@@ -74,11 +74,10 @@ export type FieldOptions = {
   type: FieldType;
   defaultValue: FieldValue;
 };
-// Field Types
 
 export type Values = { [key: string]: FieldValue };
 
-/* Relationship Types */
+/** Relationship Types. */
 export type Relationship = {
   kind: "single" | "multiple";
   model: ModelSchema;
@@ -88,7 +87,6 @@ export type RelationshipType = {
   type: FieldTypeString;
   relationship: Relationship;
 };
-// Relationship Types
 
 /** Available fields data types. */
 export const DATA_TYPES: Fields = {
