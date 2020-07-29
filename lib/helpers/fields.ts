@@ -13,7 +13,6 @@ export function addFieldToSchema(
 
   if (typeof fieldOptions.type === "object") {
     if (fieldOptions.type.relationship) {
-
       const relationshipPKName = fieldOptions.type.relationship.model
         .getComputedPrimaryKey();
 
