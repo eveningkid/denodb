@@ -128,7 +128,7 @@ export class Model {
     );
 
     return {
-      name: field ? field[0] : "",
+      name: field ? this.formatFieldToDatabase(field[0]) as string : "",
       type: field ? field[1] : DataTypes.INTEGER,
       defaultValue: 0,
     }
