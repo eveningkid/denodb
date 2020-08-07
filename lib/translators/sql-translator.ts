@@ -1,7 +1,8 @@
 import { Translator } from "./translator.ts";
 import { DatabaseDialect } from "../database.ts";
 import { SQLQueryBuilder, snakeCase } from "../../deps.ts";
-import { Query, QueryDescription, FieldAlias } from "../query-builder.ts";
+import { Query, QueryDescription } from "../query-builder.ts";
+import { FieldAlias } from '../data-types.ts';
 import { addFieldToSchema } from "../helpers/fields.ts";
 
 export class SQLTranslator extends Translator {

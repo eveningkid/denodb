@@ -1,16 +1,6 @@
 import { ModelSchema } from "./model.ts";
-import { DataTypes, FieldTypeString } from "./data-types.ts";
+import { DataTypes, FieldTypeString, RelationshipType } from "./data-types.ts";
 import { PivotModel } from "./model-pivot.ts";
-
-export type Relationship = {
-  kind: "single" | "multiple";
-  model: ModelSchema;
-};
-
-export type RelationshipType = {
-  type: FieldTypeString;
-  relationship: Relationship;
-};
 
 export const Relationships = {
   /** Define a one-to-one or one-to-many relationship for a given model. */

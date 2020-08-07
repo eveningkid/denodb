@@ -1,10 +1,4 @@
-import { FieldType, FieldValue } from "../query-builder.ts";
-
-type FieldOptions = {
-  name: string;
-  type: FieldType;
-  defaultValue: FieldValue;
-};
+import { FieldOptions, DataTypes, FieldTypeString } from "../data-types.ts";
 
 /** Add a model field to a table schema. */
 export function addFieldToSchema(
@@ -22,12 +16,18 @@ export function addFieldToSchema(
       const relationshipPKName = fieldOptions.type.relationship.model
         .getComputedPrimaryKey();
 
-      table.string(fieldOptions.name);
-      table.foreign(fieldOptions.name).references(
-        fieldOptions.type.relationship.model.field(
-          relationshipPKName,
-        ),
-      ).onDelete("CASCADE");
+      const relationshipPKType: FieldTypeString = fieldOptions.type.relationship.model
+        .getComputedPrimaryType();
+      
+      table[relationshipPKType](fieldOptions.name);
+
+      table
+        .foreign(fieldOptions.name)
+        .references(
+            fieldOptions.type.relationship.model
+              .field(relationshipPKName)
+          )
+        .onDelete("CASCADE");
 
       return;
     }
