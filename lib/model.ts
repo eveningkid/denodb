@@ -506,6 +506,56 @@ export class Model {
     return this;
   }
 
+  /** Join a table with left outer statement to the current query.
+   *
+   *     await Flight.where(
+   *       Flight.field("departure"),
+   *       "Paris",
+   *     ).leftOuterJoin(
+   *       Airport,
+   *       Airport.field("id"),
+   *       Flight.field("airportId"),
+   *     ).get()
+   */
+  static leftOuterJoin<T extends ModelSchema>(
+    this: T,
+    joinTable: ModelSchema,
+    originField: string,
+    targetField: string,
+  ) {
+    this._currentQuery.leftOuterJoin(
+      joinTable.table,
+      joinTable.formatFieldToDatabase(originField) as string,
+      this.formatFieldToDatabase(targetField) as string,
+    );
+    return this;
+  }
+
+  /** Join a table with left statement to the current query.
+   *
+   *     await Flight.where(
+   *       Flight.field("departure"),
+   *       "Paris",
+   *     ).leftJoin(
+   *       Airport,
+   *       Airport.field("id"),
+   *       Flight.field("airportId"),
+   *     ).get()
+   */
+  static leftJoin<T extends ModelSchema>(
+    this: T,
+    joinTable: ModelSchema,
+    originField: string,
+    targetField: string,
+  ) {
+    this._currentQuery.leftJoin(
+      joinTable.table,
+      joinTable.formatFieldToDatabase(originField) as string,
+      this.formatFieldToDatabase(targetField) as string,
+    );
+    return this;
+  }
+
   /** Count the number of records of a model or filtered by a field name.
    *     
    *     await Flight.count();
