@@ -88,6 +88,16 @@ export class SQLTranslator extends Translator {
       });
     }
 
+    if (query.leftOuterJoins) {
+      query.leftOuterJoins.forEach((join) => {
+        queryBuilder = queryBuilder.leftOuterJoin(
+          join.joinTable,
+          join.originField,
+          join.targetField,
+        );
+      });
+    }
+
     switch (query.type) {
       case "drop":
         const dropTableHelper = query.ifExists

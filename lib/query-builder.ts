@@ -49,6 +49,7 @@ export type QueryDescription = {
   wheres?: WhereClause[];
   whereIn?: WhereInClause;
   joins?: JoinClause[];
+  leftOuterJoins?: JoinClause[];
   aggregatorField?: string;
   limit?: number;
   offset?: number;
@@ -215,6 +216,24 @@ export class QueryBuilder {
     }
 
     this._query.joins.push({
+      joinTable,
+      originField,
+      targetField,
+    });
+
+    return this;
+  }
+
+  leftOuterJoin(
+    joinTable: string,
+    originField: string,
+    targetField: string,
+  ) {
+    if (!this._query.leftOuterJoins) {
+      this._query.leftOuterJoins = [];
+    }
+
+    this._query.leftOuterJoins.push({
       joinTable,
       originField,
       targetField,
