@@ -18,8 +18,12 @@ export function addFieldToSchema(
 
       const relationshipPKType: FieldTypeString = fieldOptions.type.relationship.model
         .getComputedPrimaryType();
-      
-      table[relationshipPKType](fieldOptions.name);
+
+      if (relationshipPKType === "integer") {
+        table[relationshipPKType](fieldOptions.name).notNullable();
+      } else {
+        table[relationshipPKType](fieldOptions.name);
+      }
 
       table
         .foreign(fieldOptions.name)
