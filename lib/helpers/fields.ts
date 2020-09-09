@@ -1,4 +1,4 @@
-import { FieldOptions, DataTypes, FieldTypeString } from "../data-types.ts";
+import {FieldOptions, DataTypes, FieldTypeString, FieldType, FieldProps} from "../data-types.ts";
 
 /** Add a model field to a table schema. */
 export function addFieldToSchema(
@@ -13,14 +13,22 @@ export function addFieldToSchema(
 
   if (typeof fieldOptions.type === "object") {
     if (fieldOptions.type.relationship) {
-      const relationshipPKName = fieldOptions.type.relationship.model
+
+      const  relationshipPKName = fieldOptions.type.relationship.model
         .getComputedPrimaryKey();
+
+      const relationshipPKProps: FieldProps = fieldOptions.type.relationship.model
+        .getComputedPrimaryProps();
 
       const relationshipPKType: FieldTypeString = fieldOptions.type.relationship.model
         .getComputedPrimaryType();
 
       if (relationshipPKType === "integer") {
-        table[relationshipPKType](fieldOptions.name).notNullable();
+        const foreignField = table[relationshipPKType](fieldOptions.name).notNullable();
+
+        if (relationshipPKProps.autoIncrement) {
+          foreignField.unsigned();
+        }
       } else {
         table[relationshipPKType](fieldOptions.name);
       }
