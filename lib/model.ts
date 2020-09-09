@@ -8,7 +8,16 @@ import {
 import { Database } from "./database.ts";
 import { PivotModelSchema } from "./model-pivot.ts";
 import { camelCase } from "../deps.ts";
-import { FieldAlias, FieldValue, FieldType, Values, FieldOptions, FieldTypeString, DataTypes } from "./data-types.ts";
+import {
+  FieldAlias,
+  FieldValue,
+  FieldType,
+  Values,
+  FieldOptions,
+  FieldTypeString,
+  DataTypes,
+  FieldProps
+} from "./data-types.ts";
 
 /** Represents a Model class, not an instance. */
 export type ModelSchema = typeof Model;
@@ -155,6 +164,15 @@ export class Model {
     return typeof field.type === "object" 
         ? (field.type as any).type 
         : field.type;
+  }
+
+  /**/
+  static getComputedPrimaryProps(): FieldProps {
+    const field = this._findPrimaryField();
+
+    return typeof field === "object"
+      ? field.type
+      : {};
   }
 
   /** Build the current query and run it on the associated database. */
