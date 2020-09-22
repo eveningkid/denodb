@@ -172,10 +172,10 @@ export class Model {
     defaultCase?: (field: string) => string,
   ): string | { [fieldName: string]: any } {
     if (typeof field !== "string") {
-      return Object.entries(field).reduce((prev, [fieldName, value]) => ({
-        ...prev,
-        [this._formatField(fieldMatching, fieldName) as string]: value,
-      }), {}) as { [fieldName: string]: any };
+      return Object.entries(field).reduce((prev, [fieldName, value]) => {
+        prev[this._formatField(fieldMatching, fieldName) as string] = value;
+        return prev;
+      }, {}) as { [fieldName: string]: any };
     }
 
     if (field in fieldMatching) {

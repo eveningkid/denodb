@@ -227,10 +227,8 @@ export class SQLTranslator extends Translator {
       return snakeCase(fieldName);
     } else {
       return Object.entries(fieldName).reduce((prev, [alias, fullName]) => {
-        return {
-          ...prev,
-          [alias]: this.formatFieldNameToDatabase(fullName),
-        };
+        prev[alias] = this.formatFieldNameToDatabase(fullName);
+        return prev;
       }, {});
     }
   }
