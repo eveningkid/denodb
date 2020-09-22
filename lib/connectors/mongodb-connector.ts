@@ -259,10 +259,8 @@ export class MongoDBConnector implements Connector {
           selectFields.push({
             $sort: Object.entries(queryDescription.orderBy).reduce(
               (prev, [field, orderDirection]) => {
-                return {
-                  ...prev,
-                  [field]: orderDirection === "asc" ? 1 : -1,
-                };
+                prev[field] = orderDirection === "asc" ? 1 : -1;
+                return prev;
               },
               {}
             ),
