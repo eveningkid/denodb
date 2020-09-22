@@ -195,11 +195,9 @@ export class Database {
             ? fieldType.as
             : (translator.formatFieldNameToDatabase(clientFieldName) as string);
 
-        return {
-          ...prev,
-          [clientFieldName]: databaseFieldName,
-          [`${table}.${clientFieldName}`]: `${table}.${databaseFieldName}`,
-        };
+        prev[clientFieldName] = databaseFieldName;
+        prev[`${table}.${clientFieldName}`] = `${table}.${databaseFieldName}`;
+        return prev;
       },
       {}
     );

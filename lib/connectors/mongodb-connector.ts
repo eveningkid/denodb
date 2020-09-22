@@ -1,5 +1,5 @@
-import { Connector, ConnectorOptions } from "./connector.ts";
-import { QueryDescription } from "../query-builder.ts";
+import {Connector, ConnectorOptions} from "./connector.ts";
+import {QueryDescription} from "../query-builder.ts";
 
 type MongoDBOptionsBase = {
   database: string;
@@ -162,7 +162,7 @@ export class MongoDBConnector implements Connector {
         }
 
         const whereValue =
-          curr.field === "_id" ? { $oid: curr.value } : curr.value;
+          curr.field === "_id" ? {$oid: curr.value} : curr.value;
 
         return {
           ...prev,
@@ -196,7 +196,7 @@ export class MongoDBConnector implements Connector {
             };
           }
 
-          return { ...defaultedValues, ...record, ...timestamps };
+          return {...defaultedValues, ...record, ...timestamps};
         });
 
         const insertedRecords: { $oid: string }[] = await collection.insertMany(
@@ -214,8 +214,8 @@ export class MongoDBConnector implements Connector {
             $in:
               queryDescription.whereIn.field === "_id"
                 ? queryDescription.whereIn.possibleValues.map((value) => ({
-                    $oid: value,
-                  }))
+                  $oid: value,
+                }))
                 : queryDescription.whereIn.possibleValues,
           };
         }
@@ -259,10 +259,8 @@ export class MongoDBConnector implements Connector {
           selectFields.push({
             $sort: Object.entries(queryDescription.orderBy).reduce(
               (prev, [field, orderDirection]) => {
-                return {
-                  ...prev,
-                  [field]: orderDirection === "asc" ? 1 : -1,
-                };
+                prev[field] = orderDirection === "asc" ? 1 : -1;
+                return prev;
               },
               {}
             ),
@@ -278,18 +276,18 @@ export class MongoDBConnector implements Connector {
         }
 
         if (queryDescription.limit) {
-          selectFields.push({ $limit: queryDescription.limit });
+          selectFields.push({$limit: queryDescription.limit});
         }
 
         if (queryDescription.offset) {
-          selectFields.push({ $skip: queryDescription.offset });
+          selectFields.push({$skip: queryDescription.offset});
         }
 
         results = await collection.aggregate(selectFields);
         break;
 
       case "update":
-        await collection.updateMany(wheres, { $set: queryDescription.values! });
+        await collection.updateMany(wheres, {$set: queryDescription.values!});
         break;
 
       case "delete":
@@ -297,48 +295,48 @@ export class MongoDBConnector implements Connector {
         break;
 
       case "count":
-        return [{ count: await collection.count(wheres) }];
+        return [{count: await collection.count(wheres)}];
 
       case "avg":
         return await collection.aggregate([
-          { $match: wheres },
+          {$match: wheres},
           {
             $group: {
               _id: null,
-              avg: { $avg: `$${queryDescription.aggregatorField}` },
+              avg: {$avg: `$${queryDescription.aggregatorField}`},
             },
           },
         ]);
 
       case "max":
         return await collection.aggregate([
-          { $match: wheres },
+          {$match: wheres},
           {
             $group: {
               _id: null,
-              max: { $max: `$${queryDescription.aggregatorField}` },
+              max: {$max: `$${queryDescription.aggregatorField}`},
             },
           },
         ]);
 
       case "min":
         return await collection.aggregate([
-          { $match: wheres },
+          {$match: wheres},
           {
             $group: {
               _id: null,
-              min: { $min: `$${queryDescription.aggregatorField}` },
+              min: {$min: `$${queryDescription.aggregatorField}`},
             },
           },
         ]);
 
       case "sum":
         return await collection.aggregate([
-          { $match: wheres },
+          {$match: wheres},
           {
             $group: {
               _id: null,
-              sum: { $sum: `$${queryDescription.aggregatorField}` },
+              sum: {$sum: `$${queryDescription.aggregatorField}`},
             },
           },
         ]);
