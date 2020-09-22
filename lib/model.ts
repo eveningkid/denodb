@@ -166,7 +166,7 @@ export class Model {
         : field.type;
   }
 
-  /**/
+  /** Return the field properties of the primary key */
   static getComputedPrimaryProps(): FieldProps {
     const field = this._findPrimaryField();
 
