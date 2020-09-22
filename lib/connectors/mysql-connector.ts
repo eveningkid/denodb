@@ -40,9 +40,20 @@ export class MySQLConnector implements Connector {
     this._connected = true;
   }
 
+  async ping() {
+    await this._makeConnection();
+
+    try {
+      const [{ result }] = await this._client.query("SELECT 1 + 1 as result");
+      return result === 2;
+    } catch (error) {
+      return false;
+    }
+  }
+
   async query(
     queryDescription: QueryDescription,
-    client?: MySQLClient | MySQLConnection,
+    client?: MySQLClient | MySQLConnection
   ): Promise<any | any[]> {
     await this._makeConnection();
 

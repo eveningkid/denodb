@@ -18,10 +18,12 @@ import { formatResultToModelInstance } from "./helpers/results.ts";
 import { Translator } from "./translators/translator.ts";
 import { SQLTranslator } from "./translators/sql-translator.ts";
 
-type DatabaseOptions = DatabaseDialect | {
-  dialect: DatabaseDialect;
-  debug?: boolean;
-};
+type DatabaseOptions =
+  | DatabaseDialect
+  | {
+      dialect: DatabaseDialect;
+      debug?: boolean;
+    };
 
 export type SyncOptions = {
   /** If tables should be dropped if they exist. */
@@ -39,11 +41,11 @@ export class Database {
   private _debug: boolean;
 
   /** Initialize database given a dialect and options.
-   * 
+   *
    *     const db = new Database("sqlite3", {
    *       filepath: "./db.sqlite"
    *     });
-   *     
+   *
    *     const db = new Database({
    *       dialect: "sqlite3",
    *       debug: true
@@ -55,48 +57,53 @@ export class Database {
       | PostgresOptions
       | SQLite3Options
       | MySQLOptions
-      | MongoDBOptions,
+      | MongoDBOptions
   ) {
-    this._dialect = typeof databaseOptionsOrDialect === "object"
-      ? databaseOptionsOrDialect.dialect
-      : databaseOptionsOrDialect;
+    this._dialect =
+      typeof databaseOptionsOrDialect === "object"
+        ? databaseOptionsOrDialect.dialect
+        : databaseOptionsOrDialect;
 
-    this._debug = typeof databaseOptionsOrDialect === "object"
-      ? databaseOptionsOrDialect.debug ?? false
-      : false;
+    this._debug =
+      typeof databaseOptionsOrDialect === "object"
+        ? databaseOptionsOrDialect.debug ?? false
+        : false;
 
     this._queryBuilder = new QueryBuilder();
 
     switch (this._dialect) {
       case "postgres":
         this._connector = new PostgresConnector(
-          connectionOptions as PostgresOptions,
+          connectionOptions as PostgresOptions
         );
         break;
 
       case "sqlite3":
         this._connector = new SQLite3Connector(
-          connectionOptions as SQLite3Options,
+          connectionOptions as SQLite3Options
         );
         break;
 
       case "mysql":
-        this._connector = new MySQLConnector(
-          connectionOptions as MySQLOptions,
-        );
+        this._connector = new MySQLConnector(connectionOptions as MySQLOptions);
         break;
 
       case "mongo":
         this._connector = new MongoDBConnector(
-          connectionOptions as MongoDBOptions,
+          connectionOptions as MongoDBOptions
         );
         break;
 
       default:
         throw new Error(
-          `No connector was found for the given dialect: ${this._dialect}.`,
+          `No connector was found for the given dialect: ${this._dialect}.`
         );
     }
+  }
+
+  /** Test database connection. */
+  ping() {
+    return this._connector.ping();
   }
 
   /** Get the database dialect. */
@@ -110,7 +117,7 @@ export class Database {
   }
 
   /** Create the given models in the current database.
-   * 
+   *
    *     await db.sync({ drop: true });
    */
   async sync(options: SyncOptions = {}) {
@@ -143,7 +150,7 @@ export class Database {
   }
 
   /** Pass on any query to the database.
-   * 
+   *
    *     await db.query("SELECT * FROM `flights`");
    */
   async query(query: QueryDescription): Promise<any> {
@@ -155,8 +162,8 @@ export class Database {
 
     return Array.isArray(results)
       ? results.map((result) =>
-        formatResultToModelInstance(query.schema, result)
-      )
+          formatResultToModelInstance(query.schema, result)
+        )
       : formatResultToModelInstance(query.schema, results);
   }
 
@@ -164,15 +171,16 @@ export class Database {
   _computeModelFieldMatchings(
     table: string,
     fields: ModelFields,
-    withTimestamps: boolean,
+    withTimestamps: boolean
   ): {
     toClient: FieldMatchingTable;
     toDatabase: FieldMatchingTable;
   } {
     const databaseDialect = this.getDialect();
-    const translator = databaseDialect === "mongo"
-      ? new Translator()
-      : new SQLTranslator(databaseDialect);
+    const translator =
+      databaseDialect === "mongo"
+        ? new Translator()
+        : new SQLTranslator(databaseDialect);
 
     const modelFields = { ...fields };
     if (withTimestamps) {
@@ -183,19 +191,15 @@ export class Database {
     const toDatabase: FieldMatchingTable = Object.entries(modelFields).reduce(
       (prev, [clientFieldName, fieldType]) => {
         const databaseFieldName =
-          (typeof fieldType !== "string" && fieldType.as)
+          typeof fieldType !== "string" && fieldType.as
             ? fieldType.as
-            : translator.formatFieldNameToDatabase(
-              clientFieldName,
-            ) as string;
+            : (translator.formatFieldNameToDatabase(clientFieldName) as string);
 
-        return {
-          ...prev,
-          [clientFieldName]: databaseFieldName,
-          [`${table}.${clientFieldName}`]: `${table}.${databaseFieldName}`,
-        };
+        prev[clientFieldName] = databaseFieldName;
+        prev[`${table}.${clientFieldName}`] = `${table}.${databaseFieldName}`;
+        return prev;
       },
-      {},
+      {}
     );
 
     const toClient: FieldMatchingTable = Object.entries(toDatabase).reduce(
@@ -203,7 +207,7 @@ export class Database {
         ...prev,
         [databaseFieldName]: clientFieldName,
       }),
-      {},
+      {}
     );
 
     return { toDatabase, toClient };

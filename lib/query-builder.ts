@@ -1,24 +1,6 @@
 import { SQLQueryBuilder } from "../deps.ts";
-import { FieldTypeString } from "./data-types.ts";
+import { FieldValue, FieldAlias, Values } from "./data-types.ts";
 import { ModelFields, ModelDefaults, ModelSchema, Model } from "./model.ts";
-import { Relationship } from "./relationships.ts";
-
-export type FieldValue = number | string | boolean | Date | null;
-export type Values = { [key: string]: FieldValue };
-export type FieldType = FieldTypeString | {
-  type?: FieldTypeString;
-  as?: string;
-  primaryKey?: boolean;
-  unique?: boolean;
-  autoIncrement?: boolean;
-  length?: number;
-  allowNull?: boolean;
-  precision?: number;
-  scale?: number;
-  values?: (number | string)[];
-  relationship?: Relationship;
-};
-export type FieldAlias = { [k: string]: string };
 
 export type Query = string;
 export type Operator = ">" | ">=" | "<" | "<=" | "=";
@@ -67,6 +49,8 @@ export type QueryDescription = {
   wheres?: WhereClause[];
   whereIn?: WhereInClause;
   joins?: JoinClause[];
+  leftOuterJoins?: JoinClause[];
+  leftJoins?: JoinClause[];
   aggregatorField?: string;
   limit?: number;
   offset?: number;
@@ -233,6 +217,42 @@ export class QueryBuilder {
     }
 
     this._query.joins.push({
+      joinTable,
+      originField,
+      targetField,
+    });
+
+    return this;
+  }
+
+  leftOuterJoin(
+    joinTable: string,
+    originField: string,
+    targetField: string,
+  ) {
+    if (!this._query.leftOuterJoins) {
+      this._query.leftOuterJoins = [];
+    }
+
+    this._query.leftOuterJoins.push({
+      joinTable,
+      originField,
+      targetField,
+    });
+
+    return this;
+  }
+
+  leftJoin(
+    joinTable: string,
+    originField: string,
+    targetField: string,
+  ) {
+    if (!this._query.leftJoins) {
+      this._query.leftJoins = [];
+    }
+
+    this._query.leftJoins.push({
       joinTable,
       originField,
       targetField,

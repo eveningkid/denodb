@@ -1,17 +1,14 @@
 import {
   QueryBuilder,
-  FieldAlias,
-  FieldValue,
   OrderDirection,
-  Values,
   Operator,
   QueryDescription,
-  FieldType,
   OrderByClauses,
 } from "./query-builder.ts";
 import { Database } from "./database.ts";
 import { PivotModelSchema } from "./model-pivot.ts";
 import { camelCase } from "../deps.ts";
+import { FieldAlias, FieldValue, FieldType, Values, FieldOptions, FieldTypeString, DataTypes } from "./data-types.ts";
 
 /** Represents a Model class, not an instance. */
 export type ModelSchema = typeof Model;
@@ -122,14 +119,42 @@ export class Model {
     this._isCreatedInDatabase = true;
   }
 
-  /** Manually find the primary key by going through the schema fields. */
-  private static _findPrimaryKey(): string {
-    const field = Object.entries(this.fields).find(([_, fieldType]) =>
-      typeof fieldType === "object" &&
-      fieldType.primaryKey
+  /** Manually find the primary field by going through the schema fields. */
+  private static _findPrimaryField(): FieldOptions {
+    const field = Object
+      .entries(this.fields)
+      .find(([_, fieldType]) => 
+        typeof fieldType === "object" && fieldType.primaryKey
     );
 
-    return field ? this.formatFieldToDatabase(field[0]) as string : "";
+    return {
+      name: field ? this.formatFieldToDatabase(field[0]) as string : "",
+      type: field ? field[1] : DataTypes.INTEGER,
+      defaultValue: 0,
+    }
+  }
+
+  /** Manually find the primary key by going through the schema fields. */
+  private static _findPrimaryKey(): string {
+    return this._findPrimaryField().name;
+  }
+
+  /** Return the model computed primary key. */
+  static getComputedPrimaryKey(): string {
+    if (!this._primaryKey) {
+      this._primaryKey = this._findPrimaryKey();
+    }
+
+    return this._primaryKey;
+  }
+
+  /** Return the field type of the primary key. */
+  static getComputedPrimaryType(): FieldTypeString {
+    const field = this._findPrimaryField();
+
+    return typeof field.type === "object" 
+        ? (field.type as any).type 
+        : field.type;
   }
 
   /** Build the current query and run it on the associated database. */
@@ -138,14 +163,6 @@ export class Model {
     return this._database.query(query);
   }
 
-  /** Return the model computed primary key. */
-  static getComputedPrimaryKey() {
-    if (!this._primaryKey) {
-      this._findPrimaryKey();
-    }
-
-    return this._primaryKey;
-  }
 
   /** Format a field or an object of fields, following a field matching table.
    * Defaulting to `defaultCase` or `field` otherwise. */
@@ -155,10 +172,10 @@ export class Model {
     defaultCase?: (field: string) => string,
   ): string | { [fieldName: string]: any } {
     if (typeof field !== "string") {
-      return Object.entries(field).reduce((prev, [fieldName, value]) => ({
-        ...prev,
-        [this._formatField(fieldMatching, fieldName) as string]: value,
-      }), {}) as { [fieldName: string]: any };
+      return Object.entries(field).reduce((prev, [fieldName, value]) => {
+        prev[this._formatField(fieldMatching, fieldName) as string] = value;
+        return prev;
+      }, {}) as { [fieldName: string]: any };
     }
 
     if (field in fieldMatching) {
@@ -482,6 +499,56 @@ export class Model {
     targetField: string,
   ) {
     this._currentQuery.join(
+      joinTable.table,
+      joinTable.formatFieldToDatabase(originField) as string,
+      this.formatFieldToDatabase(targetField) as string,
+    );
+    return this;
+  }
+
+  /** Join a table with left outer statement to the current query.
+   *
+   *     await Flight.where(
+   *       Flight.field("departure"),
+   *       "Paris",
+   *     ).leftOuterJoin(
+   *       Airport,
+   *       Airport.field("id"),
+   *       Flight.field("airportId"),
+   *     ).get()
+   */
+  static leftOuterJoin<T extends ModelSchema>(
+    this: T,
+    joinTable: ModelSchema,
+    originField: string,
+    targetField: string,
+  ) {
+    this._currentQuery.leftOuterJoin(
+      joinTable.table,
+      joinTable.formatFieldToDatabase(originField) as string,
+      this.formatFieldToDatabase(targetField) as string,
+    );
+    return this;
+  }
+
+  /** Join a table with left statement to the current query.
+   *
+   *     await Flight.where(
+   *       Flight.field("departure"),
+   *       "Paris",
+   *     ).leftJoin(
+   *       Airport,
+   *       Airport.field("id"),
+   *       Flight.field("airportId"),
+   *     ).get()
+   */
+  static leftJoin<T extends ModelSchema>(
+    this: T,
+    joinTable: ModelSchema,
+    originField: string,
+    targetField: string,
+  ) {
+    this._currentQuery.leftJoin(
       joinTable.table,
       joinTable.formatFieldToDatabase(originField) as string,
       this.formatFieldToDatabase(targetField) as string,

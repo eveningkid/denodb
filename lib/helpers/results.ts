@@ -1,5 +1,5 @@
 import { ModelSchema } from "../model.ts";
-import { Values } from "../query-builder.ts";
+import { Values } from "../data-types.ts";
 
 /** Transform a plain record object to a given model schema. */
 export function formatResultToModelInstance(

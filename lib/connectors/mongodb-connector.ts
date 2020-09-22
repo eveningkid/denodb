@@ -60,7 +60,7 @@ type MongoDBCollection = {
         expireAfterSeconds?: number;
         storageEngine?: Object;
       };
-    }[],
+    }[]
   ): Promise<string[]>;
 };
 
@@ -77,13 +77,9 @@ type MongoDBClient = {
   database(name: string): MongoDBDatabase;
 };
 
-export type MongoDBOptions =
-  & ConnectorOptions
-  & (
-    | MongoDBOptionsWithURI
-    | MongoDBClientOptions
-  )
-  & MongoDBOptionsBase;
+export type MongoDBOptions = ConnectorOptions &
+  (MongoDBOptionsWithURI | MongoDBClientOptions) &
+  MongoDBOptionsBase;
 
 export class MongoDBConnector implements Connector {
   _client!: MongoDBClient;
@@ -102,8 +98,11 @@ export class MongoDBConnector implements Connector {
     }
 
     if (!this._client) {
-      const { MongoDBClient, MONGODB_PLUGIN_RELEASE_URL, initMongoDBPlugin } =
-        await import("../../unstable_deps.ts");
+      const {
+        MongoDBClient,
+        MONGODB_PLUGIN_RELEASE_URL,
+        initMongoDBPlugin,
+      } = await import("../../unstable_deps.ts");
       await initMongoDBPlugin(MONGODB_PLUGIN_RELEASE_URL);
       this._client = new MongoDBClient();
     }
@@ -116,6 +115,17 @@ export class MongoDBConnector implements Connector {
 
     this._database = this._client.database(this._options.database);
     this._connected = true;
+  }
+
+  async ping() {
+    await this._makeConnection();
+
+    try {
+      const dbs = await this._client.listDatabases();
+      return dbs.includes(this._options.database);
+    } catch (error) {
+      return false;
+    }
   }
 
   async query(queryDescription: QueryDescription): Promise<any | any[]> {
@@ -151,9 +161,8 @@ export class MongoDBConnector implements Connector {
             break;
         }
 
-        const whereValue = (curr.field === "_id")
-          ? { $oid: curr.value }
-          : curr.value;
+        const whereValue =
+          curr.field === "_id" ? { $oid: curr.value } : curr.value;
 
         return {
           ...prev,
@@ -191,7 +200,7 @@ export class MongoDBConnector implements Connector {
         });
 
         const insertedRecords: { $oid: string }[] = await collection.insertMany(
-          values,
+          values
         );
 
         const recordIds = insertedRecords.map((record) => record.$oid);
@@ -202,11 +211,12 @@ export class MongoDBConnector implements Connector {
 
         if (queryDescription.whereIn) {
           wheres[queryDescription.whereIn.field] = {
-            $in: queryDescription.whereIn.field === "_id"
-              ? queryDescription.whereIn.possibleValues.map((value) => ({
-                $oid: value,
-              }))
-              : queryDescription.whereIn.possibleValues,
+            $in:
+              queryDescription.whereIn.field === "_id"
+                ? queryDescription.whereIn.possibleValues.map((value) => ({
+                    $oid: value,
+                  }))
+                : queryDescription.whereIn.possibleValues,
           };
         }
 
@@ -215,24 +225,22 @@ export class MongoDBConnector implements Connector {
         });
 
         if (queryDescription.select) {
-          selectFields.push(
-            {
-              $project: queryDescription.select.reduce((prev: Object, curr) => {
-                if (typeof curr === "string") {
-                  return {
-                    ...prev,
-                    [curr]: 1,
-                  };
-                } else {
-                  const [field, alias] = Object.entries(curr)[0];
-                  return {
-                    ...prev,
-                    [alias]: field,
-                  };
-                }
-              }, {}),
-            },
-          );
+          selectFields.push({
+            $project: queryDescription.select.reduce((prev: Object, curr) => {
+              if (typeof curr === "string") {
+                return {
+                  ...prev,
+                  [curr]: 1,
+                };
+              } else {
+                const [field, alias] = Object.entries(curr)[0];
+                return {
+                  ...prev,
+                  [alias]: field,
+                };
+              }
+            }, {}),
+          });
         }
 
         if (queryDescription.joins) {
@@ -251,12 +259,10 @@ export class MongoDBConnector implements Connector {
           selectFields.push({
             $sort: Object.entries(queryDescription.orderBy).reduce(
               (prev, [field, orderDirection]) => {
-                return {
-                  ...prev,
-                  [field]: orderDirection === "asc" ? 1 : -1,
-                };
+                prev[field] = orderDirection === "asc" ? 1 : -1;
+                return prev;
               },
-              {},
+              {}
             ),
           });
         }
@@ -281,10 +287,7 @@ export class MongoDBConnector implements Connector {
         break;
 
       case "update":
-        await collection.updateMany(
-          wheres,
-          { $set: queryDescription.values! },
-        );
+        await collection.updateMany(wheres, { $set: queryDescription.values! });
         break;
 
       case "delete":
@@ -295,56 +298,48 @@ export class MongoDBConnector implements Connector {
         return [{ count: await collection.count(wheres) }];
 
       case "avg":
-        return await collection.aggregate(
-          [
-            { $match: wheres },
-            {
-              $group: {
-                _id: null,
-                avg: { $avg: `$${queryDescription.aggregatorField}` },
-              },
+        return await collection.aggregate([
+          { $match: wheres },
+          {
+            $group: {
+              _id: null,
+              avg: { $avg: `$${queryDescription.aggregatorField}` },
             },
-          ],
-        );
+          },
+        ]);
 
       case "max":
-        return await collection.aggregate(
-          [
-            { $match: wheres },
-            {
-              $group: {
-                _id: null,
-                max: { $max: `$${queryDescription.aggregatorField}` },
-              },
+        return await collection.aggregate([
+          { $match: wheres },
+          {
+            $group: {
+              _id: null,
+              max: { $max: `$${queryDescription.aggregatorField}` },
             },
-          ],
-        );
+          },
+        ]);
 
       case "min":
-        return await collection.aggregate(
-          [
-            { $match: wheres },
-            {
-              $group: {
-                _id: null,
-                min: { $min: `$${queryDescription.aggregatorField}` },
-              },
+        return await collection.aggregate([
+          { $match: wheres },
+          {
+            $group: {
+              _id: null,
+              min: { $min: `$${queryDescription.aggregatorField}` },
             },
-          ],
-        );
+          },
+        ]);
 
       case "sum":
-        return await collection.aggregate(
-          [
-            { $match: wheres },
-            {
-              $group: {
-                _id: null,
-                sum: { $sum: `$${queryDescription.aggregatorField}` },
-              },
+        return await collection.aggregate([
+          { $match: wheres },
+          {
+            $group: {
+              _id: null,
+              sum: { $sum: `$${queryDescription.aggregatorField}` },
             },
-          ],
-        );
+          },
+        ]);
 
       default:
         throw new Error(`Unknown query type: ${queryDescription.type}.`);

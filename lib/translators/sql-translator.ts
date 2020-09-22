@@ -1,7 +1,8 @@
 import { Translator } from "./translator.ts";
 import { DatabaseDialect } from "../database.ts";
 import { SQLQueryBuilder, snakeCase } from "../../deps.ts";
-import { Query, QueryDescription, FieldAlias } from "../query-builder.ts";
+import { Query, QueryDescription } from "../query-builder.ts";
+import { FieldAlias } from '../data-types.ts';
 import { addFieldToSchema } from "../helpers/fields.ts";
 
 export class SQLTranslator extends Translator {
@@ -82,6 +83,26 @@ export class SQLTranslator extends Translator {
           join.joinTable,
           join.originField,
           "=",
+          join.targetField,
+        );
+      });
+    }
+
+    if (query.leftOuterJoins) {
+      query.leftOuterJoins.forEach((join) => {
+        queryBuilder = queryBuilder.leftOuterJoin(
+          join.joinTable,
+          join.originField,
+          join.targetField,
+        );
+      });
+    }
+
+    if (query.leftJoins) {
+      query.leftJoins.forEach((join) => {
+        queryBuilder = queryBuilder.leftJoin(
+          join.joinTable,
+          join.originField,
           join.targetField,
         );
       });
@@ -206,10 +227,8 @@ export class SQLTranslator extends Translator {
       return snakeCase(fieldName);
     } else {
       return Object.entries(fieldName).reduce((prev, [alias, fullName]) => {
-        return {
-          ...prev,
-          [alias]: this.formatFieldNameToDatabase(fullName),
-        };
+        prev[alias] = this.formatFieldNameToDatabase(fullName);
+        return prev;
       }, {});
     }
   }

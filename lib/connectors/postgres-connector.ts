@@ -1,7 +1,8 @@
 import { PostgresClient } from "../../deps.ts";
 import { Connector, ConnectorOptions } from "./connector.ts";
 import { SQLTranslator } from "../translators/sql-translator.ts";
-import { QueryDescription, Values } from "../query-builder.ts";
+import { QueryDescription } from "../query-builder.ts";
+import { Values } from '../data-types.ts';
 
 export interface PostgresOptions extends ConnectorOptions {
   database: string;
@@ -37,6 +38,19 @@ export class PostgresConnector implements Connector {
 
     await this._client.connect();
     this._connected = true;
+  }
+
+  async ping() {
+    await this._makeConnection();
+
+    try {
+      const [{ result }] = (
+        await this._client.query("SELECT 1 + 1 as result")
+      ).rowsOfObjects();
+      return result === 2;
+    } catch (error) {
+      return false;
+    }
   }
 
   async query(queryDescription: QueryDescription): Promise<any | any[]> {
