@@ -1,5 +1,5 @@
-import { SQLQueryBuilder } from "../deps.ts";
-import { FieldValue, FieldAlias, Values } from "./data-types.ts";
+import type { SQLQueryBuilder } from "../deps.ts";
+import type { FieldValue, FieldAlias, Values } from "./data-types.ts";
 import { ModelFields, ModelDefaults, ModelSchema, Model } from "./model.ts";
 
 export type Query = string;

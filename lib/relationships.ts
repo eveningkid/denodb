@@ -1,4 +1,4 @@
-import { ModelSchema } from "./model.ts";
+import type { ModelSchema } from "./model.ts";
 import { DataTypes, FieldTypeString, RelationshipType } from "./data-types.ts";
 import { PivotModel } from "./model-pivot.ts";
 
