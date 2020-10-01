@@ -1,5 +1,5 @@
-import { Connector } from "./connectors/connector.ts";
-import { ModelSchema, FieldMatchingTable, ModelFields } from "./model.ts";
+import type { Connector } from "./connectors/connector.ts";
+import type { ModelSchema, FieldMatchingTable, ModelFields } from "./model.ts";
 import { QueryBuilder, QueryDescription } from "./query-builder.ts";
 import {
   PostgresConnector,
