@@ -1,5 +1,5 @@
-import { QueryDescription, Query } from "../query-builder.ts";
-import { FieldAlias } from '../data-types.ts';
+import type { QueryDescription, Query } from "../query-builder.ts";
+import type { FieldAlias } from '../data-types.ts';
 
 /** Translator interface for translating `QueryDescription` objects to regular queries. */
 export class Translator {

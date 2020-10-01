@@ -1,12 +1,12 @@
-import {
+import type {
   QueryBuilder,
   OrderDirection,
   Operator,
   QueryDescription,
   OrderByClauses,
 } from "./query-builder.ts";
-import { Database } from "./database.ts";
-import { PivotModelSchema } from "./model-pivot.ts";
+import type { Database } from "./database.ts";
+import type { PivotModelSchema } from "./model-pivot.ts";
 import { camelCase } from "../deps.ts";
 import {
   FieldAlias,

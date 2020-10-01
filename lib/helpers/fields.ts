@@ -1,4 +1,4 @@
-import { FieldOptions, DataTypes, FieldTypeString, FieldType, FieldProps } from "../data-types.ts";
+import type { FieldOptions, DataTypes, FieldTypeString, FieldType, FieldProps } from "../data-types.ts";
 
 /** Add a model field to a table schema. */
 export function addFieldToSchema(
