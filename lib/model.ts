@@ -16,7 +16,7 @@ import {
   FieldOptions,
   FieldTypeString,
   DataTypes,
-  FieldProps
+  FieldProps,
 } from "./data-types.ts";
 
 /** Represents a Model class, not an instance. */
@@ -132,15 +132,15 @@ export class Model {
   private static _findPrimaryField(): FieldOptions {
     const field = Object
       .entries(this.fields)
-      .find(([_, fieldType]) => 
+      .find(([_, fieldType]) =>
         typeof fieldType === "object" && fieldType.primaryKey
-    );
+      );
 
     return {
       name: field ? this.formatFieldToDatabase(field[0]) as string : "",
       type: field ? field[1] : DataTypes.INTEGER,
       defaultValue: 0,
-    }
+    };
   }
 
   /** Manually find the primary key by going through the schema fields. */
@@ -161,18 +161,16 @@ export class Model {
   static getComputedPrimaryType(): FieldTypeString {
     const field = this._findPrimaryField();
 
-    return typeof field.type === "object" 
-        ? (field.type as any).type 
-        : field.type;
+    return typeof field.type === "object"
+      ? (field.type as any).type
+      : field.type;
   }
 
   /** Return the field properties of the primary key */
   static getComputedPrimaryProps(): FieldProps {
     const field = this._findPrimaryField();
 
-    return typeof field === "object"
-      ? field.type
-      : {};
+    return typeof field === "object" ? field.type : {};
   }
 
   /** Build the current query and run it on the associated database. */
@@ -180,7 +178,6 @@ export class Model {
     this._currentQuery = this._queryBuilder.queryForSchema(this);
     return this._database.query(query);
   }
-
 
   /** Format a field or an object of fields, following a field matching table.
    * Defaulting to `defaultCase` or `field` otherwise. */
@@ -190,7 +187,7 @@ export class Model {
     defaultCase?: (field: string) => string,
   ): string | { [fieldName: string]: any } {
     if (typeof field !== "string") {
-      return Object.entries(field).reduce((prev, [fieldName, value]) => {
+      return Object.entries(field).reduce((prev: any, [fieldName, value]) => {
         prev[this._formatField(fieldMatching, fieldName) as string] = value;
         return prev;
       }, {}) as { [fieldName: string]: any };
