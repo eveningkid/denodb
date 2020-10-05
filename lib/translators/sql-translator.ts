@@ -1,8 +1,8 @@
 import { Translator } from "./translator.ts";
-import { DatabaseDialect } from "../database.ts";
-import { SQLQueryBuilder, snakeCase } from "../../deps.ts";
-import { Query, QueryDescription } from "../query-builder.ts";
-import { FieldAlias } from '../data-types.ts';
+import type { DatabaseDialect } from "../database.ts";
+import { SQLQueryBuilder, camelCase } from "../../deps.ts";
+import type { Query, QueryDescription } from "../query-builder.ts";
+import type { FieldAlias } from '../data-types.ts';
 import { addFieldToSchema } from "../helpers/fields.ts";
 
 export class SQLTranslator extends Translator {
@@ -221,16 +221,14 @@ export class SQLTranslator extends Translator {
       // Table.fieldName
       if (dotIndex !== -1) {
         return fieldName.slice(0, dotIndex + 1) +
-          snakeCase(fieldName.slice(dotIndex + 1));
+          camelCase(fieldName.slice(dotIndex + 1));
       }
 
-      return snakeCase(fieldName);
+      return camelCase(fieldName);
     } else {
       return Object.entries(fieldName).reduce((prev, [alias, fullName]) => {
-        return {
-          ...prev,
-          [alias]: this.formatFieldNameToDatabase(fullName),
-        };
+        prev[alias] = this.formatFieldNameToDatabase(fullName);
+        return prev;
       }, {});
     }
   }

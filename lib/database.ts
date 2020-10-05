@@ -1,5 +1,5 @@
-import { Connector } from "./connectors/connector.ts";
-import { ModelSchema, FieldMatchingTable, ModelFields } from "./model.ts";
+import type { Connector } from "./connectors/connector.ts";
+import type { ModelSchema, FieldMatchingTable, ModelFields } from "./model.ts";
 import { QueryBuilder, QueryDescription } from "./query-builder.ts";
 import {
   PostgresConnector,
@@ -195,11 +195,9 @@ export class Database {
             ? fieldType.as
             : (translator.formatFieldNameToDatabase(clientFieldName) as string);
 
-        return {
-          ...prev,
-          [clientFieldName]: databaseFieldName,
-          [`${table}.${clientFieldName}`]: `${table}.${databaseFieldName}`,
-        };
+        prev[clientFieldName] = databaseFieldName;
+        prev[`${table}.${clientFieldName}`] = `${table}.${databaseFieldName}`;
+        return prev;
       },
       {}
     );

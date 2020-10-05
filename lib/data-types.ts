@@ -1,4 +1,4 @@
-import { ModelSchema } from './model.ts';
+import type { ModelSchema } from './model.ts';
 
 /** Field Types. */
 export type FieldTypeString =
@@ -53,7 +53,7 @@ export type Fields =
     ) => { type: FieldTypeString; values: (number | string)[] };
   };
 
-export type FieldType = FieldTypeString | {
+export type FieldProps = {
   type?: FieldTypeString;
   as?: string;
   primaryKey?: boolean;
@@ -66,6 +66,8 @@ export type FieldType = FieldTypeString | {
   values?: (number | string)[];
   relationship?: Relationship;
 };
+
+export type FieldType = FieldTypeString | FieldProps;
 
 export type FieldAlias = { [k: string]: string };
 export type FieldValue = number | string | boolean | Date | null;

@@ -1,14 +1,23 @@
-import {
+import type {
   QueryBuilder,
   OrderDirection,
   Operator,
   QueryDescription,
   OrderByClauses,
 } from "./query-builder.ts";
-import { Database } from "./database.ts";
-import { PivotModelSchema } from "./model-pivot.ts";
+import type { Database } from "./database.ts";
+import type { PivotModelSchema } from "./model-pivot.ts";
 import { camelCase } from "../deps.ts";
-import { FieldAlias, FieldValue, FieldType, Values, FieldOptions, FieldTypeString, DataTypes } from "./data-types.ts";
+import {
+  FieldAlias,
+  FieldValue,
+  FieldType,
+  Values,
+  FieldOptions,
+  FieldTypeString,
+  DataTypes,
+  FieldProps
+} from "./data-types.ts";
 
 /** Represents a Model class, not an instance. */
 export type ModelSchema = typeof Model;
@@ -157,6 +166,15 @@ export class Model {
         : field.type;
   }
 
+  /** Return the field properties of the primary key */
+  static getComputedPrimaryProps(): FieldProps {
+    const field = this._findPrimaryField();
+
+    return typeof field === "object"
+      ? field.type
+      : {};
+  }
+
   /** Build the current query and run it on the associated database. */
   private static async _runQuery(query: QueryDescription) {
     this._currentQuery = this._queryBuilder.queryForSchema(this);
@@ -172,10 +190,10 @@ export class Model {
     defaultCase?: (field: string) => string,
   ): string | { [fieldName: string]: any } {
     if (typeof field !== "string") {
-      return Object.entries(field).reduce((prev, [fieldName, value]) => ({
-        ...prev,
-        [this._formatField(fieldMatching, fieldName) as string]: value,
-      }), {}) as { [fieldName: string]: any };
+      return Object.entries(field).reduce((prev, [fieldName, value]) => {
+        prev[this._formatField(fieldMatching, fieldName) as string] = value;
+        return prev;
+      }, {}) as { [fieldName: string]: any };
     }
 
     if (field in fieldMatching) {

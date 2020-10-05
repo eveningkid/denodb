@@ -1,5 +1,5 @@
-import { Connector, ConnectorOptions } from "./connector.ts";
-import { QueryDescription } from "../query-builder.ts";
+import type { Connector, ConnectorOptions } from "./connector.ts";
+import type { QueryDescription } from "../query-builder.ts";
 
 type MongoDBOptionsBase = {
   database: string;
@@ -259,10 +259,8 @@ export class MongoDBConnector implements Connector {
           selectFields.push({
             $sort: Object.entries(queryDescription.orderBy).reduce(
               (prev, [field, orderDirection]) => {
-                return {
-                  ...prev,
-                  [field]: orderDirection === "asc" ? 1 : -1,
-                };
+                prev[field] = orderDirection === "asc" ? 1 : -1;
+                return prev;
               },
               {}
             ),
