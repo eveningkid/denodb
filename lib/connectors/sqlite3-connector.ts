@@ -1,7 +1,7 @@
 import { SQLiteClient } from "../../deps.ts";
 import type { Connector, ConnectorOptions } from "./connector.ts";
 import type { QueryDescription } from "../query-builder.ts";
-import type { FieldValue } from '../data-types.ts';
+import type { FieldValue } from "../data-types.ts";
 import { SQLTranslator } from "../translators/sql-translator.ts";
 
 export interface SQLite3Options extends ConnectorOptions {
@@ -76,7 +76,7 @@ export class SQLite3Connector implements Connector {
             return await Promise.all(
               queryDescription.values.map((values) =>
                 queryDescription.schema.where(values).first()
-              )
+              ),
             );
           }
 
