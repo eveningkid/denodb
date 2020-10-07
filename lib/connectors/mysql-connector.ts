@@ -53,7 +53,7 @@ export class MySQLConnector implements Connector {
 
   async query(
     queryDescription: QueryDescription,
-    client?: MySQLClient | MySQLConnection
+    client?: MySQLClient | MySQLConnection,
   ): Promise<any | any[]> {
     await this._makeConnection();
 
