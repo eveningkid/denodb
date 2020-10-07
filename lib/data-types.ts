@@ -1,4 +1,4 @@
-import type { ModelSchema } from './model.ts';
+import type { ModelSchema } from "./model.ts";
 
 /** Field Types. */
 export type FieldTypeString =

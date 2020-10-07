@@ -1,22 +1,22 @@
 import type {
-  QueryBuilder,
-  OrderDirection,
   Operator,
-  QueryDescription,
   OrderByClauses,
+  OrderDirection,
+  QueryBuilder,
+  QueryDescription,
 } from "./query-builder.ts";
 import type { Database } from "./database.ts";
 import type { PivotModelSchema } from "./model-pivot.ts";
 import { camelCase } from "../deps.ts";
 import {
-  FieldAlias,
-  FieldValue,
-  FieldType,
-  Values,
-  FieldOptions,
-  FieldTypeString,
   DataTypes,
+  FieldAlias,
+  FieldOptions,
   FieldProps,
+  FieldType,
+  FieldTypeString,
+  FieldValue,
+  Values,
 } from "./data-types.ts";
 
 /** Represents a Model class, not an instance. */

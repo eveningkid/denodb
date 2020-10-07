@@ -1,6 +1,6 @@
 import { Translator } from "./translator.ts";
 import type { DatabaseDialect } from "../database.ts";
-import { SQLQueryBuilder, camelCase } from "../../deps.ts";
+import { camelCase, SQLQueryBuilder } from "../../deps.ts";
 import type { Query, QueryDescription } from "../query-builder.ts";
 import type { FieldAlias } from "../data-types.ts";
 import { addFieldToSchema } from "../helpers/fields.ts";
