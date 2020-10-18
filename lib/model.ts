@@ -77,9 +77,7 @@ export class Model {
   private static _options: ModelOptions;
 
   /** Link a model to a database. Should not be called from a child model. */
-  static _link(
-    options: ModelOptions,
-  ) {
+  static _link(options: ModelOptions) {
     this._options = options;
     this._database = options.database;
     this._queryBuilder = options.queryBuilder;
@@ -96,9 +94,11 @@ export class Model {
 
   /** Drop a model in the database. */
   static async drop() {
-    const dropQuery = this._options.queryBuilder.queryForSchema(this).table(
-      this.table,
-    ).dropIfExists().toDescription();
+    const dropQuery = this._options.queryBuilder
+      .queryForSchema(this)
+      .table(this.table)
+      .dropIfExists()
+      .toDescription();
 
     await this._options.database.query(dropQuery);
 
@@ -111,9 +111,9 @@ export class Model {
       throw new Error("This model has already been initialized.");
     }
 
-    const createQuery = this._options.queryBuilder.queryForSchema(this).table(
-      this.table,
-    )
+    const createQuery = this._options.queryBuilder
+      .queryForSchema(this)
+      .table(this.table)
       .createTable(
         this.formatFieldToDatabase(this.fields) as ModelFields,
         this.formatFieldToDatabase(this.defaults) as ModelDefaults,
@@ -121,7 +121,8 @@ export class Model {
           withTimestamps: this.timestamps,
           ifNotExists: true,
         },
-      ).toDescription();
+      )
+      .toDescription();
 
     await this._options.database.query(createQuery);
 
@@ -130,14 +131,12 @@ export class Model {
 
   /** Manually find the primary field by going through the schema fields. */
   private static _findPrimaryField(): FieldOptions {
-    const field = Object
-      .entries(this.fields)
-      .find(([_, fieldType]) =>
-        typeof fieldType === "object" && fieldType.primaryKey
-      );
+    const field = Object.entries(this.fields).find(
+      ([_, fieldType]) => typeof fieldType === "object" && fieldType.primaryKey,
+    );
 
     return {
-      name: field ? this.formatFieldToDatabase(field[0]) as string : "",
+      name: field ? (this.formatFieldToDatabase(field[0]) as string) : "",
       type: field ? field[1] : DataTypes.INTEGER,
       defaultValue: 0,
     };
@@ -211,9 +210,9 @@ export class Model {
   }
 
   /** Return the table name followed by a field name. Can also rename a field using `nameAs`.
-   * 
+   *
    *     Flight.field("departure") => "flights.departure"
-   *     
+   *
    *     Flight.field("id", "flight_id") => { flight_id: "flights.id" }
    */
   static field(field: string): string;
@@ -238,9 +237,9 @@ export class Model {
   }
 
   /** Fetch all the model records.
-   * 
+   *
    *     await Flight.all();
-   *     
+   *
    *     await Flight.select("id").all();
    */
   static async all() {
@@ -248,9 +247,9 @@ export class Model {
   }
 
   /** Indicate which fields should be returned/selected from the query.
-   * 
+   *
    *     await Flight.select("id").get();
-   *     
+   *
    *     await Flight.select("id", "destination").get();
    */
   static select<T extends ModelSchema>(
@@ -264,44 +263,50 @@ export class Model {
   }
 
   /** Create one or multiple records in the current model.
-   * 
+   *
    *     await Flight.create({ departure: "Paris", destination: "Tokyo" });
-   *     
+   *
    *     await Flight.create([{ ... }, { ... }]);
    */
   static async create(values: Values | Values[]) {
     const insertions = Array.isArray(values) ? values : [values];
 
     return this._runQuery(
-      this._currentQuery.table(this.table).create(
-        insertions.map((field) =>
-          this.formatFieldToDatabase(field)
-        ) as Values[],
-      ).toDescription(),
+      this._currentQuery
+        .table(this.table)
+        .create(
+          insertions.map((field) =>
+            this.formatFieldToDatabase(field)
+          ) as Values[],
+        )
+        .toDescription(),
     );
   }
 
   /** Find one or multiple records based on the model primary key.
-   * 
+   *
    *     await Flight.find("1");
    */
   static async find(idOrIds: FieldValue | FieldValue[]) {
     const results = await this._runQuery(
-      this._currentQuery.table(this.table).find(
-        this.getComputedPrimaryKey(),
-        Array.isArray(idOrIds) ? idOrIds : [idOrIds],
-      ).toDescription(),
+      this._currentQuery
+        .table(this.table)
+        .find(
+          this.getComputedPrimaryKey(),
+          Array.isArray(idOrIds) ? idOrIds : [idOrIds],
+        )
+        .toDescription(),
     );
 
     return Array.isArray(idOrIds) ? results : results[0];
   }
 
   /** Order query results based on a field name and an optional direction.
-   * 
+   *
    *     await Flight.orderBy("departure").all();
-   *     
+   *
    *     await Flight.orderBy("departure", "desc").all();
-   * 
+   *
    *     await Flight.orderBy({ departure: "desc", destination: "asc" }).all();
    */
   static orderBy<T extends ModelSchema>(
@@ -316,7 +321,9 @@ export class Model {
       );
     } else {
       for (
-        const [field, orderDirectionField] of Object.entries(fieldOrFields)
+        const [field, orderDirectionField] of Object.entries(
+          fieldOrFields,
+        )
       ) {
         this._currentQuery.orderBy(
           this.formatFieldToDatabase(field) as string,
@@ -329,7 +336,7 @@ export class Model {
   }
 
   /** Group rows by a given field.
-   * 
+   *
    *     await Flight.groupBy('departure').all();
    */
   static groupBy<T extends ModelSchema>(this: T, field: string) {
@@ -338,7 +345,7 @@ export class Model {
   }
 
   /** Similar to `limit`, limit the number of results returned from the query.
-   * 
+   *
    *     await Flight.take(10).get();
    */
   static take<T extends ModelSchema>(this: T, limit: number) {
@@ -346,7 +353,7 @@ export class Model {
   }
 
   /** Limit the number of results returned from the query.
-   * 
+   *
    *     await Flight.limit(10).get();
    */
   static limit<T extends ModelSchema>(this: T, limit: number) {
@@ -355,7 +362,7 @@ export class Model {
   }
 
   /** Return the first record that matches the current query.
-   * 
+   *
    *     await Flight.where("id", ">", "1").first();
    */
   static async first() {
@@ -365,9 +372,9 @@ export class Model {
   }
 
   /** Skip n values in the results.
-   * 
+   *
    *     await Flight.offset(10).get();
-   *     
+   *
    *     await Flight.offset(10).limit(2).get();
    */
   static offset<T extends ModelSchema>(this: T, offset: number) {
@@ -376,9 +383,9 @@ export class Model {
   }
 
   /** Similar to `offset`, skip n values in the results.
-   * 
+   *
    *     await Flight.skip(10).get();
-   *     
+   *
    *     await Flight.skip(10).take(2).get();
    */
   static skip<T extends ModelSchema>(this: T, offset: number) {
@@ -386,11 +393,11 @@ export class Model {
   }
 
   /** Add a `where` clause to your query.
-   * 
+   *
    *     await Flight.where("id", "1").get();
-   *     
+   *
    *     await Flight.where("id", ">", "1").get();
-   *     
+   *
    *     await Flight.where({ id: "1", departure: "Paris" }).get();
    */
   static where<T extends ModelSchema>(
@@ -401,12 +408,12 @@ export class Model {
   ) {
     if (typeof fieldOrFields === "string") {
       const whereOperator: Operator = typeof fieldValue !== "undefined"
-        ? operatorOrFieldValue as Operator
+        ? (operatorOrFieldValue as Operator)
         : "=";
 
       const whereValue: FieldValue = typeof fieldValue !== "undefined"
         ? fieldValue
-        : operatorOrFieldValue as FieldValue;
+        : (operatorOrFieldValue as FieldValue);
 
       if (whereValue !== undefined) {
         this._currentQuery.where(
@@ -438,56 +445,57 @@ export class Model {
   }
 
   /** Update one or multiple records. Also update `updated_at` if `timestamps` is `true`.
-   * 
+   *
    *     await Flight.where("departure", "Dublin").update("departure", "Tokyo");
-   *     
+   *
    *     await Flight.where("departure", "Dublin").update({ destination: "Tokyo" });
    */
-  static async update(
-    fieldOrFields: string | Values,
-    fieldValue?: FieldValue,
-  ) {
+  static async update(fieldOrFields: string | Values, fieldValue?: FieldValue) {
     let fieldsToUpdate: Values = {};
 
     if (this.timestamps) {
-      fieldsToUpdate[this.formatFieldToDatabase("updatedAt") as string] =
-        new Date();
+      fieldsToUpdate[
+        this.formatFieldToDatabase("updated_at") as string
+      ] = new Date();
     }
 
     if (typeof fieldOrFields === "string") {
-      fieldsToUpdate[this.formatFieldToDatabase(fieldOrFields) as string] =
-        fieldValue!;
+      fieldsToUpdate[
+        this.formatFieldToDatabase(fieldOrFields) as string
+      ] = fieldValue!;
     } else {
       fieldsToUpdate = {
         ...fieldsToUpdate,
-        ...this.formatFieldToDatabase(fieldOrFields) as {
+        ...(this.formatFieldToDatabase(fieldOrFields) as {
           [fieldName: string]: any;
-        },
+        }),
       };
     }
 
     return this._runQuery(
-      this._currentQuery.table(this.table).update(fieldsToUpdate)
+      this._currentQuery
+        .table(this.table)
+        .update(fieldsToUpdate)
         .toDescription(),
     );
   }
 
   /** Delete a record by a primary key value.
-   * 
+   *
    *     await Flight.deleteById("1");
    */
   static async deleteById(id: FieldValue) {
     return this._runQuery(
-      this._currentQuery.table(this.table).where(
-        this.getComputedPrimaryKey(),
-        "=",
-        id,
-      ).delete().toDescription(),
+      this._currentQuery
+        .table(this.table)
+        .where(this.getComputedPrimaryKey(), "=", id)
+        .delete()
+        .toDescription(),
     );
   }
 
   /** Delete selected records.
-   * 
+   *
    *     await Flight.where("destination", "Paris").delete();
    */
   static async delete() {
@@ -497,7 +505,7 @@ export class Model {
   }
 
   /** Join a table to the current query.
-   * 
+   *
    *     await Flight.where(
    *       Flight.field("departure"),
    *       "Paris",
@@ -572,30 +580,31 @@ export class Model {
   }
 
   /** Count the number of records of a model or filtered by a field name.
-   *     
+   *
    *     await Flight.count();
-   *     
+   *
    *     await Flight.where("destination", "Dublin").count();
    */
   static async count(field: string = "*") {
     const value = await this._runQuery(
-      this._currentQuery.table(this.table).count(
-        this.formatFieldToDatabase(field) as string,
-      ).toDescription(),
+      this._currentQuery
+        .table(this.table)
+        .count(this.formatFieldToDatabase(field) as string)
+        .toDescription(),
     );
 
     return value[0].count;
   }
 
   /** Find the minimum value of a field from all the selected records.
-   * 
+   *
    *     await Flight.min("flightDuration");
    */
   static async min(field: string) {
     const value = await this._runQuery(
-      this._currentQuery.table(this.table).min(
-        this.formatFieldToDatabase(field) as string,
-      )
+      this._currentQuery
+        .table(this.table)
+        .min(this.formatFieldToDatabase(field) as string)
         .toDescription(),
     );
 
@@ -603,14 +612,14 @@ export class Model {
   }
 
   /** Find the maximum value of a field from all the selected records.
-   * 
+   *
    *     await Flight.max("flightDuration");
    */
   static async max(field: string) {
     const value = await this._runQuery(
-      this._currentQuery.table(this.table).max(
-        this.formatFieldToDatabase(field) as string,
-      )
+      this._currentQuery
+        .table(this.table)
+        .max(this.formatFieldToDatabase(field) as string)
         .toDescription(),
     );
 
@@ -618,14 +627,14 @@ export class Model {
   }
 
   /** Compute the sum of a field's values from all the selected records.
-   * 
+   *
    *     await Flight.sum("flightDuration");
    */
   static async sum(field: string) {
     const value = await this._runQuery(
-      this._currentQuery.table(this.table).sum(
-        this.formatFieldToDatabase(field) as string,
-      )
+      this._currentQuery
+        .table(this.table)
+        .sum(this.formatFieldToDatabase(field) as string)
         .toDescription(),
     );
 
@@ -633,30 +642,30 @@ export class Model {
   }
 
   /** Compute the average value of a field's values from all the selected records.
-   * 
+   *
    *     await Flight.avg("flightDuration");
-   *     
+   *
    *     await Flight.where("destination", "San Francisco").avg("flightDuration");
    */
   static async avg(field: string) {
     const value = await this._runQuery(
-      this._currentQuery.table(this.table).avg(
-        this.formatFieldToDatabase(field) as string,
-      )
+      this._currentQuery
+        .table(this.table)
+        .avg(this.formatFieldToDatabase(field) as string)
         .toDescription(),
     );
 
     return value[0].avg;
   }
 
-  /** Find associated values for the given model for one-to-many and many-to-many relationships. 
-   * 
+  /** Find associated values for the given model for one-to-many and many-to-many relationships.
+   *
    *     class Airport {
    *       static flights() {
    *         return this.hasMany(Flight);
    *       }
    *     }
-   *     
+   *
    *     Airport.where("id", "1").flights();
    */
   static hasMany<T extends ModelSchema>(
@@ -675,11 +684,14 @@ export class Model {
         pivot._pivotsFields[model.name],
       ) as string;
 
-      return pivot.where(pivot.field(pivotField), currentWhereValue).join(
-        pivotOtherModel,
-        pivotOtherModel.field(pivotOtherModel.getComputedPrimaryKey()),
-        pivot.field(pivotOtherModelField),
-      ).get();
+      return pivot
+        .where(pivot.field(pivotField), currentWhereValue)
+        .join(
+          pivotOtherModel,
+          pivotOtherModel.field(pivotOtherModel.getComputedPrimaryKey()),
+          pivot.field(pivotOtherModelField),
+        )
+        .get();
     }
 
     const foreignKeyName = this._findModelForeignKeyField(model);
@@ -699,7 +711,8 @@ export class Model {
         currentWhereValue,
       ).first();
       const currentModelFKValue = currentModelValue[currentModelFKName];
-      return model.where(model.getComputedPrimaryKey(), currentModelFKValue)
+      return model
+        .where(model.getComputedPrimaryKey(), currentModelFKValue)
         .first();
     }
 
@@ -733,7 +746,7 @@ export class Model {
     const modelFK: [string, FieldType] | undefined = Object.entries(
       model.fields,
     ).find(([, type]) => {
-      return (typeof type === "object")
+      return typeof type === "object"
         ? type.relationship?.model === forModel
         : false;
     });
@@ -752,7 +765,7 @@ export class Model {
   }
 
   /** Create a new record for the model.
-   * 
+   *
    *     const flight = new Flight();
    *     flight.departure = "Toronto";
    *     flight.destination = "Paris";
@@ -780,7 +793,7 @@ export class Model {
   }
 
   /** Update this record using its current field values.
-   * 
+   *
    *     flight.destination = "London";
    *     await flight.update();
    */
@@ -795,13 +808,11 @@ export class Model {
       }
     }
 
-    return model.where(modelPK, this._getCurrentPrimaryKey()).update(
-      values,
-    );
+    return model.where(modelPK, this._getCurrentPrimaryKey()).update(values);
   }
 
   /** Delete this record from the database.
-   *  
+   *
    *     await flight.delete();
    */
   async delete() {
