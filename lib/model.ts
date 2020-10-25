@@ -7,7 +7,7 @@ import type {
 } from "./query-builder.ts";
 import type { Database } from "./database.ts";
 import type { PivotModelSchema } from "./model-pivot.ts";
-import { camelCase } from "../deps.ts";
+import { camelCase, snakeCase } from "../deps.ts";
 import {
   FieldAlias,
   FieldValue,
@@ -450,7 +450,7 @@ export class Model {
     let fieldsToUpdate: Values = {};
 
     if (this.timestamps) {
-      fieldsToUpdate[this.formatFieldToDatabase("updatedAt") as string] =
+      fieldsToUpdate[snakeCase("updatedAt") as string] =
         new Date();
     }
 
