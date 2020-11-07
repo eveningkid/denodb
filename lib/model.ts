@@ -23,7 +23,7 @@ import {
 export type ModelSchema = typeof Model;
 
 export type ModelFields = { [key: string]: FieldType };
-export type ModelDefaults = { [field: string]: FieldValue };
+export type ModelDefaults = { [field: string]: FieldValue | (() => any) };
 export type ModelPivotModels = { [modelName: string]: PivotModelSchema };
 export type FieldMatchingTable = { [clientField: string]: string };
 
@@ -766,7 +766,13 @@ export class Model {
       if (this.hasOwnProperty(field)) {
         values[field] = (this as any)[field];
       } else if (model.defaults.hasOwnProperty(field)) {
-        values[field] = model.defaults[field];
+        const defaultValue = model.defaults[field];
+
+        if (typeof defaultValue === "function") {
+          values[field] = defaultValue();
+        } else {
+          values[field] = defaultValue;
+        }
       }
     }
 
