@@ -1,6 +1,6 @@
 import { Translator } from "./translator.ts";
 import type { DatabaseDialect } from "../database.ts";
-import { SQLQueryBuilder, camelCase } from "../../deps.ts";
+import { snakeCase, SQLQueryBuilder } from "../../deps.ts";
 import type { Query, QueryDescription } from "../query-builder.ts";
 import type { FieldAlias } from "../data-types.ts";
 import { addFieldToSchema } from "../helpers/fields.ts";
@@ -221,10 +221,10 @@ export class SQLTranslator extends Translator {
       // Table.fieldName
       if (dotIndex !== -1) {
         return fieldName.slice(0, dotIndex + 1) +
-          camelCase(fieldName.slice(dotIndex + 1));
+          snakeCase(fieldName.slice(dotIndex + 1));
       }
 
-      return camelCase(fieldName);
+      return snakeCase(fieldName);
     } else {
       return Object.entries(fieldName).reduce(
         (prev: any, [alias, fullName]) => {
