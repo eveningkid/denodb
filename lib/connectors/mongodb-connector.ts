@@ -1,5 +1,7 @@
 import { Connector, ConnectorOptions } from "./connector.ts";
 import { QueryDescription } from "../query-builder.ts";
+import { BasicTranslator } from "../translators/basic-translator.ts";
+import { Translator } from "../translators/translator.ts";
 
 type MongoDBOptionsBase = {
   database: string;
@@ -82,6 +84,9 @@ export type MongoDBOptions = ConnectorOptions &
   MongoDBOptionsBase;
 
 export class MongoDBConnector implements Connector {
+  _dialect = 'mongo';
+  _translator: Translator;
+
   _client!: MongoDBClient;
   _database!: MongoDBDatabase;
   _options: MongoDBOptions;
@@ -90,6 +95,8 @@ export class MongoDBConnector implements Connector {
   /** Create a MongoDB connection. */
   constructor(options: MongoDBOptions) {
     this._options = options;
+
+    this._translator = new BasicTranslator();
   }
 
   async _makeConnection() {
@@ -258,7 +265,7 @@ export class MongoDBConnector implements Connector {
         if (queryDescription.orderBy) {
           selectFields.push({
             $sort: Object.entries(queryDescription.orderBy).reduce(
-              (prev, [field, orderDirection]) => {
+              (prev: any, [field, orderDirection]) => {
                 prev[field] = orderDirection === "asc" ? 1 : -1;
                 return prev;
               },

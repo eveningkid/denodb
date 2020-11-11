@@ -3,12 +3,16 @@ import { Connector, ConnectorOptions } from "./connector.ts";
 import { QueryDescription } from "../query-builder.ts";
 import { FieldValue } from '../data-types.ts';
 import { SQLTranslator } from "../translators/sql-translator.ts";
+import { Translator } from "../translators/translator.ts";
+import { DatabaseDialect } from "../database.ts";
 
 export interface SQLite3Options extends ConnectorOptions {
   filepath: string;
 }
 
 export class SQLite3Connector implements Connector {
+  readonly _dialect = 'sqlite3';
+
   _client: SQLiteClient;
   _options: SQLite3Options;
   _translator: SQLTranslator;
@@ -18,7 +22,7 @@ export class SQLite3Connector implements Connector {
   constructor(options: SQLite3Options) {
     this._options = options;
     this._client = new SQLiteClient(this._options.filepath);
-    this._translator = new SQLTranslator("sqlite3");
+    this._translator = new SQLTranslator(this._dialect as DatabaseDialect);
   }
 
   async _makeConnection() {

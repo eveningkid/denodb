@@ -5,11 +5,10 @@ import { Query, QueryDescription } from "../query-builder.ts";
 import { FieldAlias } from '../data-types.ts';
 import { addFieldToSchema } from "../helpers/fields.ts";
 
-export class SQLTranslator extends Translator {
+export class SQLTranslator implements Translator {
   _dialect: DatabaseDialect;
 
   constructor(dialect: DatabaseDialect) {
-    super();
     this._dialect = dialect;
   }
 

@@ -3,6 +3,7 @@ import { Connector, ConnectorOptions } from "./connector.ts";
 import { SQLTranslator } from "../translators/sql-translator.ts";
 import { QueryDescription } from "../query-builder.ts";
 import { Values } from '../data-types.ts';
+import { DatabaseDialect } from "../database.ts";
 
 export interface PostgresOptions extends ConnectorOptions {
   database: string;
@@ -13,6 +14,8 @@ export interface PostgresOptions extends ConnectorOptions {
 }
 
 export class PostgresConnector implements Connector {
+  _dialect: DatabaseDialect = 'postgres';
+
   _client: PostgresClient;
   _options: PostgresOptions;
   _translator: SQLTranslator;
@@ -28,7 +31,7 @@ export class PostgresConnector implements Connector {
       database: options.database,
       port: options.port ?? 5432,
     });
-    this._translator = new SQLTranslator("postgres");
+    this._translator = new SQLTranslator(this._dialect);
   }
 
   async _makeConnection() {
