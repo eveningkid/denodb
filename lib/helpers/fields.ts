@@ -31,8 +31,11 @@ export function addFieldToSchema(
         .getComputedPrimaryType();
 
       if (relationshipPKType === "integer") {
-        const foreignField = table[relationshipPKType](fieldOptions.name)
-          .notNullable();
+        const foreignField = table[relationshipPKType](fieldOptions.name); 
+
+				if (!relationshipPKProps.allowNull) {
+					 foreignField.notNullable();
+				}
 
         if (relationshipPKProps.autoIncrement) {
           foreignField.unsigned();
