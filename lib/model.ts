@@ -23,7 +23,7 @@ import {
 export type ModelSchema = typeof Model;
 
 export type ModelFields = { [key: string]: FieldType };
-export type ModelDefaults = { [field: string]: FieldValue | (() => any) };
+export type ModelDefaults = { [field: string]: FieldValue | (() => FieldValue) };
 export type ModelPivotModels = { [modelName: string]: PivotModelSchema };
 export type FieldMatchingTable = { [clientField: string]: string };
 
