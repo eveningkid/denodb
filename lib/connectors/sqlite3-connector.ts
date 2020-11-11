@@ -55,7 +55,7 @@ export class SQLite3Connector implements Connector {
       const response = this._client.query(subquery + ";", []);
 
       if (index < subqueries.length - 1) {
-        response.done();
+        response.return();
         return [];
       }
 
