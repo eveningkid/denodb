@@ -74,6 +74,7 @@ type MongoDBClient = {
   connectWithUri(uri: string): void;
   connectWithOptions(options: MongoDBClientOptions): void;
   listDatabases(): Promise<string[]>;
+  close(): void;
   database(name: string): MongoDBDatabase;
 };
 
@@ -105,7 +106,7 @@ export class MongoDBConnector implements Connector {
         initMongoDBPlugin,
       } = await import("../../unstable_deps.ts");
       await initMongoDBPlugin(MONGODB_PLUGIN_RELEASE_URL);
-      this._client = new MongoDBClient();
+      this._client = new MongoDBClient() as unknown as MongoDBClient;
     }
 
     if (this._options.hasOwnProperty("uri")) {
