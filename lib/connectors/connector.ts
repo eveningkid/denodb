@@ -1,4 +1,4 @@
-import { QueryDescription } from "../query-builder.ts";
+import type { QueryDescription } from "../query-builder.ts";
 import { Translator } from "../translators/translator.ts";
 
 /** Default connector options. */

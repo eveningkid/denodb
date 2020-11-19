@@ -1,7 +1,7 @@
 import { MySQLClient, MySQLConnection } from "../../deps.ts";
-import { Connector, ConnectorOptions } from "./connector.ts";
+import type { Connector, ConnectorOptions } from "./connector.ts";
 import { SQLTranslator } from "../translators/sql-translator.ts";
-import { QueryDescription } from "../query-builder.ts";
+import type { QueryDescription } from "../query-builder.ts";
 import { DatabaseDialect } from "../database.ts";
 import { Translator } from "../translators/translator.ts";
 
@@ -57,7 +57,7 @@ export class MySQLConnector implements Connector {
 
   async query(
     queryDescription: QueryDescription,
-    client?: MySQLClient | MySQLConnection
+    client?: MySQLClient | MySQLConnection,
   ): Promise<any | any[]> {
     await this._makeConnection();
 

@@ -1,7 +1,7 @@
 import { SQLiteClient } from "../../deps.ts";
-import { Connector, ConnectorOptions } from "./connector.ts";
-import { QueryDescription } from "../query-builder.ts";
-import { FieldValue } from '../data-types.ts';
+import type { Connector, ConnectorOptions } from "./connector.ts";
+import type { QueryDescription } from "../query-builder.ts";
+import type { FieldValue } from "../data-types.ts";
 import { SQLTranslator } from "../translators/sql-translator.ts";
 import { Translator } from "../translators/translator.ts";
 import { DatabaseDialect } from "../database.ts";
@@ -59,7 +59,7 @@ export class SQLite3Connector implements Connector {
       const response = this._client.query(subquery + ";", []);
 
       if (index < subqueries.length - 1) {
-        response.done();
+        response.return();
         return [];
       }
 
@@ -80,7 +80,7 @@ export class SQLite3Connector implements Connector {
             return await Promise.all(
               queryDescription.values.map((values) =>
                 queryDescription.schema.where(values).first()
-              )
+              ),
             );
           }
 

@@ -1,5 +1,5 @@
-import { Connector, ConnectorOptions } from "./connector.ts";
-import { QueryDescription } from "../query-builder.ts";
+import type { Connector, ConnectorOptions } from "./connector.ts";
+import type { QueryDescription } from "../query-builder.ts";
 import { BasicTranslator } from "../translators/basic-translator.ts";
 import { Translator } from "../translators/translator.ts";
 
@@ -62,7 +62,7 @@ type MongoDBCollection = {
         expireAfterSeconds?: number;
         storageEngine?: Object;
       };
-    }[]
+    }[],
   ): Promise<string[]>;
 };
 
@@ -76,12 +76,14 @@ type MongoDBClient = {
   connectWithUri(uri: string): void;
   connectWithOptions(options: MongoDBClientOptions): void;
   listDatabases(): Promise<string[]>;
+  close(): void;
   database(name: string): MongoDBDatabase;
 };
 
-export type MongoDBOptions = ConnectorOptions &
-  (MongoDBOptionsWithURI | MongoDBClientOptions) &
-  MongoDBOptionsBase;
+export type MongoDBOptions =
+  & ConnectorOptions
+  & (MongoDBOptionsWithURI | MongoDBClientOptions)
+  & MongoDBOptionsBase;
 
 export class MongoDBConnector implements Connector {
   _dialect = 'mongo';
@@ -111,7 +113,7 @@ export class MongoDBConnector implements Connector {
         initMongoDBPlugin,
       } = await import("../../unstable_deps.ts");
       await initMongoDBPlugin(MONGODB_PLUGIN_RELEASE_URL);
-      this._client = new MongoDBClient();
+      this._client = new MongoDBClient() as unknown as MongoDBClient;
     }
 
     if (this._options.hasOwnProperty("uri")) {
@@ -168,8 +170,9 @@ export class MongoDBConnector implements Connector {
             break;
         }
 
-        const whereValue =
-          curr.field === "_id" ? { $oid: curr.value } : curr.value;
+        const whereValue = curr.field === "_id"
+          ? { $oid: curr.value }
+          : curr.value;
 
         return {
           ...prev,
@@ -207,7 +210,7 @@ export class MongoDBConnector implements Connector {
         });
 
         const insertedRecords: { $oid: string }[] = await collection.insertMany(
-          values
+          values,
         );
 
         const recordIds = insertedRecords.map((record) => record.$oid);
@@ -218,12 +221,11 @@ export class MongoDBConnector implements Connector {
 
         if (queryDescription.whereIn) {
           wheres[queryDescription.whereIn.field] = {
-            $in:
-              queryDescription.whereIn.field === "_id"
-                ? queryDescription.whereIn.possibleValues.map((value) => ({
-                    $oid: value,
-                  }))
-                : queryDescription.whereIn.possibleValues,
+            $in: queryDescription.whereIn.field === "_id"
+              ? queryDescription.whereIn.possibleValues.map((value) => ({
+                $oid: value,
+              }))
+              : queryDescription.whereIn.possibleValues,
           };
         }
 
@@ -269,7 +271,7 @@ export class MongoDBConnector implements Connector {
                 prev[field] = orderDirection === "asc" ? 1 : -1;
                 return prev;
               },
-              {}
+              {},
             ),
           });
         }

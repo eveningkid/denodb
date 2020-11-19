@@ -1,5 +1,5 @@
-import { Connector } from "./connectors/connector.ts";
-import { ModelSchema, FieldMatchingTable, ModelFields } from "./model.ts";
+import type { Connector } from "./connectors/connector.ts";
+import type { ModelSchema, FieldMatchingTable, ModelFields } from "./model.ts";
 import { QueryBuilder, QueryDescription } from "./query-builder.ts";
 import { formatResultToModelInstance } from "./helpers/results.ts";
 import { Translator } from "./translators/translator.ts";
@@ -132,7 +132,7 @@ export class Database {
   _computeModelFieldMatchings(
     table: string,
     fields: ModelFields,
-    withTimestamps: boolean
+    withTimestamps: boolean,
   ): {
     toClient: FieldMatchingTable;
     toDatabase: FieldMatchingTable;
@@ -155,7 +155,7 @@ export class Database {
         prev[`${table}.${clientFieldName}`] = `${table}.${databaseFieldName}`;
         return prev;
       },
-      {}
+      {},
     );
 
     const toClient: FieldMatchingTable = Object.entries(toDatabase).reduce(
@@ -163,7 +163,7 @@ export class Database {
         ...prev,
         [databaseFieldName]: clientFieldName,
       }),
-      {}
+      {},
     );
 
     return { toDatabase, toClient };

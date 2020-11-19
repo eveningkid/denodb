@@ -7,9 +7,8 @@
  */
 
 export {
-  MongoClient as MongoDBClient,
-  ClientOptions as MongoDBClientOptions,
   Database as MongoDBDatabase,
   init as initMongoDBPlugin,
+  MongoClient as MongoDBClient,
   RELEASE_URL as MONGODB_PLUGIN_RELEASE_URL,
 } from "https://raw.githubusercontent.com/eveningkid/deno_mongo/master/mod.ts";

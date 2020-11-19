@@ -1,8 +1,8 @@
 import { PostgresClient } from "../../deps.ts";
-import { Connector, ConnectorOptions } from "./connector.ts";
+import type { Connector, ConnectorOptions } from "./connector.ts";
 import { SQLTranslator } from "../translators/sql-translator.ts";
-import { QueryDescription } from "../query-builder.ts";
-import { Values } from '../data-types.ts';
+import type { QueryDescription } from "../query-builder.ts";
+import type { Values } from "../data-types.ts";
 import { DatabaseDialect } from "../database.ts";
 
 export interface PostgresOptions extends ConnectorOptions {
