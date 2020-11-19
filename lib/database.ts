@@ -4,7 +4,7 @@ import { QueryBuilder, QueryDescription } from "./query-builder.ts";
 import { formatResultToModelInstance } from "./helpers/results.ts";
 import { Translator } from "./translators/translator.ts";
 
-type DatabaseOptions =
+export type DatabaseOptions =
   Connector
   | {
     connector: Connector;
@@ -16,7 +16,7 @@ export type SyncOptions = {
   drop?: boolean;
 };
 
-export type DatabaseDialect = "postgres" | "sqlite3" | "mysql" | "mongo";
+export type BuiltInDatabaseDialect = "postgres" | "sqlite3" | "mysql" | "mongo";
 
 /** Database client which interacts with an external database instance. */
 export class Database {

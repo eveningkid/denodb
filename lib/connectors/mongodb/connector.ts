@@ -1,7 +1,7 @@
-import type { Connector, ConnectorOptions } from "./connector.ts";
-import type { QueryDescription } from "../query-builder.ts";
-import { BasicTranslator } from "../translators/basic-translator.ts";
-import { Translator } from "../translators/translator.ts";
+import type { Connector, ConnectorOptions } from "../connector.ts";
+import type { QueryDescription } from "../../query-builder.ts";
+import { BasicTranslator } from "../../translators/basic-translator.ts";
+import { Translator } from "../../translators/translator.ts";
 
 type MongoDBOptionsBase = {
   database: string;
@@ -86,7 +86,7 @@ export type MongoDBOptions =
   & MongoDBOptionsBase;
 
 export class MongoDBConnector implements Connector {
-  _dialect = 'mongo';
+  _dialect = "mongo";
   _translator: Translator;
 
   _client!: MongoDBClient;
@@ -111,7 +111,7 @@ export class MongoDBConnector implements Connector {
         MongoDBClient,
         MONGODB_PLUGIN_RELEASE_URL,
         initMongoDBPlugin,
-      } = await import("../../unstable_deps.ts");
+      } = await import("./deps.ts");
       await initMongoDBPlugin(MONGODB_PLUGIN_RELEASE_URL);
       this._client = new MongoDBClient() as unknown as MongoDBClient;
     }

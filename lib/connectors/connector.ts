@@ -9,7 +9,6 @@ export interface ConnectorClient {}
 
 /** Connector interface for a database provider connection. */
 export interface Connector {
-
   /** The DB this connector for */
   readonly _dialect: string;
 

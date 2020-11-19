@@ -1,14 +1,14 @@
 import { Translator } from "./translator.ts";
-import type { DatabaseDialect } from "../database.ts";
+import type { BuiltInDatabaseDialect } from "../database.ts";
 import { snakeCase, SQLQueryBuilder } from "../../deps.ts";
 import type { Query, QueryDescription } from "../query-builder.ts";
 import type { FieldAlias } from "../data-types.ts";
 import { addFieldToSchema } from "../helpers/fields.ts";
 
 export class SQLTranslator implements Translator {
-  _dialect: DatabaseDialect;
+  _dialect: BuiltInDatabaseDialect;
 
-  constructor(dialect: DatabaseDialect) {
+  constructor(dialect: BuiltInDatabaseDialect) {
     this._dialect = dialect;
   }
 
