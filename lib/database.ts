@@ -5,7 +5,7 @@ import { formatResultToModelInstance } from "./helpers/results.ts";
 import { Translator } from "./translators/translator.ts";
 
 export type DatabaseOptions =
-  Connector
+  | Connector
   | {
     connector: Connector;
     debug?: boolean;
@@ -40,25 +40,25 @@ export class Database {
   constructor(
     databaseOptionsOrConnector: DatabaseOptions,
   ) {
-    this._connector =
-      typeof databaseOptionsOrConnector === "object"
-        ? databaseOptionsOrConnector.connector
-        : databaseOptionsOrConnector;
+    this._connector = typeof databaseOptionsOrConnector === "object"
+      ? databaseOptionsOrConnector.connector
+      : databaseOptionsOrConnector;
 
-    this._debug =
-      typeof databaseOptionsOrConnector === "object"
-        ? databaseOptionsOrConnector.debug ?? false
-        : false;
+    this._debug = typeof databaseOptionsOrConnector === "object"
+      ? databaseOptionsOrConnector.debug ?? false
+      : false;
 
     this._translator = this._connector._translator;
     this._queryBuilder = new QueryBuilder();
 
     if (!this._connector) {
-      throw new Error('connector must be defined')
+      throw new Error("connector must be defined");
     }
 
     if (!this._translator) {
-      throw new Error('invalid connector must have _translator property with value')
+      throw new Error(
+        "invalid connector must have _translator property with value",
+      );
     }
   }
 
@@ -137,7 +137,6 @@ export class Database {
     toClient: FieldMatchingTable;
     toDatabase: FieldMatchingTable;
   } {
-
     const modelFields = { ...fields };
     if (withTimestamps) {
       modelFields.updatedAt = "";
@@ -146,10 +145,11 @@ export class Database {
 
     const toDatabase: FieldMatchingTable = Object.entries(modelFields).reduce(
       (prev: any, [clientFieldName, fieldType]) => {
-        const databaseFieldName =
-          typeof fieldType !== "string" && fieldType.as
-            ? fieldType.as
-            : (this._translator.formatFieldNameToDatabase(clientFieldName) as string);
+        const databaseFieldName = typeof fieldType !== "string" && fieldType.as
+          ? fieldType.as
+          : (this._translator.formatFieldNameToDatabase(
+            clientFieldName,
+          ) as string);
 
         prev[clientFieldName] = databaseFieldName;
         prev[`${table}.${clientFieldName}`] = `${table}.${databaseFieldName}`;
