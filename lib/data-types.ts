@@ -74,7 +74,7 @@ export type FieldValue = number | string | boolean | Date | null;
 export type FieldOptions = {
   name: string;
   type: FieldType;
-  defaultValue: FieldValue;
+  defaultValue: FieldValue | (() => FieldValue);
 };
 
 export type Values = { [key: string]: FieldValue };
