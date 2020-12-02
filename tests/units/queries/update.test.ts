@@ -1,4 +1,4 @@
-import { DataTypes, Model, Relationships } from "../../../mod.ts";
+import { DataTypes, Model } from "../../../mod.ts";
 import { ConnectionMySQL } from "../../connection.ts";
 import { assertEquals } from "../../deps.ts";
 
@@ -40,6 +40,7 @@ Deno.test("MySQL - Update test", async function () {
   assertEquals(
     JSON.stringify(article),
     JSON.stringify({
+      id: 1,
       title: "Hello world !",
       content: "first article !",
     }),
