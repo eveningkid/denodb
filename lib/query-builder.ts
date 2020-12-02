@@ -1,6 +1,6 @@
 import type { SQLQueryBuilder } from "../deps.ts";
-import type { FieldValue, FieldAlias, Values } from "./data-types.ts";
-import { ModelFields, ModelDefaults, ModelSchema, Model } from "./model.ts";
+import type { FieldAlias, FieldValue, Values } from "./data-types.ts";
+import { Model, ModelDefaults, ModelFields, ModelSchema } from "./model.ts";
 
 export type Query = string;
 export type Operator = ">" | ">=" | "<" | "<=" | "=";

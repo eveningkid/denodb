@@ -1,5 +1,5 @@
 import type { Connector } from "./connectors/connector.ts";
-import type { ModelSchema, FieldMatchingTable, ModelFields } from "./model.ts";
+import type { FieldMatchingTable, ModelFields, ModelSchema } from "./model.ts";
 import { QueryBuilder, QueryDescription } from "./query-builder.ts";
 import {
   PostgresConnector,
@@ -9,10 +9,10 @@ import {
   SQLite3Connector,
   SQLite3Options,
 } from "./connectors/sqlite3-connector.ts";
-import { MySQLOptions, MySQLConnector } from "./connectors/mysql-connector.ts";
+import { MySQLConnector, MySQLOptions } from "./connectors/mysql-connector.ts";
 import {
-  MongoDBOptions,
   MongoDBConnector,
+  MongoDBOptions,
 } from "./connectors/mongodb-connector.ts";
 import { formatResultToModelInstance } from "./helpers/results.ts";
 import { Translator } from "./translators/translator.ts";

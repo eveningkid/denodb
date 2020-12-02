@@ -11,3 +11,4 @@ design/*.sketch
 *.sqlite
 examples/
 .deno_plugins
+.nova/*
