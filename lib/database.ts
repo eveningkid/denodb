@@ -1,15 +1,17 @@
 import type { Connector } from "./connectors/connector.ts";
-import type { ModelSchema, FieldMatchingTable, ModelFields } from "./model.ts";
+import type { FieldMatchingTable, ModelFields, ModelSchema } from "./model.ts";
 import { QueryBuilder, QueryDescription } from "./query-builder.ts";
 import { formatResultToModelInstance } from "./helpers/results.ts";
 import { Translator } from "./translators/translator.ts";
 
-export type DatabaseOptions =
+type DatabaseOptions = {
+  connector: Connector;
+  debug?: boolean;
+};
+
+export type DatabaseOptionsOrConnector =
   | Connector
-  | {
-    connector: Connector;
-    debug?: boolean;
-  };
+  | DatabaseOptions;
 
 export type SyncOptions = {
   /** If tables should be dropped if they exist. */
@@ -38,28 +40,28 @@ export class Database {
    *     }, { ... });
    */
   constructor(
-    databaseOptionsOrConnector: DatabaseOptions,
+    databaseOptionsOrConnector: DatabaseOptionsOrConnector,
   ) {
-    this._connector = typeof databaseOptionsOrConnector === "object"
-      ? databaseOptionsOrConnector.connector
-      : databaseOptionsOrConnector;
-
-    this._debug = typeof databaseOptionsOrConnector === "object"
-      ? databaseOptionsOrConnector.debug ?? false
-      : false;
-
-    this._translator = this._connector._translator;
-    this._queryBuilder = new QueryBuilder();
+    this._connector =
+      (databaseOptionsOrConnector as DatabaseOptions)?.connector ??
+        databaseOptionsOrConnector;
 
     if (!this._connector) {
-      throw new Error("connector must be defined");
+      throw new Error(`A connector must be defined, got ${this._connector}.`);
     }
+
+    this._debug = (databaseOptionsOrConnector as DatabaseOptions)?.debug ??
+      false;
+
+    this._translator = this._connector._translator;
 
     if (!this._translator) {
       throw new Error(
-        "invalid connector must have _translator property with value",
+        `A connector must provide a translator, got ${this._translator}.`,
       );
     }
+
+    this._queryBuilder = new QueryBuilder();
   }
 
   /** Test database connection. */
