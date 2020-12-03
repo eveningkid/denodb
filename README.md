@@ -121,7 +121,7 @@ Setting up your database with DenoDB is a four-step process:
   ```
 
 ## Migration to connector usage
-Here - [Migration.md](https://github.com/eveningkid/denodb/blob/master/MIGRATION.md)
+Here - [Migration.md](MIGRATION.md)
 
 ## License
 
