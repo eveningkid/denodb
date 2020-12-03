@@ -48,7 +48,7 @@ const db = new Database({dialect: 'postgres', debug: true}, {
 });
 ```
 
-To migrate you only need to do this
+To migrate you need to do the same as before for the connector and add debug flag just like this:
 ```typescript
 import { DataTypes, Database, Model, PostgresConnector } from 'https://deno.land/x/denodb/mod.ts';
 
