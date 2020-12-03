@@ -1,4 +1,4 @@
-import type { Connector } from "./connectors/connector.ts";
+import type { Connector, ConnectorOptions } from "./connectors/connector.ts";
 import type {
   FieldMatchingTable,
   Model,
@@ -8,11 +8,27 @@ import type {
 import { QueryBuilder, QueryDescription } from "./query-builder.ts";
 import { formatResultToModelInstance } from "./helpers/results.ts";
 import { Translator } from "./translators/translator.ts";
+import {
+  MongoDBConnector,
+  MySQLConnector,
+  PostgresConnector,
+  SQLite3Connector,
+} from "./connectors";
+
+export type BuiltInDatabaseDialect = "postgres" | "sqlite3" | "mysql" | "mongo";
 
 type DatabaseOptions = {
   connector: Connector;
   debug?: boolean;
 };
+
+type DialectDatabaseOptions =
+  | BuiltInDatabaseDialect
+  | {
+    dialect: BuiltInDatabaseDialect;
+    debug?: boolean;
+    disableDialectUsageDeprecationWarning?: boolean;
+  };
 
 export type DatabaseOptionsOrConnector =
   | Connector
@@ -23,10 +39,8 @@ export type SyncOptions = {
   drop?: boolean;
 };
 
-export type BuiltInDatabaseDialect = "postgres" | "sqlite3" | "mysql" | "mongo";
-
 /** Database client which interacts with an external database instance. */
-export class Database {
+export class Database implements IDatabase {
   private _connector: Connector;
   private _translator: Translator;
   private _queryBuilder: QueryBuilder;
@@ -35,6 +49,17 @@ export class Database {
 
   /** Initialize database given a dialect and options.
    *
+   * Current Usage:
+   *     const db = new Database(new SQLite3Connector({
+   *       filepath: "./db.sqlite"
+   *     }));
+   *
+   *     const db = new Database({
+   *       connector: new SQLite3Connector({ ... }),
+   *       debug: true
+   *     });
+   *
+   * Dialect usage:
    *     const db = new Database("sqlite3", {
    *       filepath: "./db.sqlite"
    *     });
@@ -45,18 +70,32 @@ export class Database {
    *     }, { ... });
    */
   constructor(
-    databaseOptionsOrConnector: DatabaseOptionsOrConnector,
+    dialectOptionsOrDatabaseOptionsOrConnector:
+      | DatabaseOptionsOrConnector
+      | DialectDatabaseOptions,
+    connectionOptions?: ConnectorOptions,
   ) {
+    if (this._isInDialectForm(dialectOptionsOrDatabaseOptionsOrConnector)) {
+      dialectOptionsOrDatabaseOptionsOrConnector = this
+        ._convertDialectFormToConnectorForm(
+          dialectOptionsOrDatabaseOptionsOrConnector,
+          connectionOptions,
+        );
+    }
+
     this._connector =
-      (databaseOptionsOrConnector as DatabaseOptions)?.connector ??
-        databaseOptionsOrConnector;
+      (dialectOptionsOrDatabaseOptionsOrConnector as DatabaseOptions)
+        ?.connector ??
+        dialectOptionsOrDatabaseOptionsOrConnector;
 
     if (!this._connector) {
       throw new Error(`A connector must be defined, got ${this._connector}.`);
     }
 
-    this._debug = (databaseOptionsOrConnector as DatabaseOptions)?.debug ??
-      false;
+    this._debug =
+      (dialectOptionsOrDatabaseOptionsOrConnector as DatabaseOptions)
+        ?.debug ??
+        false;
 
     this._translator = this._connector._translator;
 
@@ -67,6 +106,69 @@ export class Database {
     }
 
     this._queryBuilder = new QueryBuilder();
+  }
+
+  private static _isInDialectForm(
+    dialectOptionsOrDatabaseOptions:
+      | DatabaseOptionsOrConnector
+      | DialectDatabaseOptions,
+  ): boolean {
+    return (
+      // has dialect as a property
+      typeof dialectOptionsOrDatabaseOptions === "object" &&
+      dialectOptionsOrDatabaseOptions?.dialect
+    ) ||
+      // Only Dialect
+      typeof dialectOptionsOrDatabaseOptions === "string";
+  }
+
+  private static _convertDialectFormToConnectorForm(
+    dialectOptionsOrDatabaseOptions: DialectDatabaseOptions,
+    connectionOptions: ConnectorOptions,
+  ): DatabaseOptions {
+    if (typeof dialectOptionsOrDatabaseOptions === "string") {
+      dialectOptionsOrDatabaseOptions = {
+        dialect: dialectOptionsOrDatabaseOptions,
+        disableDialectUsageDeprecationWarning: false
+      };
+    }
+    if (
+      !dialectOptionsOrDatabaseOptions.disableDialectUsageDeprecationWarning
+    ) {
+      // TODO(rluvaton): Add the migration to connector URL in the warning message
+      // I've added [denodb] at the start of each line in the warning so developer will know from which package this warning came from.
+      console.warn(
+        "[denodb]: DEPRECATION warning, the usage with dialect instead of connector is deprecated and will be removed in future versions.\n" +
+        "[denodb]: If you want to disable this warning pass `disableDialectUsageDeprecationWarning: true` with the dialect in the Database constructor.\n" +
+        "[denodb]: If you want to migrate to the current behavior, visit $URL_HERE$ for help",
+      );
+    }
+
+    let connectorForDialect: Connector;
+
+    switch (dialectOptionsOrDatabaseOptions.dialect) {
+      case "mongo":
+        connectorForDialect = new MongoDBConnector(connectionOptions);
+        break;
+      case "sqlite3":
+        connectorForDialect = new SQLite3Connector(connectionOptions);
+        break;
+      case "mysql":
+        connectorForDialect = new MySQLConnector(connectionOptions);
+        break;
+      case "postgres":
+        connectorForDialect = new PostgresConnector(connectionOptions);
+        break;
+      default:
+        throw new Error(
+          `No connector was found for the given dialect: ${dialectOptionsOrDatabaseOptions.dialect}.`,
+        );
+    }
+
+    return {
+      connector: connectorForDialect,
+      debug: dialectOptionsOrDatabaseOptions.debug,
+    };
   }
 
   /** Test database connection. */
