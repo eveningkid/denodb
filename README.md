@@ -8,14 +8,14 @@
 - [Read the documentation](https://eveningkid.github.io/denodb-docs)
 
 ```typescript
-import { DataTypes, Database, Model } from 'https://deno.land/x/denodb/mod.ts';
+import { DataTypes, Database, Model, PostgresConnector } from 'https://deno.land/x/denodb/mod.ts';
 
-const db = new Database('postgres', {
+const db = new Database(new PostgresConnector({
   host: '...',
   username: 'user',
   password: 'password',
   database: 'airlines',
-});
+}));
 
 class Flight extends Model {
   static table = 'flights';
@@ -74,12 +74,12 @@ Setting up your database with DenoDB is a four-step process:
 
 - **Create a database**, using `Database` (learn more [about clients](#clients)):
   ```typescript
-  const db = new Database('postgres', {
+  const db = new Database(new PostgresConnector({
     host: '...',
     username: 'user',
     password: 'password',
     database: 'airlines',
-  });
+  }));
   ```
 - **Create models**, extending `Model`. `table` and `fields` are both required static attributes:
 
@@ -119,6 +119,9 @@ Setting up your database with DenoDB is a four-step process:
   await User.all();
   await User.deleteById('1');
   ```
+
+## Migration to connector usage
+Here - [Migration.md](https://github.com/eveningkid/denodb/blob/master/MIGRATION.md)
 
 ## License
 
