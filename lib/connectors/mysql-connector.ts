@@ -1,11 +1,11 @@
-import { MySQLClient, MySQLConnection } from "./deps.ts";
-import type { Connector, ConnectorOptions } from "../connector.ts";
+import { MySQLClient, MySQLConnection } from "../../deps.ts";
+import type { Connector, ConnectorOptions } from "./connector.ts";
 import {
   SQLTranslator,
   SupportedSqlDatabaseDialect,
-} from "../../translators/sql-translator.ts";
-import type { QueryDescription } from "../../query-builder.ts";
-import { Translator } from "../../translators/translator.ts";
+} from "../translators/sql-translator.ts";
+import type { QueryDescription } from "../query-builder.ts";
+import { Translator } from "../translators/translator.ts";
 
 export interface MySQLOptions extends ConnectorOptions {
   database: string;
