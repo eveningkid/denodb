@@ -9,10 +9,10 @@ export interface ConnectorClient {}
 
 /** Connector interface for a database provider connection. */
 export interface Connector {
-  /** The DB this connector for */
+  /** Database dialect this connector is for. */
   readonly _dialect: string;
 
-  /** The translator that convert from query to DB specific command for this DB */
+  /** Translator that converts queries to a DB-specific commands. */
   _translator: Translator;
 
   /** Client that maintains an external database connection. */
