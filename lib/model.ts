@@ -263,6 +263,18 @@ export class Model {
     return this;
   }
 
+  /** Alias for `Model.on`, add an event listener for a specific operation/hook.
+   * 
+   *     Flight.addEventListener('created', (model) => console.log('New model:', model));
+   */
+  static addEventListener<T extends ModelSchema>(
+    this: T,
+    eventType: ModelEventType,
+    callback: ModelEventListener,
+  ) {
+    return this.on(eventType, callback);
+  }
+
   static removeEventListener(
     eventType: ModelEventType,
     callback: ModelEventListener,
