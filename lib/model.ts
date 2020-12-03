@@ -35,6 +35,14 @@ export type ModelOptions = {
   database: Database;
 };
 
+export type AggregationResult = Model & {
+  avg?: number;
+  count?: number;
+  max?: number;
+  min?: number;
+  sum?: number;
+};
+
 export type ModelEventType =
   | "creating"
   | "created"
@@ -55,6 +63,8 @@ export type ModelEventListeners = {
 
 /** Model that can be used with a `Database`. */
 export class Model {
+  [attribute: string]: FieldValue | Function
+
   /** Table name as it should be saved in the database. */
   static table = "";
 
@@ -375,7 +385,7 @@ export class Model {
    *     await Flight.select("id").all();
    */
   static async all() {
-    return this.get();
+    return this.get() as Promise<Model[]>;
   }
 
   /** Indicate which fields should be returned/selected from the query.
@@ -400,22 +410,32 @@ export class Model {
    *     
    *     await Flight.create([{ ... }, { ... }]);
    */
+  static async create(values: Values): Promise<Model>;
+  static async create(values: Values[]): Promise<Model[]>;
   static async create(values: Values | Values[]) {
     const insertions = Array.isArray(values) ? values : [values];
 
-    return this._runQuery(
+    const results = await this._runQuery(
       this._currentQuery.table(this.table).create(
         insertions.map((field) =>
           this.formatFieldToDatabase(field)
         ) as Values[],
       ).toDescription(),
     );
+
+    if (!Array.isArray(values) && Array.isArray(results)) {
+      return results[0];
+    }
+
+    return results;
   }
 
   /** Find one or multiple records based on the model primary key.
    * 
    *     await Flight.find("1");
    */
+  static async find(idOrIds: FieldValue): Promise<Model>;
+  static async find(idOrIds: FieldValue[]): Promise<Model[]>;
   static async find(idOrIds: FieldValue | FieldValue[]) {
     const results = await this._runQuery(
       this._currentQuery.table(this.table).find(
@@ -424,7 +444,7 @@ export class Model {
       ).toDescription(),
     );
 
-    return Array.isArray(idOrIds) ? results : results[0];
+    return Array.isArray(idOrIds) ? results : (results as Model[])[0];
   }
 
   /** Order query results based on a field name and an optional direction.
@@ -492,7 +512,7 @@ export class Model {
   static async first() {
     this.take(1);
     const results = await this.get();
-    return results[0];
+    return (results as Model[])[0];
   }
 
   /** Skip n values in the results.
@@ -600,7 +620,7 @@ export class Model {
     return this._runQuery(
       this._currentQuery.table(this.table).update(fieldsToUpdate)
         .toDescription(),
-    );
+    ) as Promise<Model[]>;
   }
 
   /** Delete a record by a primary key value.
@@ -715,7 +735,7 @@ export class Model {
       ).toDescription(),
     );
 
-    return value[0].count;
+    return (value as AggregationResult[])[0].count;
   }
 
   /** Find the minimum value of a field from all the selected records.
@@ -730,7 +750,7 @@ export class Model {
         .toDescription(),
     );
 
-    return value[0].min;
+    return (value as AggregationResult[])[0].min;
   }
 
   /** Find the maximum value of a field from all the selected records.
@@ -745,7 +765,7 @@ export class Model {
         .toDescription(),
     );
 
-    return value[0].max;
+    return (value as AggregationResult[])[0].max;
   }
 
   /** Compute the sum of a field's values from all the selected records.
@@ -760,7 +780,7 @@ export class Model {
         .toDescription(),
     );
 
-    return value[0].sum;
+    return (value as AggregationResult[])[0].sum;
   }
 
   /** Compute the average value of a field's values from all the selected records.
@@ -777,7 +797,7 @@ export class Model {
         .toDescription(),
     );
 
-    return value[0].avg;
+    return (value as AggregationResult[])[0].avg;
   }
 
   /** Find associated values for the given model for one-to-many and many-to-many relationships. 
@@ -793,7 +813,7 @@ export class Model {
   static hasMany<T extends ModelSchema>(
     this: T,
     model: ModelSchema,
-  ): Promise<any[]> {
+  ): Promise<Model | Model[]> {
     const currentWhereValue = this._findCurrentQueryWhereClause();
 
     if (model.name in this.pivot) {
@@ -829,7 +849,8 @@ export class Model {
         this.getComputedPrimaryKey(),
         currentWhereValue,
       ).first();
-      const currentModelFKValue = currentModelValue[currentModelFKName];
+      const currentModelFKValue =
+        currentModelValue[currentModelFKName] as FieldValue;
       return model.where(model.getComputedPrimaryKey(), currentModelFKValue)
         .first();
     }
@@ -907,10 +928,10 @@ export class Model {
       }
     }
 
-    const createdInstance = (await model.create(values))[0];
+    const createdInstance = await model.create(values);
 
     for (const field in createdInstance) {
-      (this as any)[field] = createdInstance[field];
+      (this as any)[field] = (createdInstance as any)[field];
     }
 
     return this;
@@ -932,9 +953,11 @@ export class Model {
       }
     }
 
-    return model.where(modelPK, this._getCurrentPrimaryKey()).update(
+    await model.where(modelPK, this._getCurrentPrimaryKey()).update(
       values,
     );
+
+    return this;
   }
 
   /** Delete this record from the database.
