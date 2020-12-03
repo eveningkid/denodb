@@ -8,12 +8,7 @@ import type {
 import { QueryBuilder, QueryDescription } from "./query-builder.ts";
 import { formatResultToModelInstance } from "./helpers/results.ts";
 import { Translator } from "./translators/translator.ts";
-import {
-  MongoDBConnector,
-  MySQLConnector,
-  PostgresConnector,
-  SQLite3Connector,
-} from "./connectors";
+import { connectorFactory } from "./connectors/factory.ts";
 
 export type BuiltInDatabaseDialect = "postgres" | "sqlite3" | "mysql" | "mongo";
 
@@ -40,7 +35,7 @@ export type SyncOptions = {
 };
 
 /** Database client which interacts with an external database instance. */
-export class Database implements IDatabase {
+export class Database {
   private _connector: Connector;
   private _translator: Translator;
   private _queryBuilder: QueryBuilder;
@@ -75,11 +70,11 @@ export class Database implements IDatabase {
       | DialectDatabaseOptions,
     connectionOptions?: ConnectorOptions,
   ) {
-    if (this._isInDialectForm(dialectOptionsOrDatabaseOptionsOrConnector)) {
-      dialectOptionsOrDatabaseOptionsOrConnector = this
+    if (Database._isInDialectForm(dialectOptionsOrDatabaseOptionsOrConnector)) {
+      dialectOptionsOrDatabaseOptionsOrConnector = Database
         ._convertDialectFormToConnectorForm(
-          dialectOptionsOrDatabaseOptionsOrConnector,
-          connectionOptions,
+          dialectOptionsOrDatabaseOptionsOrConnector as DialectDatabaseOptions,
+          connectionOptions as ConnectorOptions,
         );
     }
 
@@ -125,50 +120,48 @@ export class Database implements IDatabase {
   private static _convertDialectFormToConnectorForm(
     dialectOptionsOrDatabaseOptions: DialectDatabaseOptions,
     connectionOptions: ConnectorOptions,
+    fromConstructor: boolean = true,
   ): DatabaseOptions {
     if (typeof dialectOptionsOrDatabaseOptions === "string") {
       dialectOptionsOrDatabaseOptions = {
         dialect: dialectOptionsOrDatabaseOptions,
-        disableDialectUsageDeprecationWarning: false
       };
     }
     if (
+      fromConstructor &&
       !dialectOptionsOrDatabaseOptions.disableDialectUsageDeprecationWarning
     ) {
-      // TODO(rluvaton): Add the migration to connector URL in the warning message
       // I've added [denodb] at the start of each line in the warning so developer will know from which package this warning came from.
       console.warn(
         "[denodb]: DEPRECATION warning, the usage with dialect instead of connector is deprecated and will be removed in future versions.\n" +
-        "[denodb]: If you want to disable this warning pass `disableDialectUsageDeprecationWarning: true` with the dialect in the Database constructor.\n" +
-        "[denodb]: If you want to migrate to the current behavior, visit $URL_HERE$ for help",
+          "[denodb]: If you want to disable this warning pass `disableDialectUsageDeprecationWarning: true` with the dialect in the Database constructor.\n" +
+          "[denodb]: If you want to migrate to the current behavior, visit https://github.com/eveningkid/denodb/blob/master/MIGRATION.md#dialect-to-connector for help",
       );
     }
 
-    let connectorForDialect: Connector;
-
-    switch (dialectOptionsOrDatabaseOptions.dialect) {
-      case "mongo":
-        connectorForDialect = new MongoDBConnector(connectionOptions);
-        break;
-      case "sqlite3":
-        connectorForDialect = new SQLite3Connector(connectionOptions);
-        break;
-      case "mysql":
-        connectorForDialect = new MySQLConnector(connectionOptions);
-        break;
-      case "postgres":
-        connectorForDialect = new PostgresConnector(connectionOptions);
-        break;
-      default:
-        throw new Error(
-          `No connector was found for the given dialect: ${dialectOptionsOrDatabaseOptions.dialect}.`,
-        );
-    }
-
     return {
-      connector: connectorForDialect,
+      connector: connectorFactory(
+        dialectOptionsOrDatabaseOptions.dialect,
+        connectionOptions,
+      ),
       debug: dialectOptionsOrDatabaseOptions.debug,
     };
+  }
+
+  static forDialect(
+    dialectOptionsOrDatabaseOptions: Omit<
+      DialectDatabaseOptions,
+      "disableDialectUsageDeprecationWarning"
+    >,
+    connectionOptions: ConnectorOptions,
+  ): Database {
+    return new Database(
+      Database._convertDialectFormToConnectorForm(
+        dialectOptionsOrDatabaseOptions as DialectDatabaseOptions,
+        connectionOptions,
+        false,
+      ),
+    );
   }
 
   /** Test database connection. */

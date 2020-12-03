@@ -20,7 +20,7 @@ export class MySQLConnector implements Connector {
 
   _client: MySQLClient;
   _options: MySQLOptions;
-  _translator: Translator;
+  _translator: SQLTranslator;
   _connected = false;
 
   /** Create a MySQL connection. */
