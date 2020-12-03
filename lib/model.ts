@@ -1,35 +1,56 @@
 import type {
-  QueryBuilder,
-  OrderDirection,
   Operator,
-  QueryDescription,
   OrderByClauses,
+  OrderDirection,
+  QueryBuilder,
+  QueryDescription,
+  QueryType,
 } from "./query-builder.ts";
 import type { Database } from "./database.ts";
 import type { PivotModelSchema } from "./model-pivot.ts";
 import { camelCase } from "../deps.ts";
 import {
-  FieldAlias,
-  FieldValue,
-  FieldType,
-  Values,
-  FieldOptions,
-  FieldTypeString,
   DataTypes,
+  FieldAlias,
+  FieldOptions,
   FieldProps,
+  FieldType,
+  FieldTypeString,
+  FieldValue,
+  Values,
 } from "./data-types.ts";
 
 /** Represents a Model class, not an instance. */
 export type ModelSchema = typeof Model;
 
 export type ModelFields = { [key: string]: FieldType };
-export type ModelDefaults = { [field: string]: FieldValue | (() => FieldValue) };
+export type ModelDefaults = {
+  [field: string]: FieldValue | (() => FieldValue);
+};
 export type ModelPivotModels = { [modelName: string]: PivotModelSchema };
 export type FieldMatchingTable = { [clientField: string]: string };
 
 export type ModelOptions = {
   queryBuilder: QueryBuilder;
   database: Database;
+};
+
+export type ModelEventType =
+  | "creating"
+  | "created"
+  | "updating"
+  | "updated"
+  | "deleting"
+  | "deleted";
+
+export type ModelEventListenerWithModel = (model: Model) => void;
+export type ModelEventListenerWithoutModel = (model?: Model) => void;
+export type ModelEventListener =
+  | ModelEventListenerWithoutModel
+  | ModelEventListenerWithModel;
+
+export type ModelEventListeners = {
+  [eventType in ModelEventType]?: ModelEventListener[];
 };
 
 /** Model that can be used with a `Database`. */
@@ -75,6 +96,9 @@ export class Model {
 
   /** Options this model was initialized with. */
   private static _options: ModelOptions;
+
+  /** Attached event listeners. */
+  private static _listeners: ModelEventListeners = {};
 
   /** Link a model to a database. Should not be called from a child model. */
   static _link(
@@ -176,7 +200,18 @@ export class Model {
   /** Build the current query and run it on the associated database. */
   private static async _runQuery(query: QueryDescription) {
     this._currentQuery = this._queryBuilder.queryForSchema(this);
-    return this._database.query(query);
+
+    if (query.type) {
+      this._runEventListeners(query.type);
+    }
+
+    const results = await this._database.query(query);
+
+    if (query.type) {
+      this._runEventListeners(query.type, results);
+    }
+
+    return results;
   }
 
   /** Format a field or an object of fields, following a field matching table.
@@ -208,6 +243,90 @@ export class Model {
   /** Format field or an object of fields from database to client. */
   static formatFieldToClient(field: string | Object) {
     return this._formatField(this._fieldMatching.toClient, field, camelCase);
+  }
+
+  /** Add an event listener for a specific operation/hook.
+   * 
+   *     Flight.on('created', (model) => console.log('New model:', model));
+   */
+  static on<T extends ModelSchema>(
+    this: T,
+    eventType: ModelEventType,
+    callback: ModelEventListener,
+  ) {
+    if (!(eventType in this._listeners)) {
+      this._listeners[eventType] = [];
+    }
+
+    this._listeners[eventType]!.push(callback);
+
+    return this;
+  }
+
+  static removeEventListener(
+    eventType: ModelEventType,
+    callback: ModelEventListener,
+  ) {
+    if (!(eventType in this._listeners)) {
+      throw new Error(
+        `There is no event listener for ${eventType}. You might be trying to remove a listener that you haven't added with Model.on('${eventType}', ...).`,
+      );
+    }
+
+    this._listeners[eventType] = this._listeners[eventType]!.filter((
+      listener,
+    ) => listener !== callback);
+
+    return this;
+  }
+
+  /** Run event listeners given a query type and results. */
+  private static _runEventListeners(
+    queryType: QueryType,
+    instances?: Model | Model[],
+  ) {
+    // -ing => present, -ed => past
+    const isPastEvent = !!instances;
+
+    let eventType: ModelEventType;
+    switch (queryType) {
+      case "insert":
+        eventType = isPastEvent ? "created" : "creating";
+        break;
+
+      case "update":
+        eventType = isPastEvent ? "updated" : "updating";
+        break;
+
+      case "delete":
+        eventType = isPastEvent ? "deleted" : "deleting";
+        break;
+
+      default:
+        return;
+    }
+
+    const listeners = this._listeners[eventType];
+
+    if (!listeners) {
+      return;
+    }
+
+    for (const listener of listeners) {
+      if (instances) {
+        if (Array.isArray(instances)) {
+          if (instances.length > 0) {
+            instances.forEach(listener);
+          } else {
+            (listener as ModelEventListenerWithoutModel)();
+          }
+        } else {
+          listener(instances);
+        }
+      } else {
+        (listener as ModelEventListenerWithoutModel)();
+      }
+    }
   }
 
   /** Return the table name followed by a field name. Can also rename a field using `nameAs`.
