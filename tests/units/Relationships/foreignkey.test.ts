@@ -3,7 +3,7 @@ import { getMySQLConnection } from "../../connection.ts";
 import { assertEquals } from "../../deps.ts";
 
 class Owner extends Model {
-  static table = "foreingkeyowners";
+  static table = "foreignkeyowners";
   static timestamps = false;
 
   static fields = {
@@ -16,7 +16,7 @@ class Owner extends Model {
 }
 
 class Business extends Model {
-  static table = "foreingkeybusinesses";
+  static table = "foreignkeybusinesses";
   static timestamps = false;
 
   static fields = {
@@ -33,7 +33,7 @@ class Business extends Model {
   }
 }
 
-Deno.test("MySQL - Forein Key test", async function () {
+Deno.test("MySQL: Foreign key test", async function () {
   const connection = getMySQLConnection();
 
   await connection.link([Owner, Business]);

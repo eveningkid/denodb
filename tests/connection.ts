@@ -1,7 +1,8 @@
-import { Database } from "../mod.ts";
 import { config } from "https://deno.land/x/dotenv/mod.ts";
+import { Database } from "../mod.ts";
 
 const env = config();
+
 const defaultMySQLOptions = {
   database: "test",
   host: "127.0.0.1",
@@ -11,8 +12,6 @@ const defaultMySQLOptions = {
 };
 
 const getMySQLConnection = (options = {}, debug = true): Database => {
-  const env = config();
-
   const connection: Database = new Database(
     { dialect: "mysql", debug },
     {
