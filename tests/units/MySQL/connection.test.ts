@@ -1,8 +1,8 @@
-import { ConnectionMySQL } from "../../connection.ts";
+import { getMySQLConnection } from "../../connection.ts";
 import { assertEquals } from "../../deps.ts";
 
 Deno.test("MySQL connection", async function () {
-  const connection = ConnectionMySQL();
+  const connection = getMySQLConnection();
   const ping = await connection.ping();
   await connection.close();
 

@@ -12,3 +12,4 @@ design/*.sketch
 examples/
 .deno_plugins
 .nova/*
+tsconfig.json

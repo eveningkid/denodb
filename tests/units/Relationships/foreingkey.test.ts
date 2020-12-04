@@ -1,9 +1,10 @@
 import { DataTypes, Model, Relationships } from "../../../mod.ts";
-import { ConnectionMySQL } from "../../connection.ts";
+import { getMySQLConnection } from "../../connection.ts";
 import { assertEquals } from "../../deps.ts";
 
 class Owner extends Model {
-  static table = "foreinkeyowners";
+  static table = "foreingkeyowners";
+  static timestamps = false;
 
   static fields = {
     id: {
@@ -15,7 +16,8 @@ class Owner extends Model {
 }
 
 class Business extends Model {
-  static table = "foreinkeybusinesses";
+  static table = "foreingkeybusinesses";
+  static timestamps = false;
 
   static fields = {
     id: {
@@ -32,7 +34,7 @@ class Business extends Model {
 }
 
 Deno.test("MySQL - Forein Key test", async function () {
-  const connection = ConnectionMySQL();
+  const connection = getMySQLConnection();
 
   await connection.link([Owner, Business]);
 
@@ -50,9 +52,6 @@ Deno.test("MySQL - Forein Key test", async function () {
   });
 
   const OwnerTest = await Business.where("id", "1").owner();
-
-  delete OwnerTest.updatedAt;
-  delete OwnerTest.createdAt;
 
   await connection.close();
 

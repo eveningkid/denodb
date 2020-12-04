@@ -1,9 +1,10 @@
 import { DataTypes, Model } from "../../../mod.ts";
-import { ConnectionMySQL } from "../../connection.ts";
+import { getMySQLConnection } from "../../connection.ts";
 import { assertEquals } from "../../deps.ts";
 
 class Article extends Model {
   static table = "updatearticle";
+  static timestamps = false;
 
   static fields = {
     id: {
@@ -17,7 +18,7 @@ class Article extends Model {
 }
 
 Deno.test("MySQL - Update test", async function () {
-  const connection = ConnectionMySQL();
+  const connection = getMySQLConnection();
 
   await connection.link([Article]);
 
@@ -31,9 +32,6 @@ Deno.test("MySQL - Update test", async function () {
   await Article.where({ id: 1 }).update({ content: "first article !" });
 
   const article = await Article.where({ id: 1 }).first();
-
-  delete article.updatedAt;
-  delete article.createdAt;
 
   await connection.close();
 

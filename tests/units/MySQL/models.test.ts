@@ -1,13 +1,13 @@
 import { DataTypes, Model } from "../../../mod.ts";
-import { ConnectionMySQL } from "../../connection.ts";
+import { getMySQLConnection } from "../../connection.ts";
 import { assertEquals } from "../../deps.ts";
 
 Deno.test("MySQL One Model", async function () {
-  const connection = ConnectionMySQL();
+  const connection = getMySQLConnection();
 
   class Flight extends Model {
     static table = "flights";
-    static timestamps = true;
+    static timestamps = false;
 
     static fields = {
       id: { primaryKey: true, autoIncrement: true },
@@ -34,9 +34,6 @@ Deno.test("MySQL One Model", async function () {
   const result = await Flight.where({ departure: "Paris" }).first();
 
   await connection.close();
-
-  delete result.updatedAt;
-  delete result.createdAt;
 
   assertEquals(
     JSON.stringify(result),
