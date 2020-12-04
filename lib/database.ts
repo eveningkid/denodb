@@ -1,5 +1,10 @@
 import type { Connector } from "./connectors/connector.ts";
-import type { FieldMatchingTable, ModelFields, ModelSchema } from "./model.ts";
+import type {
+  FieldMatchingTable,
+  Model,
+  ModelFields,
+  ModelSchema,
+} from "./model.ts";
 import { QueryBuilder, QueryDescription } from "./query-builder.ts";
 import {
   PostgresConnector,
@@ -151,7 +156,7 @@ export class Database {
    *
    *     await db.query("SELECT * FROM `flights`");
    */
-  async query(query: QueryDescription): Promise<any> {
+  async query(query: QueryDescription): Promise<Model | Model[]> {
     if (this._debug) {
       console.log(query);
     }

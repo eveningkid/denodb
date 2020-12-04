@@ -4,6 +4,7 @@ import type {
   OrderDirection,
   QueryBuilder,
   QueryDescription,
+  QueryType,
 } from "./query-builder.ts";
 import type { Database } from "./database.ts";
 import type { PivotModelSchema } from "./model-pivot.ts";
@@ -34,8 +35,36 @@ export type ModelOptions = {
   database: Database;
 };
 
+export type AggregationResult = Model & {
+  avg?: number;
+  count?: number;
+  max?: number;
+  min?: number;
+  sum?: number;
+};
+
+export type ModelEventType =
+  | "creating"
+  | "created"
+  | "updating"
+  | "updated"
+  | "deleting"
+  | "deleted";
+
+export type ModelEventListenerWithModel = (model: Model) => void;
+export type ModelEventListenerWithoutModel = (model?: Model) => void;
+export type ModelEventListener =
+  | ModelEventListenerWithoutModel
+  | ModelEventListenerWithModel;
+
+export type ModelEventListeners = {
+  [eventType in ModelEventType]?: ModelEventListener[];
+};
+
 /** Model that can be used with a `Database`. */
 export class Model {
+  [attribute: string]: FieldValue | Function
+
   /** Table name as it should be saved in the database. */
   static table = "";
 
@@ -77,6 +106,9 @@ export class Model {
 
   /** Options this model was initialized with. */
   private static _options: ModelOptions;
+
+  /** Attached event listeners. */
+  private static _listeners: ModelEventListeners = {};
 
   /** Link a model to a database. Should not be called from a child model. */
   static _link(options: ModelOptions) {
@@ -177,7 +209,18 @@ export class Model {
   /** Build the current query and run it on the associated database. */
   private static async _runQuery(query: QueryDescription) {
     this._currentQuery = this._queryBuilder.queryForSchema(this);
-    return this._database.query(query);
+
+    if (query.type) {
+      this._runEventListeners(query.type);
+    }
+
+    const results = await this._database.query(query);
+
+    if (query.type) {
+      this._runEventListeners(query.type, results);
+    }
+
+    return results;
   }
 
   /** Format a field or an object of fields, following a field matching table.
@@ -209,6 +252,102 @@ export class Model {
   /** Format field or an object of fields from database to client. */
   static formatFieldToClient(field: string | Object) {
     return this._formatField(this._fieldMatching.toClient, field, camelCase);
+  }
+
+  /** Add an event listener for a specific operation/hook.
+   * 
+   *     Flight.on('created', (model) => console.log('New model:', model));
+   */
+  static on<T extends ModelSchema>(
+    this: T,
+    eventType: ModelEventType,
+    callback: ModelEventListener,
+  ) {
+    if (!(eventType in this._listeners)) {
+      this._listeners[eventType] = [];
+    }
+
+    this._listeners[eventType]!.push(callback);
+
+    return this;
+  }
+
+  /** Alias for `Model.on`, add an event listener for a specific operation/hook.
+   * 
+   *     Flight.addEventListener('created', (model) => console.log('New model:', model));
+   */
+  static addEventListener<T extends ModelSchema>(
+    this: T,
+    eventType: ModelEventType,
+    callback: ModelEventListener,
+  ) {
+    return this.on(eventType, callback);
+  }
+
+  static removeEventListener(
+    eventType: ModelEventType,
+    callback: ModelEventListener,
+  ) {
+    if (!(eventType in this._listeners)) {
+      throw new Error(
+        `There is no event listener for ${eventType}. You might be trying to remove a listener that you haven't added with Model.on('${eventType}', ...).`,
+      );
+    }
+
+    this._listeners[eventType] = this._listeners[eventType]!.filter((
+      listener,
+    ) => listener !== callback);
+
+    return this;
+  }
+
+  /** Run event listeners given a query type and results. */
+  private static _runEventListeners(
+    queryType: QueryType,
+    instances?: Model | Model[],
+  ) {
+    // -ing => present, -ed => past
+    const isPastEvent = !!instances;
+
+    let eventType: ModelEventType;
+    switch (queryType) {
+      case "insert":
+        eventType = isPastEvent ? "created" : "creating";
+        break;
+
+      case "update":
+        eventType = isPastEvent ? "updated" : "updating";
+        break;
+
+      case "delete":
+        eventType = isPastEvent ? "deleted" : "deleting";
+        break;
+
+      default:
+        return;
+    }
+
+    const listeners = this._listeners[eventType];
+
+    if (!listeners) {
+      return;
+    }
+
+    for (const listener of listeners) {
+      if (instances) {
+        if (Array.isArray(instances)) {
+          if (instances.length > 0) {
+            instances.forEach(listener);
+          } else {
+            (listener as ModelEventListenerWithoutModel)();
+          }
+        } else {
+          listener(instances);
+        }
+      } else {
+        (listener as ModelEventListenerWithoutModel)();
+      }
+    }
   }
 
   /** Return the table name followed by a field name. Can also rename a field using `nameAs`.
@@ -245,7 +384,7 @@ export class Model {
    *     await Flight.select("id").all();
    */
   static async all() {
-    return this.get();
+    return this.get() as Promise<Model[]>;
   }
 
   /** Indicate which fields should be returned/selected from the query.
@@ -270,25 +409,32 @@ export class Model {
    *
    *     await Flight.create([{ ... }, { ... }]);
    */
+  static async create(values: Values): Promise<Model>;
+  static async create(values: Values[]): Promise<Model[]>;
   static async create(values: Values | Values[]) {
     const insertions = Array.isArray(values) ? values : [values];
 
-    return this._runQuery(
-      this._currentQuery
-        .table(this.table)
-        .create(
-          insertions.map((field) =>
-            this.formatFieldToDatabase(field)
-          ) as Values[],
-        )
-        .toDescription(),
+    const results = await this._runQuery(
+      this._currentQuery.table(this.table).create(
+        insertions.map((field) =>
+          this.formatFieldToDatabase(field)
+        ) as Values[],
+      ).toDescription(),
     );
+
+    if (!Array.isArray(values) && Array.isArray(results)) {
+      return results[0];
+    }
+
+    return results;
   }
 
   /** Find one or multiple records based on the model primary key.
    *
    *     await Flight.find("1");
    */
+  static async find(idOrIds: FieldValue): Promise<Model>;
+  static async find(idOrIds: FieldValue[]): Promise<Model[]>;
   static async find(idOrIds: FieldValue | FieldValue[]) {
     const results = await this._runQuery(
       this._currentQuery
@@ -300,7 +446,7 @@ export class Model {
         .toDescription(),
     );
 
-    return Array.isArray(idOrIds) ? results : results[0];
+    return Array.isArray(idOrIds) ? results : (results as Model[])[0];
   }
 
   /** Order query results based on a field name and an optional direction.
@@ -370,7 +516,7 @@ export class Model {
   static async first() {
     this.take(1);
     const results = await this.get();
-    return results[0];
+    return (results as Model[])[0];
   }
 
   /** Skip n values in the results.
@@ -479,7 +625,7 @@ export class Model {
         .table(this.table)
         .update(fieldsToUpdate)
         .toDescription(),
-    );
+    ) as Promise<Model[]>;
   }
 
   /** Delete a record by a primary key value.
@@ -595,7 +741,7 @@ export class Model {
         .toDescription(),
     );
 
-    return value[0].count;
+    return (value as AggregationResult[])[0].count;
   }
 
   /** Find the minimum value of a field from all the selected records.
@@ -610,7 +756,7 @@ export class Model {
         .toDescription(),
     );
 
-    return value[0].min;
+    return (value as AggregationResult[])[0].min;
   }
 
   /** Find the maximum value of a field from all the selected records.
@@ -625,7 +771,7 @@ export class Model {
         .toDescription(),
     );
 
-    return value[0].max;
+    return (value as AggregationResult[])[0].max;
   }
 
   /** Compute the sum of a field's values from all the selected records.
@@ -640,7 +786,7 @@ export class Model {
         .toDescription(),
     );
 
-    return value[0].sum;
+    return (value as AggregationResult[])[0].sum;
   }
 
   /** Compute the average value of a field's values from all the selected records.
@@ -657,7 +803,7 @@ export class Model {
         .toDescription(),
     );
 
-    return value[0].avg;
+    return (value as AggregationResult[])[0].avg;
   }
 
   /** Find associated values for the given model for one-to-many and many-to-many relationships.
@@ -673,7 +819,7 @@ export class Model {
   static hasMany<T extends ModelSchema>(
     this: T,
     model: ModelSchema,
-  ): Promise<any[]> {
+  ): Promise<Model | Model[]> {
     const currentWhereValue = this._findCurrentQueryWhereClause();
 
     if (model.name in this.pivot) {
@@ -712,9 +858,9 @@ export class Model {
         this.getComputedPrimaryKey(),
         currentWhereValue,
       ).first();
-      const currentModelFKValue = currentModelValue[currentModelFKName];
-      return model
-        .where(model.getComputedPrimaryKey(), currentModelFKValue)
+      const currentModelFKValue =
+        currentModelValue[currentModelFKName] as FieldValue;
+      return model.where(model.getComputedPrimaryKey(), currentModelFKValue)
         .first();
     }
 
@@ -791,10 +937,10 @@ export class Model {
       }
     }
 
-    const createdInstance = (await model.create(values))[0];
+    const createdInstance = await model.create(values);
 
     for (const field in createdInstance) {
-      (this as any)[field] = createdInstance[field];
+      (this as any)[field] = (createdInstance as any)[field];
     }
 
     return this;
@@ -816,7 +962,11 @@ export class Model {
       }
     }
 
-    return model.where(modelPK, this._getCurrentPrimaryKey()).update(values);
+    await model.where(modelPK, this._getCurrentPrimaryKey()).update(
+      values,
+    );
+
+    return this;
   }
 
   /** Delete this record from the database.
