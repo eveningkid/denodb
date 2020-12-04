@@ -36,7 +36,7 @@ class Business extends Model {
 Deno.test("MySQL: Foreign key test", async function () {
   const connection = getMySQLConnection();
 
-  await connection.link([Owner, Business]);
+  connection.link([Owner, Business]);
 
   await connection.sync({ drop: false });
 
