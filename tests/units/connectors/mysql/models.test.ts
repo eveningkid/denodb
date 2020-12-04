@@ -1,8 +1,8 @@
-import { DataTypes, Model } from "../../../mod.ts";
-import { getMySQLConnection } from "../../connection.ts";
-import { assertEquals } from "../../deps.ts";
+import { DataTypes, Model } from "../../../../mod.ts";
+import { getMySQLConnection } from "../../../connection.ts";
+import { assertEquals } from "../../../deps.ts";
 
-Deno.test("MySQL One Model", async function () {
+Deno.test("MySQL: Single model", async function () {
   const connection = getMySQLConnection();
 
   class Flight extends Model {
@@ -30,7 +30,6 @@ Deno.test("MySQL One Model", async function () {
     destination: "Tokyo",
   });
 
-  // Get
   const result = await Flight.where({ departure: "Paris" }).first();
 
   await connection.close();
