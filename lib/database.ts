@@ -12,7 +12,7 @@ import { connectorFactory } from "./connectors/factory.ts";
 
 export type BuiltInDatabaseDialect = "postgres" | "sqlite3" | "mysql" | "mongo";
 
-type DatabaseOptions = {
+type ConnectorDatabaseOptions = {
   connector: Connector;
   debug?: boolean;
 };
@@ -27,7 +27,11 @@ type DialectDatabaseOptions =
 
 export type DatabaseOptionsOrConnector =
   | Connector
-  | DatabaseOptions;
+  | ConnectorDatabaseOptions;
+
+export type DatabaseOptions =
+  | DatabaseOptionsOrConnector
+  | DialectDatabaseOptions;
 
 export type SyncOptions = {
   /** If tables should be dropped if they exist. */
@@ -65,9 +69,7 @@ export class Database {
    *     }, { ... });
    */
   constructor(
-    dialectOptionsOrDatabaseOptionsOrConnector:
-      | DatabaseOptionsOrConnector
-      | DialectDatabaseOptions,
+    dialectOptionsOrDatabaseOptionsOrConnector: DatabaseOptions,
     connectionOptions?: ConnectorOptions,
   ) {
     if (Database._isInDialectForm(dialectOptionsOrDatabaseOptionsOrConnector)) {
@@ -79,7 +81,7 @@ export class Database {
     }
 
     this._connector =
-      (dialectOptionsOrDatabaseOptionsOrConnector as DatabaseOptions)
+      (dialectOptionsOrDatabaseOptionsOrConnector as ConnectorDatabaseOptions)
         ?.connector ??
         dialectOptionsOrDatabaseOptionsOrConnector;
 
@@ -88,7 +90,7 @@ export class Database {
     }
 
     this._debug =
-      (dialectOptionsOrDatabaseOptionsOrConnector as DatabaseOptions)
+      (dialectOptionsOrDatabaseOptionsOrConnector as ConnectorDatabaseOptions)
         ?.debug ??
         false;
 
@@ -104,13 +106,12 @@ export class Database {
   }
 
   private static _isInDialectForm(
-    dialectOptionsOrDatabaseOptions:
-      | DatabaseOptionsOrConnector
-      | DialectDatabaseOptions,
+    dialectOptionsOrDatabaseOptions: DatabaseOptions,
   ): boolean {
     return (
       // has dialect as a property
       typeof dialectOptionsOrDatabaseOptions === "object" &&
+      // @ts-ignore
       dialectOptionsOrDatabaseOptions?.dialect
     ) ||
       // Only Dialect
@@ -121,7 +122,7 @@ export class Database {
     dialectOptionsOrDatabaseOptions: DialectDatabaseOptions,
     connectionOptions: ConnectorOptions,
     fromConstructor: boolean = true,
-  ): DatabaseOptions {
+  ): ConnectorDatabaseOptions {
     if (typeof dialectOptionsOrDatabaseOptions === "string") {
       dialectOptionsOrDatabaseOptions = {
         dialect: dialectOptionsOrDatabaseOptions,
