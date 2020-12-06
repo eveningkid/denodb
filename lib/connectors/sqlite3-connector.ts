@@ -2,17 +2,15 @@ import { SQLiteClient } from "../../deps.ts";
 import type { Connector, ConnectorOptions } from "./connector.ts";
 import type { QueryDescription } from "../query-builder.ts";
 import type { FieldValue } from "../data-types.ts";
-import {
-  SQLTranslator,
-  SupportedSqlDatabaseDialect,
-} from "../translators/sql-translator.ts";
+import { SQLTranslator } from "../translators/sql-translator.ts";
+import type { SupportedSQLDatabaseDialect } from "../translators/sql-translator.ts";
 
 export interface SQLite3Options extends ConnectorOptions {
   filepath: string;
 }
 
 export class SQLite3Connector implements Connector {
-  _dialect: SupportedSqlDatabaseDialect = "sqlite3";
+  _dialect: SupportedSQLDatabaseDialect = "sqlite3";
 
   _client: SQLiteClient;
   _options: SQLite3Options;

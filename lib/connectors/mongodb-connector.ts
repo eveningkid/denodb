@@ -3,7 +3,6 @@ import type { MongoDBClientOptions, MongoDBDatabase } from "../../deps.ts";
 import type { Connector, ConnectorOptions } from "./connector.ts";
 import type { QueryDescription } from "../query-builder.ts";
 import { BasicTranslator } from "../translators/basic-translator.ts";
-import { Translator } from "../translators/translator.ts";
 
 type MongoDBOptionsBase = {
   database: string;
@@ -20,8 +19,8 @@ export type MongoDBOptions =
 
 export class MongoDBConnector implements Connector {
   _dialect = "mongo";
-  _translator: Translator;
 
+  _translator: BasicTranslator;
   _client: MongoDBClient;
   _database?: MongoDBDatabase;
   _options: MongoDBOptions;
@@ -31,7 +30,6 @@ export class MongoDBConnector implements Connector {
   constructor(options: MongoDBOptions) {
     this._options = options;
     this._client = new MongoDBClient();
-
     this._translator = new BasicTranslator();
   }
 

@@ -111,8 +111,10 @@ export class Database {
     return (
       // has dialect as a property
       typeof dialectOptionsOrDatabaseOptions === "object" &&
-      // @ts-ignore
-      dialectOptionsOrDatabaseOptions?.dialect
+      !!(dialectOptionsOrDatabaseOptions as Exclude<
+        DialectDatabaseOptions,
+        BuiltInDatabaseDialect
+      >)?.dialect
     ) ||
       // Only Dialect
       typeof dialectOptionsOrDatabaseOptions === "string";

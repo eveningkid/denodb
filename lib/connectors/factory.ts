@@ -2,7 +2,7 @@ import { MongoDBConnector, MongoDBOptions } from "./mongodb-connector.ts";
 import { SQLite3Connector, SQLite3Options } from "./sqlite3-connector.ts";
 import { MySQLConnector, MySQLOptions } from "./mysql-connector.ts";
 import { PostgresConnector, PostgresOptions } from "./postgres-connector.ts";
-import { BuiltInDatabaseDialect } from "../database.ts";
+import type { BuiltInDatabaseDialect } from "../database.ts";
 import { Connector, ConnectorOptions } from "./connector.ts";
 
 export function connectorFactory(
