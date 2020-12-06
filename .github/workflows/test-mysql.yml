@@ -10,7 +10,7 @@ jobs:
   mysql:
     strategy:
       matrix:
-        deno: ["v1.x"]
+        deno: ['v1.x']
     runs-on: [ubuntu-latest]
     services:
       mysql:
@@ -41,4 +41,4 @@ jobs:
           echo "DB_PASS=password" >> ./.env
 
       - name: Deno Tests
-        run: deno test --unstable -A ./tests/units/
+        run: deno test -A ./tests/units/
