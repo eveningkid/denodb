@@ -136,7 +136,7 @@ export class Database {
       console.warn(
         "[denodb]: DEPRECATION warning, the usage with dialect instead of connector is deprecated and will be removed in future versions.\n" +
           "[denodb]: If you want to disable this warning pass `disableDialectUsageDeprecationWarning: true` with the dialect in the Database constructor.\n" +
-          "[denodb]: If you want to migrate to the current behavior, visit https://github.com/eveningkid/denodb/blob/master/MIGRATION.md#dialect-to-connector for help",
+          "[denodb]: If you want to migrate to the current behavior, visit https://github.com/eveningkid/denodb/blob/master/docs/v1.0.21-migrations/connectors.md for help",
       );
     }
 

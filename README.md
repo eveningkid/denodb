@@ -10,12 +10,14 @@
 ```typescript
 import { DataTypes, Database, Model, PostgresConnector } from 'https://deno.land/x/denodb/mod.ts';
 
-const db = new Database(new PostgresConnector({
+const connection = new PostgresConnector({
   host: '...',
   username: 'user',
   password: 'password',
   database: 'airlines',
-}));
+});
+
+const db = new Database(connection);
 
 class Flight extends Model {
   static table = 'flights';
@@ -74,12 +76,14 @@ Setting up your database with DenoDB is a four-step process:
 
 - **Create a database**, using `Database` (learn more [about clients](#clients)):
   ```typescript
-  const db = new Database(new PostgresConnector({
+  const connection = new PostgresConnector({
     host: '...',
     username: 'user',
     password: 'password',
     database: 'airlines',
-  }));
+  });
+
+  const db = new Database(connection);
   ```
 - **Create models**, extending `Model`. `table` and `fields` are both required static attributes:
 
@@ -120,8 +124,8 @@ Setting up your database with DenoDB is a four-step process:
   await User.deleteById('1');
   ```
 
-## Migration to connector usage
-Here - [Migration.md](MIGRATION.md)
+## Migrate from previous versions
+- `v1.0.21`: [Migrate to connectors](docs/v1.0.21-migrations/connectors.md)
 
 ## License
 
