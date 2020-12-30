@@ -289,6 +289,7 @@ export class MongoDBConnector implements Connector {
       return;
     }
 
+    this._client.close();
     this._connected = false;
   }
 }
