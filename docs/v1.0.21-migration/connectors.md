@@ -70,10 +70,10 @@ const connector = new PostgresConnector({
   database: 'airlines',
 });
 
-const db = new Database({
+const db = new Database(
   connector,
   debug: true, // <-
-});
+);
 ```
 
 And what if you get the database type from an environment variable or somewhere else? You can still keep it similar to what we had before:
