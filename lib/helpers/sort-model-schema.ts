@@ -37,7 +37,7 @@ export const topologicalSortModelSchema = (
       });
   });
 
-  return topologicalSort(edgesAsDependencies).map((tableName: string) =>
-    modelTableToModel[tableName]
-  );
+  return (topologicalSort as (edges: [string, string][]) => string[])(
+    edgesAsDependencies,
+  ).map((tableName: string) => modelTableToModel[tableName]);
 };
