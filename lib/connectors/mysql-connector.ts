@@ -1,6 +1,7 @@
 import { MySQLClient, MySQLConnection } from "../../deps.ts";
 import type { Connector, ConnectorOptions } from "./connector.ts";
 import { SQLTranslator } from "../translators/sql-translator.ts";
+import type { SupportedSQLDatabaseDialect } from "../translators/sql-translator.ts";
 import type { QueryDescription } from "../query-builder.ts";
 
 export interface MySQLOptions extends ConnectorOptions {
@@ -12,6 +13,8 @@ export interface MySQLOptions extends ConnectorOptions {
 }
 
 export class MySQLConnector implements Connector {
+  _dialect: SupportedSQLDatabaseDialect = "mysql";
+
   _client: MySQLClient;
   _options: MySQLOptions;
   _translator: SQLTranslator;
@@ -21,7 +24,7 @@ export class MySQLConnector implements Connector {
   constructor(options: MySQLOptions) {
     this._options = options;
     this._client = new MySQLClient();
-    this._translator = new SQLTranslator("mysql");
+    this._translator = new SQLTranslator(this._dialect);
   }
 
   async _makeConnection() {
