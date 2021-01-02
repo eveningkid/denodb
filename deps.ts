@@ -9,10 +9,13 @@ export {
   Connection as MySQLConnection,
 } from "https://deno.land/x/mysql/mod.ts";
 
-export { Client as PostgresClient } from "https://raw.githubusercontent.com/deno-postgres/deno-postgres/master/mod.ts";
+export { Client as PostgresClient } from "https://raw.githubusercontent.com/denodrivers/postgres/master/mod.ts";
 
 export { DB as SQLiteClient } from "https://deno.land/x/sqlite@v2.3.1/mod.ts";
 
 export { MongoClient as MongoDBClient } from "https://deno.land/x/mongo@v0.20.0/mod.ts";
 export type { ConnectOptions as MongoDBClientOptions } from "https://deno.land/x/mongo@v0.20.0/mod.ts";
 export type { Database as MongoDBDatabase } from "https://deno.land/x/mongo@v0.20.0/src/database.ts";
+
+// We use cdn cause it's an npm package (with no dependencies or Node.js builtins).
+export * as topologicalSort from "https://cdn.skypack.dev/toposort@2.0.2";
