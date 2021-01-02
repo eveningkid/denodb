@@ -9,7 +9,7 @@ import { QueryBuilder, QueryDescription } from "./query-builder.ts";
 import { formatResultToModelInstance } from "./helpers/results.ts";
 import { Translator } from "./translators/translator.ts";
 import { connectorFactory } from "./connectors/factory.ts";
-import { topologicalSortModelSchema } from "./helpers.sort-model-schema.ts";
+import { topologicalSortModelSchema } from "./helpers/sort-model-schema.ts";
 
 export type BuiltInDatabaseDialect = "postgres" | "sqlite3" | "mysql" | "mongo";
 

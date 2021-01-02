@@ -1,3 +1,5 @@
+import { ModelSchema } from "../model.ts";
+
 /**
  *
  * @param models
