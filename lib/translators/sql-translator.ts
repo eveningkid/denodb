@@ -4,7 +4,8 @@ import { addFieldToSchema } from "../helpers/fields.ts";
 import type { Query, QueryDescription } from "../query-builder.ts";
 import type { Translator } from "./translator.ts";
 
-// These are the supported Database dialect types for the SQLQueryBuilder that we use
+// Supported Database dialects for the SQLQueryBuilder in use
+// @see http://knexjs.org
 export type SupportedSQLDatabaseDialect =
   | "mysql"
   | "mysql2"

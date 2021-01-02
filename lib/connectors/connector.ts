@@ -12,7 +12,7 @@ export interface Connector {
   /** Database dialect this connector is for. */
   readonly _dialect: string;
 
-  /** Translator that converts queries to a DB-specific commands. */
+  /** Translator that converts queries to a database-specific command. */
   _translator: Translator;
 
   /** Client that maintains an external database connection. */

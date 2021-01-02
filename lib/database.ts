@@ -109,14 +109,14 @@ export class Database {
     dialectOptionsOrDatabaseOptions: DatabaseOptions,
   ): boolean {
     return (
-      // has dialect as a property
+      // Has dialect as a property
       typeof dialectOptionsOrDatabaseOptions === "object" &&
       !!(dialectOptionsOrDatabaseOptions as Exclude<
         DialectDatabaseOptions,
         BuiltInDatabaseDialect
       >)?.dialect
     ) ||
-      // Only Dialect
+      // Only dialect
       typeof dialectOptionsOrDatabaseOptions === "string";
   }
 
@@ -134,7 +134,6 @@ export class Database {
       fromConstructor &&
       !dialectOptionsOrDatabaseOptions.disableDialectUsageDeprecationWarning
     ) {
-      // I've added [denodb] at the start of each line in the warning so developer will know from which package this warning came from.
       console.warn(
         "[denodb]: DEPRECATION warning, the usage with dialect instead of connector is deprecated and will be removed in future versions.\n" +
           "[denodb]: If you want to disable this warning pass `disableDialectUsageDeprecationWarning: true` with the dialect in the Database constructor.\n" +
