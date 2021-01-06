@@ -37,7 +37,9 @@ export const topologicalSortModelSchema = (
       });
   });
 
-  return (topologicalSort as unknown as (edges: [string, string][]) => string[])(
+  return (topologicalSort as unknown as (
+    edges: [string, string][],
+  ) => string[])(
     edgesAsDependencies,
   ).map((tableName: string) => modelTableToModel[tableName]);
 };

@@ -18,4 +18,4 @@ export type { ConnectOptions as MongoDBClientOptions } from "https://deno.land/x
 export type { Database as MongoDBDatabase } from "https://deno.land/x/mongo@v0.20.0/src/database.ts";
 
 // We use cdn cause it's an npm package (with no dependencies or Node.js builtins).
-export {default as topologicalSort } from "https://cdn.skypack.dev/toposort@2.0.2";
+export { default as topologicalSort } from "https://cdn.skypack.dev/toposort@2.0.2";

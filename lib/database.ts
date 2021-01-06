@@ -191,7 +191,12 @@ export class Database {
    */
   async sync(options: SyncOptions = {}) {
     if (options.drop) {
-      for (const model of this._models) {
+      // We using slice in order to clone the models array.
+      // we don't want to effect the original order, cause the order is important
+      // We want to reverse the order because we want the one that have no dependencies first to be dropped (at the opposite order of insertion).
+      const modelsInDropOrder = this._models.slice(0).reverse();
+
+      for (const model of modelsInDropOrder) {
         await model.drop();
       }
     }
@@ -209,12 +214,7 @@ export class Database {
     // We sort the schema topologically so we link in the order of the dependency
     this._models = topologicalSortModelSchema(models);
 
-    // We using slice in order to clone the models array.
-    // we don't want to effect the original order, cause the order is important
-    // We want to reverse the order because we want the one that have no dependencies first.
-    const reversedModels = this._models.slice(0).reverse();
-
-    reversedModels.forEach((model) =>
+    this._models.forEach((model) =>
       model._link({
         queryBuilder: this._queryBuilder,
         database: this,
