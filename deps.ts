@@ -17,5 +17,4 @@ export { MongoClient as MongoDBClient } from "https://deno.land/x/mongo@v0.20.0/
 export type { ConnectOptions as MongoDBClientOptions } from "https://deno.land/x/mongo@v0.20.0/mod.ts";
 export type { Database as MongoDBDatabase } from "https://deno.land/x/mongo@v0.20.0/src/database.ts";
 
-// We use CDN cause it's an npm package (with no dependencies or Node.js builtins).
 export { array as topologicalSort } from "https://cdn.skypack.dev/toposort@2.0.2";

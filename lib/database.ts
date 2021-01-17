@@ -9,7 +9,7 @@ import { QueryBuilder, QueryDescription } from "./query-builder.ts";
 import { formatResultToModelInstance } from "./helpers/results.ts";
 import { Translator } from "./translators/translator.ts";
 import { connectorFactory } from "./connectors/factory.ts";
-import { topologicalSortModelSchema } from "./helpers/sort-model-schema.ts";
+import { sortModelsByDependencies } from "./helpers/sort-model-schema.ts";
 
 export type BuiltInDatabaseDialect = "postgres" | "sqlite3" | "mysql" | "mongo";
 
@@ -45,8 +45,7 @@ export class Database {
   private _translator: Translator;
   private _queryBuilder: QueryBuilder;
 
-  // The models order is from the one that have dependencies to the one that doesn't
-  // The order is important.
+  // Inter-dependent models come first, and the ones without dependencies come last
   private _models: ModelSchema[] = [];
   private _debug: boolean;
 
@@ -191,9 +190,7 @@ export class Database {
    */
   async sync(options: SyncOptions = {}) {
     if (options.drop) {
-      // We using slice in order to clone the models array.
-      // we don't want to effect the original order, cause the order is important
-      // We want to reverse the order because we want the one that have no dependencies first to be dropped (at the opposite order of insertion).
+      // Reverse the order so the models without dependencies are dropped first
       const modelsInDropOrder = this._models.slice(0).reverse();
 
       for (const model of modelsInDropOrder) {
@@ -211,8 +208,7 @@ export class Database {
    *     await db.link([Flight, Airport]);
    */
   link(models: ModelSchema[]) {
-    // We sort the schema topologically so we link in the order of the dependency
-    this._models = topologicalSortModelSchema(models);
+    this._models = sortModelsByDependencies(models);
 
     this._models.forEach((model) =>
       model._link({

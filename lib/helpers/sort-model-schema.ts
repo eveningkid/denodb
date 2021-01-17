@@ -2,9 +2,8 @@ import { ModelSchema } from "../model.ts";
 import { FieldProps } from "../data-types.ts";
 import { topologicalSort } from "../../deps.ts";
 
-/**
- *
- * @param models
+/** Sort models so that Inter-dependent models come first, and the ones without dependencies come last by using topological sort algorithm
+ * 
  * @example
  * Models:
  * A->B
@@ -13,7 +12,7 @@ import { topologicalSort } from "../../deps.ts";
  * The returned value will be:
  * A,B,C,D
  */
-export const topologicalSortModelSchema = (
+export const sortModelsByDependencies = (
   models: ModelSchema[],
 ): ModelSchema[] => {
   const modelTableToModel: { [tableName: string]: ModelSchema } = models.reduce(
