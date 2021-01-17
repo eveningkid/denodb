@@ -9,6 +9,7 @@ import { QueryBuilder, QueryDescription } from "./query-builder.ts";
 import { formatResultToModelInstance } from "./helpers/results.ts";
 import { Translator } from "./translators/translator.ts";
 import { connectorFactory } from "./connectors/factory.ts";
+import { sortModelsByDependencies } from "./helpers/sort-model-schema.ts";
 
 export type BuiltInDatabaseDialect = "postgres" | "sqlite3" | "mysql" | "mongo";
 
@@ -43,6 +44,8 @@ export class Database {
   private _connector: Connector;
   private _translator: Translator;
   private _queryBuilder: QueryBuilder;
+
+  // Inter-dependent models come first, and the ones without dependencies come last
   private _models: ModelSchema[] = [];
   private _debug: boolean;
 
@@ -187,7 +190,10 @@ export class Database {
    */
   async sync(options: SyncOptions = {}) {
     if (options.drop) {
-      for (const model of this._models) {
+      // Reverse the order so the models without dependencies are dropped first
+      const modelsInDropOrder = this._models.slice(0).reverse();
+
+      for (const model of modelsInDropOrder) {
         await model.drop();
       }
     }
@@ -202,7 +208,7 @@ export class Database {
    *     await db.link([Flight, Airport]);
    */
   link(models: ModelSchema[]) {
-    this._models = models;
+    this._models = sortModelsByDependencies(models);
 
     this._models.forEach((model) =>
       model._link({
