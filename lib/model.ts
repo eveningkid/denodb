@@ -625,7 +625,7 @@ export class Model {
         .table(this.table)
         .update(fieldsToUpdate)
         .toDescription(),
-    ) as Promise<Model[]>;
+    ) as Promise<Model | Model[]>;
   }
 
   /** Delete a record by a primary key value.
