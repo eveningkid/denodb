@@ -550,6 +550,18 @@ export class Model {
    */
   static where<T extends ModelSchema>(
     this: T,
+    field: string,
+    fieldValue: FieldValue,
+  ): T;
+  static where<T extends ModelSchema>(
+    this: T,
+    field: string,
+    operator: Operator,
+    fieldValue: FieldValue,
+  ): T;
+  static where<T extends ModelSchema>(this: T, fields: Values): T;
+  static where<T extends ModelSchema>(
+    this: T,
     fieldOrFields: string | Values,
     operatorOrFieldValue?: Operator | FieldValue,
     fieldValue?: FieldValue,
