@@ -135,10 +135,18 @@ export class QueryBuilder {
 
   find(field: string, possibleValues: FieldValue[]) {
     this._query.type = "select";
-    this._query.whereIn = {
-      field,
-      possibleValues,
-    };
+    
+    if (possibleValues.length === 1) {
+      this._query.values = {
+        [field]: possibleValues[0]
+      }
+    } else {
+      this._query.whereIn = {
+        field,
+        possibleValues,
+      };
+    }
+    
     return this;
   }
 
