@@ -255,7 +255,7 @@ export class Model {
   }
 
   /** Add an event listener for a specific operation/hook.
-   * 
+   *
    *     Flight.on('created', (model) => console.log('New model:', model));
    */
   static on<T extends ModelSchema>(
@@ -273,7 +273,7 @@ export class Model {
   }
 
   /** Alias for `Model.on`, add an event listener for a specific operation/hook.
-   * 
+   *
    *     Flight.addEventListener('created', (model) => console.log('New model:', model));
    */
   static addEventListener<T extends ModelSchema>(
@@ -550,6 +550,18 @@ export class Model {
    */
   static where<T extends ModelSchema>(
     this: T,
+    field: string,
+    fieldValue: FieldValue,
+  ): T;
+  static where<T extends ModelSchema>(
+    this: T,
+    field: string,
+    operator: Operator,
+    fieldValue: FieldValue,
+  ): T;
+  static where<T extends ModelSchema>(this: T, fields: Values): T;
+  static where<T extends ModelSchema>(
+    this: T,
     fieldOrFields: string | Values,
     operatorOrFieldValue?: Operator | FieldValue,
     fieldValue?: FieldValue,
@@ -625,7 +637,7 @@ export class Model {
         .table(this.table)
         .update(fieldsToUpdate)
         .toDescription(),
-    ) as Promise<Model[]>;
+    ) as Promise<Model | Model[]>;
   }
 
   /** Delete a record by a primary key value.

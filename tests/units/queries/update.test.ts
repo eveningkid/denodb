@@ -17,19 +17,19 @@ class Article extends Model {
   };
 }
 
-Deno.test("MySQL - Update test", async function () {
+Deno.test("MySQL: Update model", async function () {
   const connection = getMySQLConnection();
 
-  await connection.link([Article]);
+  connection.link([Article]);
 
   await connection.sync({ drop: false });
 
   await Article.create({
-    title: "Hello world !",
-    content: "first articlE !",
+    title: "Hello world!",
+    content: "first articlE!",
   });
 
-  await Article.where({ id: 1 }).update({ content: "first article !" });
+  await Article.where({ id: 1 }).update({ content: "first article!" });
 
   const article = await Article.where({ id: 1 }).first();
 
@@ -39,8 +39,8 @@ Deno.test("MySQL - Update test", async function () {
     JSON.stringify(article),
     JSON.stringify({
       id: 1,
-      title: "Hello world !",
-      content: "first article !",
+      title: "Hello world!",
+      content: "first article!",
     }),
   );
 });

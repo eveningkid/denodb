@@ -1,4 +1,5 @@
 import type { QueryDescription } from "../query-builder.ts";
+import { Translator } from "../translators/translator.ts";
 
 /** Default connector options. */
 export interface ConnectorOptions {}
@@ -8,6 +9,12 @@ export interface ConnectorClient {}
 
 /** Connector interface for a database provider connection. */
 export interface Connector {
+  /** Database dialect this connector is for. */
+  readonly _dialect: string;
+
+  /** Translator that converts queries to a database-specific command. */
+  _translator: Translator;
+
   /** Client that maintains an external database connection. */
   _client: ConnectorClient;
 

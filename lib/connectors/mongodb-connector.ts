@@ -1,5 +1,8 @@
+import { MongoDBClient } from "../../deps.ts";
+import type { MongoDBClientOptions, MongoDBDatabase } from "../../deps.ts";
 import type { Connector, ConnectorOptions } from "./connector.ts";
 import type { QueryDescription } from "../query-builder.ts";
+import { BasicTranslator } from "../translators/basic-translator.ts";
 
 type MongoDBOptionsBase = {
   database: string;
@@ -9,89 +12,25 @@ type MongoDBOptionsWithURI = {
   uri: string;
 };
 
-type MongoDBClientOptions = {
-  hosts: string[];
-  appName?: string;
-  connectTimeout?: number;
-  username?: string;
-  password?: string;
-  directConnection?: boolean;
-  heartbeatFreq?: number;
-  maxIdleTime?: number;
-  maxPoolSize?: number;
-  minPoolSize?: number;
-  replSetName?: string;
-  serverSelectionTimeout?: number;
-  waitQueueTimeout?: number;
-};
-
-type FindOptions = {
-  findOne?: boolean;
-  skip?: number;
-  limit?: number;
-};
-
-type UpdateResult = {
-  matchedCount: number;
-  modifiedCount: number;
-  upsertedId: Object | null;
-};
-
-type MongoDBCollection = {
-  count(filter?: Object): Promise<number>;
-  findOne(filter?: Object): Promise<any>;
-  find(filter?: Object, options?: FindOptions): Promise<any>;
-  insertOne(doc: Object): Promise<any>;
-  insertMany(docs: Object[]): Promise<any>;
-  deleteOne(query: Object): Promise<number>;
-  deleteMany(query: Object): Promise<number>;
-  updateOne(query: Object, update: Object): Promise<UpdateResult>;
-  updateMany(query: Object, update: Object): Promise<UpdateResult>;
-  aggregate<T = any>(pipeline: Object[]): Promise<T[]>;
-  createIndexes(
-    models: {
-      keys: Object;
-      options?: {
-        background?: boolean;
-        unique?: boolean;
-        name?: string;
-        partialFilterExpression?: Object;
-        sparse?: boolean;
-        expireAfterSeconds?: number;
-        storageEngine?: Object;
-      };
-    }[],
-  ): Promise<string[]>;
-};
-
-type MongoDBDatabase = {
-  listCollectionNames(): Promise<string[]>;
-  collection(name: string): MongoDBCollection;
-};
-
-type MongoDBClient = {
-  clientId: number;
-  connectWithUri(uri: string): void;
-  connectWithOptions(options: MongoDBClientOptions): void;
-  listDatabases(): Promise<string[]>;
-  close(): void;
-  database(name: string): MongoDBDatabase;
-};
-
 export type MongoDBOptions =
   & ConnectorOptions
   & (MongoDBOptionsWithURI | MongoDBClientOptions)
   & MongoDBOptionsBase;
 
 export class MongoDBConnector implements Connector {
-  _client!: MongoDBClient;
-  _database!: MongoDBDatabase;
+  _dialect = "mongo";
+
+  _translator: BasicTranslator;
+  _client: MongoDBClient;
+  _database?: MongoDBDatabase;
   _options: MongoDBOptions;
   _connected = false;
 
   /** Create a MongoDB connection. */
   constructor(options: MongoDBOptions) {
     this._options = options;
+    this._client = new MongoDBClient();
+    this._translator = new BasicTranslator();
   }
 
   async _makeConnection() {
@@ -99,20 +38,10 @@ export class MongoDBConnector implements Connector {
       return;
     }
 
-    if (!this._client) {
-      const {
-        MongoDBClient,
-        MONGODB_PLUGIN_RELEASE_URL,
-        initMongoDBPlugin,
-      } = await import("../../unstable_deps.ts");
-      await initMongoDBPlugin(MONGODB_PLUGIN_RELEASE_URL);
-      this._client = new MongoDBClient() as unknown as MongoDBClient;
-    }
-
     if (this._options.hasOwnProperty("uri")) {
-      this._client.connectWithUri((this._options as MongoDBOptionsWithURI).uri);
+      await this._client.connect((this._options as MongoDBOptionsWithURI).uri);
     } else {
-      this._client.connectWithOptions(this._options as MongoDBClientOptions);
+      await this._client.connect(this._options as MongoDBClientOptions);
     }
 
     this._database = this._client.database(this._options.database);
@@ -123,8 +52,10 @@ export class MongoDBConnector implements Connector {
     await this._makeConnection();
 
     try {
-      const dbs = await this._client.listDatabases();
-      return dbs.includes(this._options.database);
+      const databases = await this._client.listDatabases();
+      return databases.map((database) => database.name).includes(
+        this._options.database,
+      );
     } catch (error) {
       return false;
     }
@@ -138,7 +69,7 @@ export class MongoDBConnector implements Connector {
       return [];
     }
 
-    const collection = this._database.collection(queryDescription.table!);
+    const collection = this._database!.collection(queryDescription.table!);
 
     let wheres: { [k: string]: any } = {};
     if (queryDescription.wheres) {
@@ -163,14 +94,10 @@ export class MongoDBConnector implements Connector {
             break;
         }
 
-        const whereValue = curr.field === "_id"
-          ? { $oid: curr.value }
-          : curr.value;
-
         return {
           ...prev,
           [curr.field]: {
-            [mongoOperator]: whereValue,
+            [mongoOperator]: curr.value,
           },
         };
       }, {});
@@ -202,11 +129,11 @@ export class MongoDBConnector implements Connector {
           return { ...defaultedValues, ...record, ...timestamps };
         });
 
-        const insertedRecords: { $oid: string }[] = await collection.insertMany(
+        const insertedRecords = await collection.insertMany(
           values,
         );
 
-        const recordIds = insertedRecords.map((record) => record.$oid);
+        const recordIds = insertedRecords.insertedIds as unknown as string[];
         return await queryDescription.schema.find(recordIds);
 
       case "select":
@@ -214,11 +141,7 @@ export class MongoDBConnector implements Connector {
 
         if (queryDescription.whereIn) {
           wheres[queryDescription.whereIn.field] = {
-            $in: queryDescription.whereIn.field === "_id"
-              ? queryDescription.whereIn.possibleValues.map((value) => ({
-                $oid: value,
-              }))
-              : queryDescription.whereIn.possibleValues,
+            $in: queryDescription.whereIn.possibleValues,
           };
         }
 
@@ -285,7 +208,7 @@ export class MongoDBConnector implements Connector {
           selectFields.push({ $skip: queryDescription.offset });
         }
 
-        results = await collection.aggregate(selectFields);
+        results = await collection.aggregate(selectFields).toArray();
         break;
 
       case "update":
@@ -308,7 +231,7 @@ export class MongoDBConnector implements Connector {
               avg: { $avg: `$${queryDescription.aggregatorField}` },
             },
           },
-        ]);
+        ]).toArray();
 
       case "max":
         return await collection.aggregate([
@@ -319,7 +242,7 @@ export class MongoDBConnector implements Connector {
               max: { $max: `$${queryDescription.aggregatorField}` },
             },
           },
-        ]);
+        ]).toArray();
 
       case "min":
         return await collection.aggregate([
@@ -330,7 +253,7 @@ export class MongoDBConnector implements Connector {
               min: { $min: `$${queryDescription.aggregatorField}` },
             },
           },
-        ]);
+        ]).toArray();
 
       case "sum":
         return await collection.aggregate([
@@ -341,7 +264,7 @@ export class MongoDBConnector implements Connector {
               sum: { $sum: `$${queryDescription.aggregatorField}` },
             },
           },
-        ]);
+        ]).toArray();
 
       default:
         throw new Error(`Unknown query type: ${queryDescription.type}.`);
@@ -371,6 +294,7 @@ export class MongoDBConnector implements Connector {
       return;
     }
 
+    this._client.close();
     this._connected = false;
   }
 }

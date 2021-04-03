@@ -1,0 +1,3 @@
+# Force contributors to get the EOL this project use (LF) instead of committing again just to fix
+# (This is mainly for developers on Windows machine that their git is automatically change their line ending to the system ones)
+* text=auto eol=lf

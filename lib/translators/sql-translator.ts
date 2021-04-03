@@ -1,15 +1,24 @@
 import { snakeCase, SQLQueryBuilder } from "../../deps.ts";
 import type { FieldAlias } from "../data-types.ts";
-import type { DatabaseDialect } from "../database.ts";
 import { addFieldToSchema } from "../helpers/fields.ts";
 import type { Query, QueryDescription } from "../query-builder.ts";
-import { Translator } from "./translator.ts";
+import type { Translator } from "./translator.ts";
 
-export class SQLTranslator extends Translator {
-  _dialect: DatabaseDialect;
+// Supported Database dialects for the SQLQueryBuilder in use
+// @see http://knexjs.org
+export type SupportedSQLDatabaseDialect =
+  | "mysql"
+  | "mysql2"
+  | "oracledb"
+  | "postgres"
+  | "redshift"
+  | "sqlite3"
+  | "mssql";
 
-  constructor(dialect: DatabaseDialect) {
-    super();
+export class SQLTranslator implements Translator {
+  _dialect: SupportedSQLDatabaseDialect;
+
+  constructor(dialect: SupportedSQLDatabaseDialect) {
     this._dialect = dialect;
   }
 
