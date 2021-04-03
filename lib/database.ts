@@ -187,8 +187,8 @@ export class Database {
    */
   async sync(options: SyncOptions = {}) {
     if (options.drop) {
-      for (const model of this._models) {
-        await model.drop();
+      for (let i = this._models.length - 1; i >= 0; i--){
+        await this._models[i].drop();
       }
     }
 
