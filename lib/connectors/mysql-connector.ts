@@ -10,6 +10,7 @@ export interface MySQLOptions extends ConnectorOptions {
   username: string;
   password: string;
   port?: number;
+  charset?: string;
 }
 
 export class MySQLConnector implements Connector {
@@ -38,6 +39,7 @@ export class MySQLConnector implements Connector {
       db: this._options.database,
       password: this._options.password,
       port: this._options.port ?? 3306,
+      charset: this._options.charset ?? "utf8",
     });
 
     this._connected = true;
