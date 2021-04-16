@@ -95,7 +95,9 @@ export function addFieldToSchema(
   } else {
     instruction = table[type](fieldOptions.name);
   }
-
+  if (typeof fieldOptions.type === "object" && fieldOptions.type.comment) {
+    instruction.comment(fieldOptions.type.comment);
+  }
   if (typeof fieldOptions.defaultValue !== "undefined") {
     instruction.defaultTo(fieldOptions.defaultValue);
   }

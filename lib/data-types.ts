@@ -65,6 +65,7 @@ export type FieldProps = {
   scale?: number;
   values?: (number | string)[];
   relationship?: Relationship;
+  comment?: string;
 };
 
 export type FieldType = FieldTypeString | FieldProps;
