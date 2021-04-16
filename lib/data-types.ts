@@ -51,6 +51,7 @@ export type Fields =
     enum: (
       values: (number | string)[],
     ) => { type: FieldTypeString; values: (number | string)[] };
+    integer: (length: number) => { type: FieldTypeString; length: number };
   };
 
 export type FieldProps = {
@@ -132,6 +133,13 @@ export const DATA_TYPES: Fields = {
     return {
       type: this.ENUM,
       values,
+    };
+  },
+
+  integer(length: number) {
+    return {
+      type: this.INTEGER,
+      length,
     };
   },
 };
