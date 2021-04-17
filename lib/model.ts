@@ -139,7 +139,7 @@ export class Model {
     this._isCreatedInDatabase = false;
   }
 
-  /** Truncate a model in the database */
+  /** Truncate a model in the database. */
   static async truncate() {
     const truncateQuery = this._options.queryBuilder
       .queryForSchema(this)
