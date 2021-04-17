@@ -126,6 +126,10 @@ export class SQLTranslator implements Translator {
         queryBuilder = queryBuilder.schema[dropTableHelper](query.table);
         break;
 
+      case "truncate":
+        queryBuilder = queryBuilder.truncate(query.table);
+        break;
+
       case "create":
         if (!query.fields) {
           throw new Error(

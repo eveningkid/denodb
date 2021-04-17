@@ -36,6 +36,7 @@ export type DatabaseOptions =
 export type SyncOptions = {
   /** If tables should be dropped if they exist. */
   drop?: boolean;
+  truncate?: boolean;
 };
 
 /** Database client which interacts with an external database instance. */
@@ -187,8 +188,14 @@ export class Database {
    */
   async sync(options: SyncOptions = {}) {
     if (options.drop) {
-      for (let i = this._models.length - 1; i >= 0; i--){
+      for (let i = this._models.length - 1; i >= 0; i--) {
         await this._models[i].drop();
+      }
+    }
+
+    if (options.truncate) {
+      for (let i = this._models.length - 1; i >= 0; i--) {
+        await this._models[i].truncate();
       }
     }
 
