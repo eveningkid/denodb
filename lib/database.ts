@@ -36,6 +36,7 @@ export type DatabaseOptions =
 export type SyncOptions = {
   /** If tables should be dropped if they exist. */
   drop?: boolean;
+  /** If tables should be truncated. Will raise errors if the linked tables don't exist. */
   truncate?: boolean;
 };
 
