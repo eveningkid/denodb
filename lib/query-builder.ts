@@ -8,6 +8,7 @@ export type OrderDirection = "desc" | "asc";
 export type QueryType =
   | "create"
   | "drop"
+  | "truncate"
   | "select"
   | "insert"
   | "update"
@@ -119,6 +120,11 @@ export class QueryBuilder {
   dropIfExists() {
     this._query.type = "drop";
     this._query.ifExists = true;
+    return this;
+  }
+
+  truncate() {
+    this._query.type = "truncate";
     return this;
   }
 

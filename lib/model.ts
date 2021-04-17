@@ -139,6 +139,17 @@ export class Model {
     this._isCreatedInDatabase = false;
   }
 
+  /** Truncate a model in the database. */
+  static async truncate() {
+    const truncateQuery = this._options.queryBuilder
+      .queryForSchema(this)
+      .table(this.table)
+      .truncate()
+      .toDescription();
+
+    await this._options.database.query(truncateQuery);
+  }
+
   /** Create a model in the database. Should not be called from a child model. */
   static async createTable() {
     if (this._isCreatedInDatabase) {
