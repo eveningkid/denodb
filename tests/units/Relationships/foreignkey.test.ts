@@ -25,13 +25,14 @@ class Business extends Model {
       primaryKey: true,
     },
     name: DataTypes.STRING,
-    ownerId: Relationships.belongsTo(Owner),
   };
 
   static owner() {
     return this.hasOne(Owner);
   }
 }
+
+Relationships.belongsTo(Business, Owner);
 
 Deno.test("MySQL: Foreign key test", async function () {
   const connection = getMySQLConnection();
