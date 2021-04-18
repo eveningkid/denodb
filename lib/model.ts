@@ -764,7 +764,7 @@ export class Model {
         .toDescription(),
     );
 
-    return (value as AggregationResult[])[0].count;
+    return Number((value as AggregationResult[])[0].count);
   }
 
   /** Find the minimum value of a field from all the selected records.
@@ -779,7 +779,7 @@ export class Model {
         .toDescription(),
     );
 
-    return (value as AggregationResult[])[0].min;
+    return Number((value as AggregationResult[])[0].min);
   }
 
   /** Find the maximum value of a field from all the selected records.
@@ -794,7 +794,7 @@ export class Model {
         .toDescription(),
     );
 
-    return (value as AggregationResult[])[0].max;
+    return Number((value as AggregationResult[])[0].max);
   }
 
   /** Compute the sum of a field's values from all the selected records.
@@ -809,7 +809,7 @@ export class Model {
         .toDescription(),
     );
 
-    return (value as AggregationResult[])[0].sum;
+    return Number((value as AggregationResult[])[0].sum);
   }
 
   /** Compute the average value of a field's values from all the selected records.
@@ -826,7 +826,7 @@ export class Model {
         .toDescription(),
     );
 
-    return (value as AggregationResult[])[0].avg;
+    return Number((value as AggregationResult[])[0].avg);
   }
 
   /** Find associated values for the given model for one-to-many and many-to-many relationships.
