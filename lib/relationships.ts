@@ -30,7 +30,7 @@ export const Relationships = {
     modelB: ModelSchema,
     options?: PrimaryKeyOption,
   ) {
-    const primaryKey = options.primaryKey;
+    const primaryKey = options?.primaryKey;
     const modelAFieldName = primaryKey || `${modelB.name.toLowerCase()}Id`;
     modelA.fields[modelAFieldName] = this._belongsToField(modelB);
   },
