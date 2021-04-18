@@ -28,10 +28,10 @@ export const Relationships = {
   belongsTo(
     modelA: ModelSchema,
     modelB: ModelSchema,
-    options?: PrimaryKeyOption,
+    options?: ForeignKeyOption,
   ) {
-    const primaryKey = options?.primaryKey;
-    const modelAFieldName = primaryKey || `${modelB.name.toLowerCase()}Id`;
+    const foreignKey = options?.foreignKey;
+    const modelAFieldName = foreignKey || `${modelB.name.toLowerCase()}Id`;
     modelA.fields[modelAFieldName] = this._belongsToField(modelB);
   },
 
