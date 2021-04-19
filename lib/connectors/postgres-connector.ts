@@ -48,10 +48,10 @@ export class PostgresConnector implements Connector {
 
     try {
       const [{ result }] = (
-        await this._client.query("SELECT 1 + 1 as result")
-      ).rowsOfObjects();
+        await this._client.queryObject("SELECT 1 + 1 as result")
+      ).rows;
       return result === 2;
-    } catch (error) {
+    } catch {
       return false;
     }
   }
@@ -60,14 +60,21 @@ export class PostgresConnector implements Connector {
     await this._makeConnection();
 
     const query = this._translator.translateToQuery(queryDescription);
-    const response = await this._client.query(query);
-    const results = response.rowsOfObjects() as Values[];
+    const response = await this._client.queryObject(query);
+    const results = response.rows as Values[];
 
     if (queryDescription.type === "insert") {
       return results.length === 1 ? results[0] : results;
     }
 
     return results;
+  }
+
+  async transaction(queries: () => Promise<void>) {
+    const transaction = this._client.createTransaction("transaction");
+    await transaction.begin();
+    await queries();
+    return transaction.commit();
   }
 
   async close() {

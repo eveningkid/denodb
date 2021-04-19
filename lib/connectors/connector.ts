@@ -34,7 +34,7 @@ export interface Connector {
   query(queryDescription: QueryDescription): Promise<any | any[]>;
 
   /** Execute queries within a transaction on the database instance. */
-  transaction?(queries: QueryDescription[]): Promise<any | any[]>;
+  transaction?(queries: () => Promise<void>): Promise<void>;
 
   /** Disconnect from the external database instance. */
   close(): Promise<any>;

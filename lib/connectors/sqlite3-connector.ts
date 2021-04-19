@@ -121,7 +121,19 @@ export class SQLite3Connector implements Connector {
     return results[results.length - 1];
   }
 
-  async close() {
+  async transaction(queries: () => Promise<void>) {
+    this._client.query("begin");
+
+    try {
+      await queries();
+      this._client.query("commit");
+    } catch (error) {
+      this._client.query("rollback");
+      console.log(error);
+    }
+  }
+
+  close() {
     if (!this._connected) {
       return;
     }

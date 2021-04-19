@@ -9,6 +9,7 @@ import { QueryBuilder, QueryDescription } from "./query-builder.ts";
 import { formatResultToModelInstance } from "./helpers/results.ts";
 import { Translator } from "./translators/translator.ts";
 import { connectorFactory } from "./connectors/factory.ts";
+import { warning } from "./helpers/log.ts";
 
 export type BuiltInDatabaseDialect = "postgres" | "sqlite3" | "mysql" | "mongo";
 
@@ -243,6 +244,21 @@ export class Database {
         formatResultToModelInstance(query.schema, result)
       )
       : formatResultToModelInstance(query.schema, results);
+  }
+
+  /** Execute queries within a transaction. */
+  transaction(queries: () => Promise<void>) {
+    const callTransactions = this.getConnector().transaction;
+
+    if (!callTransactions) {
+      warning(
+        "Transactions are not supported by this connector at the moment.",
+      );
+
+      return Promise.resolve();
+    }
+
+    return callTransactions(queries);
   }
 
   /** Compute field matchings tables for model usage. */

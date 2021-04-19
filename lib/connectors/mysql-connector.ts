@@ -78,22 +78,8 @@ export class MySQLConnector implements Connector {
     }
   }
 
-  async transaction(queries: QueryDescription[]): Promise<any | any[]> {
-    if (queries.length === 0) {
-      return [];
-    }
-
-    const results = await this._client.transaction(async (transaction) => {
-      const lastQuery = queries.pop()!;
-
-      for (const query of queries) {
-        await this.query(query, transaction);
-      }
-
-      return this.query(lastQuery, transaction);
-    });
-
-    return results as any;
+  transaction(queries: () => Promise<void>) {
+    return this._client.transaction(queries);
   }
 
   async close() {
