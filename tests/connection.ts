@@ -11,6 +11,10 @@ const defaultMySQLOptions = {
   port: Number(env.DB_PORT),
 };
 
+const defaultSQLiteOptions = {
+  filepath: "test.db",
+};
+
 const getMySQLConnection = (options = {}, debug = true): Database => {
   const connection: Database = new Database(
     { dialect: "mysql", debug },
@@ -23,4 +27,16 @@ const getMySQLConnection = (options = {}, debug = true): Database => {
   return connection;
 };
 
-export { getMySQLConnection };
+const getSQLiteConnection = (options = {}, debug = true): Database => {
+  const connection: Database = new Database(
+    { dialect: "sqlite3", debug },
+    {
+      ...defaultSQLiteOptions,
+      ...options,
+    },
+  );
+
+  return connection;
+};
+
+export { getMySQLConnection, getSQLiteConnection };
