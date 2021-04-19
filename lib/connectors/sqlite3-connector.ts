@@ -129,7 +129,7 @@ export class SQLite3Connector implements Connector {
       this._client.query("commit");
     } catch (error) {
       this._client.query("rollback");
-      console.log(error);
+      throw error;
     }
   }
 
