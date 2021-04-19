@@ -289,12 +289,13 @@ export class MongoDBConnector implements Connector {
     return results;
   }
 
-  async close() {
+  close() {
     if (!this._connected) {
-      return;
+      return Promise.resolve();
     }
 
     this._client.close();
     this._connected = false;
+    return Promise.resolve();
   }
 }
