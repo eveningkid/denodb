@@ -9,6 +9,7 @@ import { QueryBuilder, QueryDescription } from "./query-builder.ts";
 import { formatResultToModelInstance } from "./helpers/results.ts";
 import { Translator } from "./translators/translator.ts";
 import { connectorFactory } from "./connectors/factory.ts";
+import { warning } from "./helpers/log.ts";
 
 export type BuiltInDatabaseDialect = "postgres" | "sqlite3" | "mysql" | "mongo";
 
@@ -125,7 +126,7 @@ export class Database {
   private static _convertDialectFormToConnectorForm(
     dialectOptionsOrDatabaseOptions: DialectDatabaseOptions,
     connectionOptions: ConnectorOptions,
-    fromConstructor: boolean = true,
+    fromConstructor = true,
   ): ConnectorDatabaseOptions {
     if (typeof dialectOptionsOrDatabaseOptions === "string") {
       dialectOptionsOrDatabaseOptions = {
@@ -136,7 +137,7 @@ export class Database {
       fromConstructor &&
       !dialectOptionsOrDatabaseOptions.disableDialectUsageDeprecationWarning
     ) {
-      console.warn(
+      warning(
         "[denodb]: DEPRECATION warning, the usage with dialect instead of connector is deprecated and will be removed in future versions.\n" +
           "[denodb]: If you want to disable this warning pass `disableDialectUsageDeprecationWarning: true` with the dialect in the Database constructor.\n" +
           "[denodb]: If you want to migrate to the current behavior, visit https://github.com/eveningkid/denodb/blob/master/docs/v1.0.21-migrations/connectors.md for help",
@@ -170,12 +171,12 @@ export class Database {
 
   /** Test database connection. */
   ping() {
-    return this._connector.ping();
+    return this.getConnector().ping();
   }
 
   /** Get the database dialect. */
   getDialect() {
-    return this._connector?._dialect;
+    return this.getConnector()._dialect;
   }
 
   /* Get the database connector. */
@@ -236,13 +237,26 @@ export class Database {
       console.log(query);
     }
 
-    const results = await this._connector.query(query);
+    const results = await this.getConnector().query(query);
 
     return Array.isArray(results)
       ? results.map((result) =>
         formatResultToModelInstance(query.schema, result)
       )
       : formatResultToModelInstance(query.schema, results);
+  }
+
+  /** Execute queries within a transaction. */
+  transaction(queries: () => Promise<void>) {
+    if (!this.getConnector().transaction) {
+      warning(
+        "Transactions are not supported by this connector at the moment.",
+      );
+
+      return Promise.resolve();
+    }
+
+    return this.getConnector().transaction?.(queries);
   }
 
   /** Compute field matchings tables for model usage. */
@@ -287,7 +301,7 @@ export class Database {
   }
 
   /** Close the current database connection. */
-  async close() {
-    return this._connector.close();
+  close() {
+    return this.getConnector().close();
   }
 }

@@ -24,7 +24,7 @@ export class SQLite3Connector implements Connector {
     this._translator = new SQLTranslator(this._dialect);
   }
 
-  async _makeConnection() {
+  _makeConnection() {
     if (this._connected) {
       return;
     }
@@ -32,8 +32,8 @@ export class SQLite3Connector implements Connector {
     this._connected = true;
   }
 
-  async ping() {
-    await this._makeConnection();
+  ping() {
+    this._makeConnection();
 
     try {
       let connected = false;
@@ -42,14 +42,14 @@ export class SQLite3Connector implements Connector {
         connected = result === 2;
       }
 
-      return connected;
-    } catch (error) {
-      return false;
+      return Promise.resolve(connected);
+    } catch {
+      return Promise.resolve(false);
     }
   }
 
-  async query(queryDescription: QueryDescription): Promise<any | any[]> {
-    await this._makeConnection();
+  query(queryDescription: QueryDescription): Promise<any | any[]> {
+    this._makeConnection();
 
     const query = this._translator.translateToQuery(queryDescription);
     const subqueries = query.split(";");
@@ -67,7 +67,7 @@ export class SQLite3Connector implements Connector {
 
       try {
         columns = response.columns();
-      } catch (error) {
+      } catch {
         // If there are no matching records, .columns will throw an error
 
         if (
@@ -121,12 +121,25 @@ export class SQLite3Connector implements Connector {
     return results[results.length - 1];
   }
 
-  async close() {
+  async transaction(queries: () => Promise<void>) {
+    this._client.query("begin");
+
+    try {
+      await queries();
+      this._client.query("commit");
+    } catch (error) {
+      this._client.query("rollback");
+      throw error;
+    }
+  }
+
+  close() {
     if (!this._connected) {
-      return;
+      return Promise.resolve();
     }
 
     this._client.close();
     this._connected = false;
+    return Promise.resolve();
   }
 }
