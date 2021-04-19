@@ -183,6 +183,11 @@ export class Database {
     return this._connector;
   }
 
+  /* Get the database client. */
+  getClient() {
+    return this.getConnector()._client;
+  }
+
   /** Create the given models in the current database.
    *
    *     await db.sync({ drop: true });
