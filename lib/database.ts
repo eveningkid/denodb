@@ -248,9 +248,7 @@ export class Database {
 
   /** Execute queries within a transaction. */
   transaction(queries: () => Promise<void>) {
-    const callTransactions = this.getConnector().transaction;
-
-    if (!callTransactions) {
+    if (!this.getConnector().transaction) {
       warning(
         "Transactions are not supported by this connector at the moment.",
       );
@@ -258,7 +256,7 @@ export class Database {
       return Promise.resolve();
     }
 
-    return callTransactions(queries);
+    return this.getConnector().transaction?.(queries);
   }
 
   /** Compute field matchings tables for model usage. */
