@@ -51,7 +51,7 @@ export class MySQLConnector implements Connector {
     try {
       const [{ result }] = await this._client.query("SELECT 1 + 1 as result");
       return result === 2;
-    } catch (error) {
+    } catch {
       return false;
     }
   }

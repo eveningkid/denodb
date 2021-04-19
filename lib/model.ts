@@ -81,7 +81,7 @@ export class Model {
   static pivot: ModelPivotModels = {};
 
   /** If the model has been created in the database. */
-  private static _isCreatedInDatabase: boolean = false;
+  private static _isCreatedInDatabase = false;
 
   /** Query builder instance. */
   private static _queryBuilder: QueryBuilder;
@@ -382,7 +382,7 @@ export class Model {
   }
 
   /** Run the current query. */
-  static async get() {
+  static get() {
     return this._runQuery(
       this._currentQuery.table(this.table).get().toDescription(),
     );
@@ -394,7 +394,7 @@ export class Model {
    *
    *     await Flight.select("id").all();
    */
-  static async all() {
+  static all() {
     return this.get() as Promise<Model[]>;
   }
 
@@ -621,7 +621,7 @@ export class Model {
    *
    *     await Flight.where("departure", "Dublin").update({ destination: "Tokyo" });
    */
-  static async update(fieldOrFields: string | Values, fieldValue?: FieldValue) {
+  static update(fieldOrFields: string | Values, fieldValue?: FieldValue) {
     let fieldsToUpdate: Values = {};
 
     if (this.timestamps) {
@@ -655,7 +655,7 @@ export class Model {
    *
    *     await Flight.deleteById("1");
    */
-  static async deleteById(id: FieldValue) {
+  static deleteById(id: FieldValue) {
     return this._runQuery(
       this._currentQuery
         .table(this.table)
@@ -669,7 +669,7 @@ export class Model {
    *
    *     await Flight.where("destination", "Paris").delete();
    */
-  static async delete() {
+  static delete() {
     return this._runQuery(
       this._currentQuery.table(this.table).delete().toDescription(),
     );
@@ -756,7 +756,7 @@ export class Model {
    *
    *     await Flight.where("destination", "Dublin").count();
    */
-  static async count(field: string = "*") {
+  static async count(field = "*") {
     const value = await this._runQuery(
       this._currentQuery
         .table(this.table)
@@ -996,7 +996,7 @@ export class Model {
    *
    *     await flight.delete();
    */
-  async delete() {
+  delete() {
     const model = this.constructor as ModelSchema;
     const PKCurrentValue = this._getCurrentPrimaryKey();
 
