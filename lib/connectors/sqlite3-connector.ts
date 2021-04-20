@@ -69,24 +69,14 @@ export class SQLite3Connector implements Connector {
         columns = response.columns();
       } catch {
         // If there are no matching records, .columns will throw an error
-
-        if (
-          (queryDescription.type === "insert" ||
-            queryDescription.type === "update") &&
-          queryDescription.values
-        ) {
-          if (Array.isArray(queryDescription.values)) {
-            return await Promise.all(
-              queryDescription.values.map((values) =>
-                queryDescription.schema.where(values).first()
-              ),
-            );
-          }
-
-          return queryDescription.schema.where(queryDescription.values).first();
+        if (queryDescription.type === "insert" && queryDescription.values) {
+          return {
+            affectedRows: this._client.changes,
+            lastInsertId: this._client.lastInsertRowId,
+          };
         }
 
-        return [];
+        return { affectedRows: this._client.changes };
       }
 
       for (const row of response) {
