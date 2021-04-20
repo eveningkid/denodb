@@ -29,8 +29,6 @@ Deno.test("SQLite: Response model", async () => {
     content: "first article!",
   });
 
-  console.log(createResponse);
-
   assertEquals(
     JSON.stringify(createResponse),
     JSON.stringify({
