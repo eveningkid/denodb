@@ -72,7 +72,7 @@ export type FieldProps = {
 export type FieldType = FieldTypeString | FieldProps;
 
 export type FieldAlias = { [k: string]: string };
-export type FieldValue = number | string | boolean | Date | null;
+export type FieldValue = number | string | boolean | Date | null | object;
 export type FieldOptions = {
   name: string;
   type: FieldType;

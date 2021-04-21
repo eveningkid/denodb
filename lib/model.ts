@@ -8,7 +8,7 @@ import type {
 } from "./query-builder.ts";
 import type { Database } from "./database.ts";
 import type { PivotModelSchema } from "./model-pivot.ts";
-import { camelCase } from "../deps.ts";
+import { camelCase, Bson } from "../deps.ts";
 import {
   DataTypes,
   FieldAlias,
@@ -447,6 +447,12 @@ export class Model {
   static async find(idOrIds: FieldValue): Promise<Model>;
   static async find(idOrIds: FieldValue[]): Promise<Model[]>;
   static async find(idOrIds: FieldValue | FieldValue[]) {
+
+    // Convert mongodb id string to ObjectId2
+    if (typeof idOrIds === "string") {
+      idOrIds = new Bson.ObjectId(idOrIds);
+    }
+
     const results = await this._runQuery(
       this._currentQuery
         .table(this.table)
