@@ -3,6 +3,7 @@ import type { MongoDBClientOptions, MongoDBDatabase } from "../../deps.ts";
 import type { Connector, ConnectorOptions } from "./connector.ts";
 import type { QueryDescription } from "../query-builder.ts";
 import { BasicTranslator } from "../translators/basic-translator.ts";
+import { Bson } from "../../deps.ts";
 
 type MongoDBOptionsBase = {
   database: string;
@@ -73,6 +74,13 @@ export class MongoDBConnector implements Connector {
 
     let wheres: { [k: string]: any } = {};
     if (queryDescription.wheres) {
+
+      for (let i of queryDescription.wheres) {
+        if (i.field === "_id") {
+          i.value = new Bson.ObjectId(i.value);
+        }
+      }
+
       wheres = queryDescription.wheres.reduce((prev, curr) => {
         let mongoOperator = "$eq";
 
@@ -140,6 +148,13 @@ export class MongoDBConnector implements Connector {
         const selectFields: Object[] = [];
 
         if (queryDescription.whereIn) {
+
+          if (queryDescription.whereIn.field === "_id") {
+            queryDescription.whereIn.possibleValues = queryDescription.whereIn.possibleValues.map(
+              (value) => new Bson.ObjectId(value)
+            );
+          }
+          
           wheres[queryDescription.whereIn.field] = {
             $in: queryDescription.whereIn.possibleValues,
           };
