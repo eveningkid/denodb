@@ -9,8 +9,8 @@ export {
   configLogger as MySQLConfigLogger,
   Connection as MySQLConnection,
   log as MySQLLogs,
-} from "https://deno.land/x/mysql/mod.ts";
-export type { LoggerConfig } from "https://deno.land/x/mysql/mod.ts";
+} from "https://deno.land/x/mysql@v2.8.0/mod.ts";
+export type { LoggerConfig } from "https://deno.land/x/mysql@v2.8.0/mod.ts";
 
 export { Client as PostgresClient } from "https://deno.land/x/postgres@v0.4.6/mod.ts";
 
