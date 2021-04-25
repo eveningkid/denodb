@@ -1,9 +1,5 @@
-import {
-  LoggerConfig,
-  MySQLClient,
-  MySQLConfigLogger,
-  MySQLConnection,
-} from "../../deps.ts";
+import { configMySQLLogger, MySQLClient, MySQLConnection } from "../../deps.ts";
+import type { LoggerConfig } from "../../deps.ts";
 import type { Connector, ConnectorOptions } from "./connector.ts";
 import { SQLTranslator } from "../translators/sql-translator.ts";
 import type { SupportedSQLDatabaseDialect } from "../translators/sql-translator.ts";
@@ -40,7 +36,7 @@ export class MySQLConnector implements Connector {
     }
 
     if (this._options.logger !== undefined) {
-      await MySQLConfigLogger(this._options.logger);
+      await configMySQLLogger(this._options.logger);
     }
 
     await this._client.connect({

@@ -8,9 +8,8 @@ export { camelCase, snakeCase } from "https://deno.land/x/case@v2.1.0/mod.ts";
 
 export {
   Client as MySQLClient,
-  configLogger as MySQLConfigLogger,
+  configLogger as configMySQLLogger,
   Connection as MySQLConnection,
-  log as MySQLLogs,
 } from "https://deno.land/x/mysql@v2.8.0/mod.ts";
 export type { LoggerConfig } from "https://deno.land/x/mysql@v2.8.0/mod.ts";
 
