@@ -52,7 +52,7 @@ export class SQLite3Connector implements Connector {
     this._makeConnection();
 
     const query = this._translator.translateToQuery(queryDescription);
-    const subqueries = query.split(";");
+    const subqueries = query.split(/;(?=(?:[^'"]|'[^']*'|"[^"]*")*$)/);
 
     const results = subqueries.map(async (subquery, index) => {
       const response = this._client.query(subquery + ";", []);
