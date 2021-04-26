@@ -76,6 +76,10 @@ export class SQLite3Connector implements Connector {
           };
         }
 
+        if (queryDescription.type === "select") {
+          return [];
+        }
+
         return { affectedRows: this._client.changes };
       }
 

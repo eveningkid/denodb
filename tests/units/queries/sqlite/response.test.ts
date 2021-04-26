@@ -38,6 +38,15 @@ Deno.test("SQLite: Response model", async () => {
     "Insert response",
   );
 
+  const selectResponse = await Article.select("id")
+    .where({ title: "Hello world!" }).get();
+
+  assertEquals(
+    JSON.stringify(selectResponse),
+    JSON.stringify([{ id: 1 }]),
+    "Expected one article",
+  );
+
   const updateResponse = await Article.where({ id: 1 })
     .update({ title: "Hello there!" });
 
@@ -82,6 +91,14 @@ Deno.test("SQLite: Response model", async () => {
     JSON.stringify(deleteManyResponse),
     JSON.stringify({ affectedRows: 2 }),
     "Delete many records response",
+  );
+
+  const selectEmptyResponse = await Article.all();
+
+  assertEquals(
+    JSON.stringify(selectEmptyResponse),
+    JSON.stringify([]),
+    "Select expected empty response",
   );
 
   await connection.close();
