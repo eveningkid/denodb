@@ -1,9 +1,8 @@
-import { MongoDBClient } from "../../deps.ts";
+import { MongoDBClient, Bson } from "../../deps.ts";
 import type { MongoDBClientOptions, MongoDBDatabase } from "../../deps.ts";
 import type { Connector, ConnectorOptions } from "./connector.ts";
 import type { QueryDescription } from "../query-builder.ts";
 import { BasicTranslator } from "../translators/basic-translator.ts";
-import { Bson } from "../../deps.ts";
 
 type MongoDBOptionsBase = {
   database: string;
@@ -74,10 +73,9 @@ export class MongoDBConnector implements Connector {
 
     let wheres: { [k: string]: any } = {};
     if (queryDescription.wheres) {
-
-      for (let i of queryDescription.wheres) {
-        if (i.field === "_id") {
-          i.value = new Bson.ObjectId(i.value);
+      for (const whereClause of queryDescription.wheres) {
+        if (whereClause.field === "_id") {
+          whereClause.value = new Bson.ObjectId(whereClause.value);
         }
       }
 
