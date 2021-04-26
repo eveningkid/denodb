@@ -3,7 +3,7 @@ import type { FieldAlias, FieldValue, Values } from "./data-types.ts";
 import { Model, ModelDefaults, ModelFields, ModelSchema } from "./model.ts";
 
 export type Query = string;
-export type Operator = ">" | ">=" | "<" | "<=" | "=";
+export type Operator = ">" | ">=" | "<" | "<=" | "=" | "like";
 export type OrderDirection = "desc" | "asc";
 export type QueryType =
   | "create"
