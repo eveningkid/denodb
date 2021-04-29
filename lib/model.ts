@@ -265,16 +265,14 @@ export class Model {
     return this._formatField(this._fieldMatching.toClient, field, camelCase);
   }
 
-  /* Wraps values with defaults */
+  /* Wraps values with defaults. */
   private static _wrapValuesWithDefaults(values: Values): Values {
     for (const field of Object.keys(this.fields)) {
       if (values.hasOwnProperty(field)) {
         continue;
       }
 
-      if (this.hasOwnProperty(field)) {
-        values[field] = (this as any)[field];
-      } else if (this.defaults.hasOwnProperty(field)) {
+      if (this.defaults.hasOwnProperty(field)) {
         const defaultValue = this.defaults[field];
 
         if (typeof defaultValue === "function") {
