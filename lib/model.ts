@@ -265,6 +265,27 @@ export class Model {
     return this._formatField(this._fieldMatching.toClient, field, camelCase);
   }
 
+  /* Wraps values with defaults. */
+  private static _wrapValuesWithDefaults(values: Values): Values {
+    for (const field of Object.keys(this.fields)) {
+      if (values.hasOwnProperty(field)) {
+        continue;
+      }
+
+      if (this.defaults.hasOwnProperty(field)) {
+        const defaultValue = this.defaults[field];
+
+        if (typeof defaultValue === "function") {
+          values[field] = defaultValue();
+        } else {
+          values[field] = defaultValue;
+        }
+      }
+    }
+
+    return values;
+  }
+
   /** Add an event listener for a specific operation/hook.
    *
    *     Flight.on('created', (model) => console.log('New model:', model));
@@ -428,7 +449,7 @@ export class Model {
     const results = await this._runQuery(
       this._currentQuery.table(this.table).create(
         insertions.map((field) =>
-          this.formatFieldToDatabase(field)
+          this.formatFieldToDatabase(this._wrapValuesWithDefaults(field))
         ) as Values[],
       ).toDescription(),
     );
@@ -944,19 +965,11 @@ export class Model {
    */
   async save() {
     const model = this.constructor as ModelSchema;
-
     const values: Values = {};
+
     for (const field of Object.keys(model.fields)) {
       if (this.hasOwnProperty(field)) {
         values[field] = (this as any)[field];
-      } else if (model.defaults.hasOwnProperty(field)) {
-        const defaultValue = model.defaults[field];
-
-        if (typeof defaultValue === "function") {
-          values[field] = defaultValue();
-        } else {
-          values[field] = defaultValue;
-        }
       }
     }
 
