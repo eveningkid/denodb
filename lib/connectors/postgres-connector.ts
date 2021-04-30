@@ -5,14 +5,27 @@ import type { SupportedSQLDatabaseDialect } from "../translators/sql-translator.
 import type { QueryDescription } from "../query-builder.ts";
 import type { Values } from "../data-types.ts";
 
-export interface PostgresOptions extends ConnectorOptions {
+interface PostgresOptionsBase extends ConnectorOptions {
   database: string;
   host: string;
   username: string;
   password: string;
   port?: number;
-  uri?: string;
+  // unused types
+  uri?: never;
 }
+
+interface PostgresOptionsWithURI extends ConnectorOptions {
+  uri: string;
+  // unused types
+  database?: never;
+  host?: never;
+  username?: never;
+  password?: never;
+  port?: never;
+}
+
+export type PostgresOptions = PostgresOptionsWithURI | PostgresOptionsBase;
 
 export class PostgresConnector implements Connector {
   _dialect: SupportedSQLDatabaseDialect = "postgres";
