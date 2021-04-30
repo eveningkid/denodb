@@ -11,6 +11,7 @@ export interface PostgresOptions extends ConnectorOptions {
   username: string;
   password: string;
   port?: number;
+  uri?: string;
 }
 
 export class PostgresConnector implements Connector {
@@ -24,13 +25,17 @@ export class PostgresConnector implements Connector {
   /** Create a PostgreSQL connection. */
   constructor(options: PostgresOptions) {
     this._options = options;
-    this._client = new PostgresClient({
-      hostname: options.host,
-      user: options.username,
-      password: options.password,
-      database: options.database,
-      port: options.port ?? 5432,
-    });
+    if (options.hasOwnProperty("uri")) {
+      this._client = new PostgresClient(options.uri);
+    } else {
+      this._client = new PostgresClient({
+        hostname: options.host,
+        user: options.username,
+        password: options.password,
+        database: options.database,
+        port: options.port ?? 5432,
+      });
+    }
     this._translator = new SQLTranslator(this._dialect);
   }
 
