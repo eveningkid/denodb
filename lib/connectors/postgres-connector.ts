@@ -5,27 +5,21 @@ import type { SupportedSQLDatabaseDialect } from "../translators/sql-translator.
 import type { QueryDescription } from "../query-builder.ts";
 import type { Values } from "../data-types.ts";
 
-interface PostgresOptionsBase extends ConnectorOptions {
+interface PostgresOptionsWithConfig extends ConnectorOptions {
   database: string;
   host: string;
   username: string;
   password: string;
   port?: number;
-  // unused types
-  uri?: never;
 }
 
 interface PostgresOptionsWithURI extends ConnectorOptions {
   uri: string;
-  // unused types
-  database?: never;
-  host?: never;
-  username?: never;
-  password?: never;
-  port?: never;
 }
 
-export type PostgresOptions = PostgresOptionsWithURI | PostgresOptionsBase;
+export type PostgresOptions =
+  | PostgresOptionsWithConfig
+  | PostgresOptionsWithURI;
 
 export class PostgresConnector implements Connector {
   _dialect: SupportedSQLDatabaseDialect = "postgres";
@@ -38,7 +32,7 @@ export class PostgresConnector implements Connector {
   /** Create a PostgreSQL connection. */
   constructor(options: PostgresOptions) {
     this._options = options;
-    if (options.hasOwnProperty("uri")) {
+    if ("uri" in options) {
       this._client = new PostgresClient(options.uri);
     } else {
       this._client = new PostgresClient({
