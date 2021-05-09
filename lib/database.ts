@@ -222,7 +222,7 @@ export class Database {
     console.log("[experimentalAutoMigrate] dialect:", dialect);
 
     for (const model of this._models) {
-      await model.createTable();
+      await model.createTableOnlyTable();
 
       if (dialect === "mongo") {
         throw ("Auto-migration only works on SQL.");

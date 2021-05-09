@@ -174,6 +174,31 @@ export class Model {
     this._isCreatedInDatabase = true;
   }
 
+  /** Create a model in the database. Only the table not the fields.
+   *  Should not be called from a child model. */
+  static async createTableOnlyTable() {
+    if (this._isCreatedInDatabase) {
+      throw new Error("This model has already been initialized.");
+    }
+
+    const createQuery = this._options.queryBuilder
+      .queryForSchema(this)
+      .table(this.table)
+      .createTableOnlyTable(
+        {
+          withTimestamps: this.timestamps,
+          ifNotExists: true,
+        },
+      )
+      .toDescription();
+
+    await this._options.database.query(createQuery);
+
+    this._isCreatedInDatabase = true;
+  }
+
+  
+
   /** Manually find the primary field by going through the schema fields. */
   private static _findPrimaryField(): FieldOptions {
     const field = Object.entries(this.fields).find(

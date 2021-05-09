@@ -117,6 +117,22 @@ export class QueryBuilder {
     return this;
   }
 
+  createTableOnlyTable(
+    {
+      withTimestamps,
+      ifNotExists,
+    }: {
+      withTimestamps: boolean;
+      ifNotExists: boolean;
+    },
+  ) {
+    this._query.type = "create";
+    this._query.ifExists = ifNotExists ? false : true;
+    this._query.fields = {};
+    this._query.timestamps = withTimestamps;
+    return this;
+  }
+
   dropIfExists() {
     this._query.type = "drop";
     this._query.ifExists = true;
