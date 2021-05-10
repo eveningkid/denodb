@@ -222,26 +222,19 @@ export class Database {
     console.log("[experimentalAutoMigrate] dialect:", dialect);
 
     for (const model of this._models) {
-      await model.createTableOnlyTable();
+      try {
+        console.log('[experimentalAutoMigrate] migrating table', model.table);
+        await model.createTableOnlyTable();
+      } catch (e) {
+        console.log('[experimentalAutoMigrate]', e);
+      }
+      
 
       if (dialect === "mongo") {
         throw ("Auto-migration only works on SQL.");
       }
 
-      console.log(`[experimentalAutoMigrate] syncing table ${model.table}`);
-      console.log(`[experimentalAutoMigrate] fields:`);
-
-      for (const key in model.fields) {
-        console.log(key, ":", model.fields[key]);
-
-        const checkDesc = new QueryBuilder().select(key)
-          .table(
-            model.table,
-          ).get();
-
-        console.log(checkDesc.toDescription());
-        console.log(checkDesc.queryForSchema(model));
-      }
+      await model.autoMigrate();
     }
   }
 

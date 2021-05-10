@@ -197,6 +197,46 @@ export class Model {
     this._isCreatedInDatabase = true;
   }
 
+  /** Auto-migrate */
+   static async autoMigrate() {
+    console.log(`[experimentalAutoMigrate] syncing table ${this.table}`);
+    console.log(`[experimentalAutoMigrate] fields:`);
+
+    for (const key in this.fields) {
+      console.log('[autoMigrate]', key, ":", this.fields[key], ':type', typeof this.fields[key]);
+
+      const checkDesc = this._queryBuilder.select(key)
+        .table(
+          this.table,
+        ).get();
+
+        try {
+          await this._options.database.query(checkDesc.toDescription());    
+        } catch (e) {
+          console.log(`[autoMigrate] ${this.table}:${key}:${this.fields[key]} error ${e}`);
+          console.log(`[autoMigrate] column not found. Creating ${key}:${this.fields[key]}`);
+          
+          try {
+            // await this._options.database.query(`alter table ${this.table} add column ${key} ${this.fields[key]}`);
+            const alterQuery = this._queryBuilder
+              .removeSelect()
+              .alterTable(this.table)
+              .addColumn(key)
+              .columnType(this.fields[key].toString());
+
+            console.log(`[autoMigrate] TODO: query builder alter table, add column ${this.table}:${key}:${this.fields[key]}`);
+            // console.log('[autoMigrate]', alterQuery);
+            console.log('\n')
+          } catch (e) {
+            console.log('[autoMigrate] failed altering', e);
+          }
+          
+        }
+      
+    }
+  }
+
+  
   
 
   /** Manually find the primary field by going through the schema fields. */

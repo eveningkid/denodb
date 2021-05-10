@@ -7,6 +7,7 @@ export type Operator = ">" | ">=" | "<" | "<=" | "=" | "like";
 export type OrderDirection = "desc" | "asc";
 export type QueryType =
   | "create"
+  | "alter table"
   | "drop"
   | "truncate"
   | "select"
@@ -60,6 +61,8 @@ export type QueryDescription = {
   fieldsDefaults?: ModelDefaults;
   timestamps?: boolean;
   values?: Values | Values[];
+  addColumn?: string;
+  columnType?: string;
 };
 
 export type QueryResult = {};
@@ -88,6 +91,24 @@ export class QueryBuilder {
     this._query.table = table;
     return this;
   }
+
+  alterTable(table: string) {
+    this._query.type = "alter table";
+    this._query.table = table;
+    return this;
+  }
+
+  addColumn(columnName: string) {
+    this._query.addColumn = columnName;
+    return this;
+  }
+
+  columnType(columnType: string) {
+    this._query.columnType = columnType;
+    return this;
+  }
+
+  
 
   get() {
     this._query.type = "select";
@@ -146,6 +167,11 @@ export class QueryBuilder {
 
   select(...fields: (string | FieldAlias)[]) {
     this._query.select = fields;
+    return this;
+  }
+
+  removeSelect() {
+    this._query.select = undefined;
     return this;
   }
 
