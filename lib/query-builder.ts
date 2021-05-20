@@ -108,8 +108,6 @@ export class QueryBuilder {
     return this;
   }
 
-  
-
   get() {
     this._query.type = "select";
     return this;
@@ -128,7 +126,7 @@ export class QueryBuilder {
     }: {
       withTimestamps: boolean;
       ifNotExists: boolean;
-    },
+    }
   ) {
     this._query.type = "create";
     this._query.ifExists = ifNotExists ? false : true;
@@ -138,15 +136,13 @@ export class QueryBuilder {
     return this;
   }
 
-  createTableOnlyTable(
-    {
-      withTimestamps,
-      ifNotExists,
-    }: {
-      withTimestamps: boolean;
-      ifNotExists: boolean;
-    },
-  ) {
+  createTableOnlyTable({
+    withTimestamps,
+    ifNotExists,
+  }: {
+    withTimestamps: boolean;
+    ifNotExists: boolean;
+  }) {
     this._query.type = "create";
     this._query.ifExists = ifNotExists ? false : true;
     this._query.fields = {};
@@ -171,7 +167,7 @@ export class QueryBuilder {
   }
 
   removeSelect() {
-    this._query.select = undefined;
+    delete this._query.select;
     return this;
   }
 
@@ -190,10 +186,7 @@ export class QueryBuilder {
     return this;
   }
 
-  orderBy(
-    field: string,
-    orderDirection: OrderDirection,
-  ) {
+  orderBy(field: string, orderDirection: OrderDirection) {
     if (!this._query.orderBy) {
       this._query.orderBy = {};
     }
@@ -216,11 +209,7 @@ export class QueryBuilder {
     return this;
   }
 
-  where(
-    field: string,
-    operator: Operator,
-    value: FieldValue,
-  ) {
+  where(field: string, operator: Operator, value: FieldValue) {
     if (!this._query.wheres) {
       this._query.wheres = [];
     }
@@ -231,8 +220,8 @@ export class QueryBuilder {
       value,
     };
 
-    const existingWhereForFieldIndex = this._query.wheres.findIndex((where) =>
-      where.field === field
+    const existingWhereForFieldIndex = this._query.wheres.findIndex(
+      (where) => where.field === field
     );
 
     if (existingWhereForFieldIndex === -1) {
@@ -255,11 +244,7 @@ export class QueryBuilder {
     return this;
   }
 
-  join(
-    joinTable: string,
-    originField: string,
-    targetField: string,
-  ) {
+  join(joinTable: string, originField: string, targetField: string) {
     if (!this._query.joins) {
       this._query.joins = [];
     }
@@ -273,11 +258,7 @@ export class QueryBuilder {
     return this;
   }
 
-  leftOuterJoin(
-    joinTable: string,
-    originField: string,
-    targetField: string,
-  ) {
+  leftOuterJoin(joinTable: string, originField: string, targetField: string) {
     if (!this._query.leftOuterJoins) {
       this._query.leftOuterJoins = [];
     }
@@ -291,11 +272,7 @@ export class QueryBuilder {
     return this;
   }
 
-  leftJoin(
-    joinTable: string,
-    originField: string,
-    targetField: string,
-  ) {
+  leftJoin(joinTable: string, originField: string, targetField: string) {
     if (!this._query.leftJoins) {
       this._query.leftJoins = [];
     }

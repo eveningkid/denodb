@@ -63,7 +63,7 @@ export type ModelEventListeners = {
 
 /** Model that can be used with a `Database`. */
 export class Model {
-  [attribute: string]: FieldValue | Function
+  [attribute: string]: FieldValue | Function;
 
   /** Table name as it should be saved in the database. */
   static table = "";
@@ -119,7 +119,7 @@ export class Model {
     this._fieldMatching = this._database._computeModelFieldMatchings(
       this.name,
       this.fields,
-      this.timestamps,
+      this.timestamps
     );
 
     this._currentQuery = this._queryBuilder.queryForSchema(this);
@@ -165,7 +165,7 @@ export class Model {
         {
           withTimestamps: this.timestamps,
           ifNotExists: true,
-        },
+        }
       )
       .toDescription();
 
@@ -184,12 +184,10 @@ export class Model {
     const createQuery = this._options.queryBuilder
       .queryForSchema(this)
       .table(this.table)
-      .createTableOnlyTable(
-        {
-          withTimestamps: this.timestamps,
-          ifNotExists: true,
-        },
-      )
+      .createTableOnlyTable({
+        withTimestamps: this.timestamps,
+        ifNotExists: true,
+      })
       .toDescription();
 
     await this._options.database.query(createQuery);
@@ -198,51 +196,59 @@ export class Model {
   }
 
   /** Auto-migrate */
-   static async autoMigrate() {
+  static async autoMigrate() {
     console.log(`[experimentalAutoMigrate] syncing table ${this.table}`);
-    console.log(`[experimentalAutoMigrate] fields:`);
+    console.log(`[experimentalAutoMigrate] fields:`, this.fields);
 
     for (const key in this.fields) {
-      console.log('[autoMigrate]', key, ":", this.fields[key], ':type', typeof this.fields[key]);
+      console.log(
+        "[autoMigrate]",
+        key,
+        ":",
+        this.fields[key],
+        ":type",
+        typeof this.fields[key]
+      );
 
-      const checkDesc = this._queryBuilder.select(key)
-        .table(
-          this.table,
-        ).get();
+      const checkDesc = this._queryBuilder.select(key).table(this.table).get();
+
+      try {
+        await this._options.database.query(checkDesc.toDescription());
+      } catch (e) {
+        console.log(
+          `[autoMigrate] ${this.table}:${key}:${this.fields[key]} error ${e}`
+        );
+        console.log(
+          `[autoMigrate] column not found. Creating ${key}:${this.fields[key]}`
+        );
 
         try {
-          await this._options.database.query(checkDesc.toDescription());    
-        } catch (e) {
-          console.log(`[autoMigrate] ${this.table}:${key}:${this.fields[key]} error ${e}`);
-          console.log(`[autoMigrate] column not found. Creating ${key}:${this.fields[key]}`);
-          
-          try {
-            // await this._options.database.query(`alter table ${this.table} add column ${key} ${this.fields[key]}`);
-            const alterQuery = this._queryBuilder
-              .removeSelect()
-              .alterTable(this.table)
-              .addColumn(key)
-              .columnType(this.fields[key].toString());
+          // await this._options.database.query(`alter table ${this.table} add column ${key} ${this.fields[key]}`);
+          const alterQuery = this._queryBuilder
+            .removeSelect()
+            .alterTable(this.table)
+            .addColumn(this.formatFieldToDatabase(key) as string)
+            .columnType(this.fields[key].toString())
+            .toDescription();
 
-            console.log(`[autoMigrate] TODO: query builder alter table, add column ${this.table}:${key}:${this.fields[key]}`);
-            // console.log('[autoMigrate]', alterQuery);
-            console.log('\n')
-          } catch (e) {
-            console.log('[autoMigrate] failed altering', e);
-          }
-          
+          await this._options.database.query(alterQuery);
+
+          console.log(
+            `[autoMigrate] TODO: query builder alter table, add column ${this.table}:${key}:${this.fields[key]}`
+          );
+          console.log('[autoMigrate]', alterQuery);
+          console.log("\n");
+        } catch (e) {
+          console.log("[autoMigrate] failed altering", e);
         }
-      
+      }
     }
   }
-
-  
-  
 
   /** Manually find the primary field by going through the schema fields. */
   private static _findPrimaryField(): FieldOptions {
     const field = Object.entries(this.fields).find(
-      ([_, fieldType]) => typeof fieldType === "object" && fieldType.primaryKey,
+      ([_, fieldType]) => typeof fieldType === "object" && fieldType.primaryKey
     );
 
     return {
@@ -304,7 +310,7 @@ export class Model {
   private static _formatField(
     fieldMatching: FieldMatchingTable,
     field: string | { [fieldName: string]: any },
-    defaultCase?: (field: string) => string,
+    defaultCase?: (field: string) => string
   ): string | { [fieldName: string]: any } {
     if (typeof field !== "string") {
       return Object.entries(field).reduce((prev: any, [fieldName, value]) => {
@@ -358,7 +364,7 @@ export class Model {
   static on<T extends ModelSchema>(
     this: T,
     eventType: ModelEventType,
-    callback: ModelEventListener,
+    callback: ModelEventListener
   ) {
     if (!(eventType in this._listeners)) {
       this._listeners[eventType] = [];
@@ -376,24 +382,24 @@ export class Model {
   static addEventListener<T extends ModelSchema>(
     this: T,
     eventType: ModelEventType,
-    callback: ModelEventListener,
+    callback: ModelEventListener
   ) {
     return this.on(eventType, callback);
   }
 
   static removeEventListener(
     eventType: ModelEventType,
-    callback: ModelEventListener,
+    callback: ModelEventListener
   ) {
     if (!(eventType in this._listeners)) {
       throw new Error(
-        `There is no event listener for ${eventType}. You might be trying to remove a listener that you haven't added with Model.on('${eventType}', ...).`,
+        `There is no event listener for ${eventType}. You might be trying to remove a listener that you haven't added with Model.on('${eventType}', ...).`
       );
     }
 
-    this._listeners[eventType] = this._listeners[eventType]!.filter((
-      listener,
-    ) => listener !== callback);
+    this._listeners[eventType] = this._listeners[eventType]!.filter(
+      (listener) => listener !== callback
+    );
 
     return this;
   }
@@ -401,7 +407,7 @@ export class Model {
   /** Run event listeners given a query type and results. */
   private static _runEventListeners(
     queryType: QueryType,
-    instances?: Model | Model[],
+    instances?: Model | Model[]
   ) {
     // -ing => present, -ed => past
     const isPastEvent = !!instances;
@@ -457,7 +463,7 @@ export class Model {
   static field(field: string, nameAs: string): FieldAlias;
   static field(field: string, nameAs?: string): string | FieldAlias {
     const fullField = this.formatFieldToDatabase(
-      `${this.table}.${field}`,
+      `${this.table}.${field}`
     ) as string;
 
     if (nameAs) {
@@ -470,7 +476,7 @@ export class Model {
   /** Run the current query. */
   static get() {
     return this._runQuery(
-      this._currentQuery.table(this.table).get().toDescription(),
+      this._currentQuery.table(this.table).get().toDescription()
     );
   }
 
@@ -495,7 +501,7 @@ export class Model {
     ...fields: (string | FieldAlias)[]
   ) {
     this._currentQuery.select(
-      ...fields.map((field) => this.formatFieldToDatabase(field)),
+      ...fields.map((field) => this.formatFieldToDatabase(field))
     );
     return this;
   }
@@ -512,11 +518,14 @@ export class Model {
     const insertions = Array.isArray(values) ? values : [values];
 
     const results = await this._runQuery(
-      this._currentQuery.table(this.table).create(
-        insertions.map((field) =>
-          this.formatFieldToDatabase(this._wrapValuesWithDefaults(field))
-        ) as Values[],
-      ).toDescription(),
+      this._currentQuery
+        .table(this.table)
+        .create(
+          insertions.map((field) =>
+            this.formatFieldToDatabase(this._wrapValuesWithDefaults(field))
+          ) as Values[]
+        )
+        .toDescription()
     );
 
     if (!Array.isArray(values) && Array.isArray(results)) {
@@ -538,9 +547,9 @@ export class Model {
         .table(this.table)
         .find(
           this.getComputedPrimaryKey(),
-          Array.isArray(idOrIds) ? idOrIds : [idOrIds],
+          Array.isArray(idOrIds) ? idOrIds : [idOrIds]
         )
-        .toDescription(),
+        .toDescription()
     );
 
     return Array.isArray(idOrIds) ? results : (results as Model[])[0];
@@ -557,22 +566,20 @@ export class Model {
   static orderBy<T extends ModelSchema>(
     this: T,
     fieldOrFields: string | OrderByClauses,
-    orderDirection: OrderDirection = "asc",
+    orderDirection: OrderDirection = "asc"
   ) {
     if (typeof fieldOrFields === "string") {
       this._currentQuery.orderBy(
         this.formatFieldToDatabase(fieldOrFields) as string,
-        orderDirection,
+        orderDirection
       );
     } else {
-      for (
-        const [field, orderDirectionField] of Object.entries(
-          fieldOrFields,
-        )
-      ) {
+      for (const [field, orderDirectionField] of Object.entries(
+        fieldOrFields
+      )) {
         this._currentQuery.orderBy(
           this.formatFieldToDatabase(field) as string,
-          orderDirectionField,
+          orderDirectionField
         );
       }
     }
@@ -648,35 +655,37 @@ export class Model {
   static where<T extends ModelSchema>(
     this: T,
     field: string,
-    fieldValue: FieldValue,
+    fieldValue: FieldValue
   ): T;
   static where<T extends ModelSchema>(
     this: T,
     field: string,
     operator: Operator,
-    fieldValue: FieldValue,
+    fieldValue: FieldValue
   ): T;
   static where<T extends ModelSchema>(this: T, fields: Values): T;
   static where<T extends ModelSchema>(
     this: T,
     fieldOrFields: string | Values,
     operatorOrFieldValue?: Operator | FieldValue,
-    fieldValue?: FieldValue,
+    fieldValue?: FieldValue
   ) {
     if (typeof fieldOrFields === "string") {
-      const whereOperator: Operator = typeof fieldValue !== "undefined"
-        ? (operatorOrFieldValue as Operator)
-        : "=";
+      const whereOperator: Operator =
+        typeof fieldValue !== "undefined"
+          ? (operatorOrFieldValue as Operator)
+          : "=";
 
-      const whereValue: FieldValue = typeof fieldValue !== "undefined"
-        ? fieldValue
-        : (operatorOrFieldValue as FieldValue);
+      const whereValue: FieldValue =
+        typeof fieldValue !== "undefined"
+          ? fieldValue
+          : (operatorOrFieldValue as FieldValue);
 
       if (whereValue !== undefined) {
         this._currentQuery.where(
           this.formatFieldToDatabase(fieldOrFields) as string,
           whereOperator,
-          whereValue,
+          whereValue
         );
       }
     } else {
@@ -693,7 +702,7 @@ export class Model {
         this._currentQuery.where(
           this.formatFieldToDatabase(field) as string,
           "=",
-          value,
+          value
         );
       }
     }
@@ -711,15 +720,13 @@ export class Model {
     let fieldsToUpdate: Values = {};
 
     if (this.timestamps) {
-      fieldsToUpdate[
-        this.formatFieldToDatabase("updated_at") as string
-      ] = new Date();
+      fieldsToUpdate[this.formatFieldToDatabase("updated_at") as string] =
+        new Date();
     }
 
     if (typeof fieldOrFields === "string") {
-      fieldsToUpdate[
-        this.formatFieldToDatabase(fieldOrFields) as string
-      ] = fieldValue!;
+      fieldsToUpdate[this.formatFieldToDatabase(fieldOrFields) as string] =
+        fieldValue!;
     } else {
       fieldsToUpdate = {
         ...fieldsToUpdate,
@@ -733,7 +740,7 @@ export class Model {
       this._currentQuery
         .table(this.table)
         .update(fieldsToUpdate)
-        .toDescription(),
+        .toDescription()
     ) as Promise<Model | Model[]>;
   }
 
@@ -747,7 +754,7 @@ export class Model {
         .table(this.table)
         .where(this.getComputedPrimaryKey(), "=", id)
         .delete()
-        .toDescription(),
+        .toDescription()
     );
   }
 
@@ -757,7 +764,7 @@ export class Model {
    */
   static delete() {
     return this._runQuery(
-      this._currentQuery.table(this.table).delete().toDescription(),
+      this._currentQuery.table(this.table).delete().toDescription()
     );
   }
 
@@ -776,12 +783,12 @@ export class Model {
     this: T,
     joinTable: ModelSchema,
     originField: string,
-    targetField: string,
+    targetField: string
   ) {
     this._currentQuery.join(
       joinTable.table,
       joinTable.formatFieldToDatabase(originField) as string,
-      this.formatFieldToDatabase(targetField) as string,
+      this.formatFieldToDatabase(targetField) as string
     );
     return this;
   }
@@ -801,12 +808,12 @@ export class Model {
     this: T,
     joinTable: ModelSchema,
     originField: string,
-    targetField: string,
+    targetField: string
   ) {
     this._currentQuery.leftOuterJoin(
       joinTable.table,
       joinTable.formatFieldToDatabase(originField) as string,
-      this.formatFieldToDatabase(targetField) as string,
+      this.formatFieldToDatabase(targetField) as string
     );
     return this;
   }
@@ -826,12 +833,12 @@ export class Model {
     this: T,
     joinTable: ModelSchema,
     originField: string,
-    targetField: string,
+    targetField: string
   ) {
     this._currentQuery.leftJoin(
       joinTable.table,
       joinTable.formatFieldToDatabase(originField) as string,
-      this.formatFieldToDatabase(targetField) as string,
+      this.formatFieldToDatabase(targetField) as string
     );
     return this;
   }
@@ -847,7 +854,7 @@ export class Model {
       this._currentQuery
         .table(this.table)
         .count(this.formatFieldToDatabase(field) as string)
-        .toDescription(),
+        .toDescription()
     );
 
     return Number((value as AggregationResult[])[0].count);
@@ -862,7 +869,7 @@ export class Model {
       this._currentQuery
         .table(this.table)
         .min(this.formatFieldToDatabase(field) as string)
-        .toDescription(),
+        .toDescription()
     );
 
     return Number((value as AggregationResult[])[0].min);
@@ -877,7 +884,7 @@ export class Model {
       this._currentQuery
         .table(this.table)
         .max(this.formatFieldToDatabase(field) as string)
-        .toDescription(),
+        .toDescription()
     );
 
     return Number((value as AggregationResult[])[0].max);
@@ -892,7 +899,7 @@ export class Model {
       this._currentQuery
         .table(this.table)
         .sum(this.formatFieldToDatabase(field) as string)
-        .toDescription(),
+        .toDescription()
     );
 
     return Number((value as AggregationResult[])[0].sum);
@@ -909,7 +916,7 @@ export class Model {
       this._currentQuery
         .table(this.table)
         .avg(this.formatFieldToDatabase(field) as string)
-        .toDescription(),
+        .toDescription()
     );
 
     return Number((value as AggregationResult[])[0].avg);
@@ -927,18 +934,18 @@ export class Model {
    */
   static hasMany<T extends ModelSchema>(
     this: T,
-    model: ModelSchema,
+    model: ModelSchema
   ): Promise<Model | Model[]> {
     const currentWhereValue = this._findCurrentQueryWhereClause();
 
     if (model.name in this.pivot) {
       const pivot = this.pivot[model.name];
       const pivotField = this.formatFieldToDatabase(
-        pivot._pivotsFields[this.name],
+        pivot._pivotsFields[this.name]
       ) as string;
       const pivotOtherModel = pivot._pivotsModels[model.name];
       const pivotOtherModelField = pivotOtherModel.formatFieldToDatabase(
-        pivot._pivotsFields[model.name],
+        pivot._pivotsFields[model.name]
       ) as string;
 
       return pivot
@@ -946,7 +953,7 @@ export class Model {
         .join(
           pivotOtherModel,
           pivotOtherModel.field(pivotOtherModel.getComputedPrimaryKey()),
-          pivot.field(pivotOtherModelField),
+          pivot.field(pivotOtherModelField)
         )
         .get();
     }
@@ -965,11 +972,13 @@ export class Model {
       const currentModelFKName = this._findModelForeignKeyField(this, model);
       const currentModelValue = await this.where(
         this.getComputedPrimaryKey(),
-        currentWhereValue,
+        currentWhereValue
       ).first();
-      const currentModelFKValue =
-        currentModelValue[currentModelFKName] as FieldValue;
-      return model.where(model.getComputedPrimaryKey(), currentModelFKValue)
+      const currentModelFKValue = currentModelValue[
+        currentModelFKName
+      ] as FieldValue;
+      return model
+        .where(model.getComputedPrimaryKey(), currentModelFKValue)
         .first();
     }
 
@@ -988,7 +997,7 @@ export class Model {
 
     if (!where) {
       throw new Error(
-        "The current query does not have any where clause for this model primary key.",
+        "The current query does not have any where clause for this model primary key."
       );
     }
 
@@ -998,10 +1007,10 @@ export class Model {
   /** Look for a `fieldName: Relationships.belongsTo(forModel)` field for a given `model`. */
   private static _findModelForeignKeyField(
     model: ModelSchema,
-    forModel: ModelSchema = this,
+    forModel: ModelSchema = this
   ): string {
     const modelFK: [string, FieldType] | undefined = Object.entries(
-      model.fields,
+      model.fields
     ).find(([, type]) => {
       return typeof type === "object"
         ? type.relationship?.model === forModel
@@ -1063,9 +1072,7 @@ export class Model {
       }
     }
 
-    await model.where(modelPK, this._getCurrentPrimaryKey()).update(
-      values,
-    );
+    await model.where(modelPK, this._getCurrentPrimaryKey()).update(values);
 
     return this;
   }
@@ -1080,7 +1087,7 @@ export class Model {
 
     if (PKCurrentValue === undefined) {
       throw new Error(
-        "This instance does not have a value for its primary key. It cannot be deleted.",
+        "This instance does not have a value for its primary key. It cannot be deleted."
       );
     }
 
