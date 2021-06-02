@@ -4,6 +4,7 @@ import type { Connector, ConnectorOptions } from "./connector.ts";
 import { SQLTranslator } from "../translators/sql-translator.ts";
 import type { SupportedSQLDatabaseDialect } from "../translators/sql-translator.ts";
 import type { QueryDescription } from "../query-builder.ts";
+import { ResponseTimeoutError } from "https://deno.land/x/mysql@v2.8.0/src/constant/errors.ts";
 
 export interface MySQLOptions extends ConnectorOptions {
   database: string;
@@ -64,9 +65,16 @@ export class MySQLConnector implements Connector {
     }
   }
 
+  /**
+   * Executing query
+   * @param queryDescription {QueryDescription}
+   * @param client {MySQLClient | MySQLConnection}
+   * @param reconnectAttempt {boolean} - Used for reconnect client when ResponseTimeoutError happened
+   */
   async query(
     queryDescription: QueryDescription,
     client?: MySQLClient | MySQLConnection,
+    reconnectAttempt: boolean = true
   ): Promise<any | any[]> {
     await this._makeConnection();
 
@@ -78,7 +86,22 @@ export class MySQLConnector implements Connector {
       : "execute";
 
     for (let i = 0; i < subqueries.length; i++) {
-      const result = await queryClient[queryMethod](subqueries[i]);
+      let result = null;
+
+      try{
+        result = await queryClient[queryMethod](subqueries[i]);
+      }
+      catch(e){
+        //prevent unhandled behavior
+        if(!(e instanceof ResponseTimeoutError) || !reconnectAttempt){
+          return result;
+        }
+
+        //reconnect client, at this moment we can't subscribe to connectionState of mysql driver, we need to do this
+        await this.reconnect();
+
+        return this.query(queryDescription, client, false);
+      }
 
       if (i === subqueries.length - 1) {
         return result;
@@ -88,6 +111,14 @@ export class MySQLConnector implements Connector {
 
   transaction(queries: () => Promise<void>) {
     return this._client.transaction(queries);
+  }
+
+  /**
+   * Reconnect client by close existing and reconnecting it
+   */
+  async reconnect(){
+    await this.close();
+    await this._makeConnection();
   }
 
   async close() {
