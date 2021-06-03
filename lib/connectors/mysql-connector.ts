@@ -100,7 +100,7 @@ export class MySQLConnector implements Connector {
         //reconnect client, at this moment we can't subscribe to connectionState of mysql driver, we need to do this
         await this.reconnect();
 
-        return this.query(queryDescription, client, false);
+        return await this.query(queryDescription, client, false);
       }
 
       if (i === subqueries.length - 1) {
