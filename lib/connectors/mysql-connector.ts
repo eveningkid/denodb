@@ -117,8 +117,9 @@ export class MySQLConnector implements Connector {
    * Reconnect client by close existing and reconnecting it
    */
   async reconnect(){
+    console.log('Debug >> Reconnect MySQL Client');
     await this.close();
-    await this._makeConnection();
+    return this._makeConnection();
   }
 
   async close() {
