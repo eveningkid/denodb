@@ -1,10 +1,10 @@
-import { configMySQLLogger, MySQLClient, MySQLConnection } from "../../deps.ts";
+import { configMySQLLogger, MySQLClient, MySQLConnection, MySQLReponseTimeoutError } from "../../deps.ts";
 import type { LoggerConfig } from "../../deps.ts";
 import type { Connector, ConnectorOptions } from "./connector.ts";
 import { SQLTranslator } from "../translators/sql-translator.ts";
 import type { SupportedSQLDatabaseDialect } from "../translators/sql-translator.ts";
 import type { QueryDescription } from "../query-builder.ts";
-import { ResponseTimeoutError } from "https://deno.land/x/mysql@v2.8.0/src/constant/errors.ts";
+import { warning } from "../helpers/log.ts";
 
 export interface MySQLOptions extends ConnectorOptions {
   database: string;
@@ -15,6 +15,7 @@ export interface MySQLOptions extends ConnectorOptions {
   charset?: string;
   logger?: LoggerConfig;
   idleTimeout?: number;
+  reconnectOnTimeout?: boolean
 }
 
 export class MySQLConnector implements Connector {
@@ -48,7 +49,7 @@ export class MySQLConnector implements Connector {
       password: this._options.password,
       port: this._options.port ?? 3306,
       charset: this._options.charset ?? "utf8",
-      idleTimeout: this._options.idleTimeout ??  4 * 3600 * 1000
+      idleTimeout: this._options.idleTimeout
     });
 
     this._connected = true;
@@ -73,8 +74,7 @@ export class MySQLConnector implements Connector {
    */
   async query(
     queryDescription: QueryDescription,
-    client?: MySQLClient | MySQLConnection,
-    reconnectAttempt: boolean = true
+    client?: MySQLClient | MySQLConnection
   ): Promise<any | any[]> {
     await this._makeConnection();
 
@@ -88,19 +88,20 @@ export class MySQLConnector implements Connector {
     for (let i = 0; i < subqueries.length; i++) {
       let result = null;
 
-      try{
+      try {
         result = await queryClient[queryMethod](subqueries[i]);
       }
-      catch(e){
-        //prevent unhandled behavior
-        if(!(e instanceof ResponseTimeoutError) || !reconnectAttempt){
-          return result;
+      catch (error) {
+        
+        //reconnect client on timeout error
+        if (this._options.reconnectOnTimeout && error instanceof MySQLReponseTimeoutError) {
+          //reconnect client, at this moment we can't subscribe to connectionState of mysql driver, we need to do this
+          await this.reconnect();
+
+          return this.query(queryDescription, client);
         }
-
-        //reconnect client, at this moment we can't subscribe to connectionState of mysql driver, we need to do this
-        await this.reconnect();
-
-        return await this.query(queryDescription, client, false);
+        
+        throw error;
       }
 
       if (i === subqueries.length - 1) {
@@ -113,11 +114,13 @@ export class MySQLConnector implements Connector {
     return this._client.transaction(queries);
   }
 
+  
   /**
-   * Reconnect client by close existing and reconnecting it
+   * Reconnect client connection
    */
-  async reconnect(){
-    console.log('Debug >> Reconnect MySQL Client');
+  async reconnect() {
+    warning("Client reconnection has been triggered.");
+
     await this.close();
     return this._makeConnection();
   }
