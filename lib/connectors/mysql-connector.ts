@@ -1,4 +1,9 @@
-import { configMySQLLogger, MySQLClient, MySQLConnection, MySQLReponseTimeoutError } from "../../deps.ts";
+import {
+  configMySQLLogger,
+  MySQLClient,
+  MySQLConnection,
+  MySQLReponseTimeoutError,
+} from "../../deps.ts";
 import type { LoggerConfig } from "../../deps.ts";
 import type { Connector, ConnectorOptions } from "./connector.ts";
 import { SQLTranslator } from "../translators/sql-translator.ts";
@@ -15,7 +20,7 @@ export interface MySQLOptions extends ConnectorOptions {
   charset?: string;
   logger?: LoggerConfig;
   idleTimeout?: number;
-  reconnectOnTimeout?: boolean
+  reconnectOnTimeout?: boolean;
 }
 
 export class MySQLConnector implements Connector {
@@ -49,7 +54,7 @@ export class MySQLConnector implements Connector {
       password: this._options.password,
       port: this._options.port ?? 3306,
       charset: this._options.charset ?? "utf8",
-      idleTimeout: this._options.idleTimeout
+      idleTimeout: this._options.idleTimeout,
     });
 
     this._connected = true;
@@ -70,11 +75,10 @@ export class MySQLConnector implements Connector {
    * Executing query
    * @param queryDescription {QueryDescription}
    * @param client {MySQLClient | MySQLConnection}
-   * @param reconnectAttempt {boolean} - Used for reconnect client when ResponseTimeoutError happened
    */
   async query(
     queryDescription: QueryDescription,
-    client?: MySQLClient | MySQLConnection
+    client?: MySQLClient | MySQLConnection,
   ): Promise<any | any[]> {
     await this._makeConnection();
 
@@ -90,17 +94,17 @@ export class MySQLConnector implements Connector {
 
       try {
         result = await queryClient[queryMethod](subqueries[i]);
-      }
-      catch (error) {
-        
+      } catch (error) {
         //reconnect client on timeout error
-        if (this._options.reconnectOnTimeout && error instanceof MySQLReponseTimeoutError) {
-          //reconnect client, at this moment we can't subscribe to connectionState of mysql driver, we need to do this
+        if (
+          this._options.reconnectOnTimeout &&
+          error instanceof MySQLReponseTimeoutError
+        ) {
           await this.reconnect();
 
           return this.query(queryDescription, client);
         }
-        
+
         throw error;
       }
 
@@ -114,13 +118,11 @@ export class MySQLConnector implements Connector {
     return this._client.transaction(queries);
   }
 
-  
   /**
-   * Reconnect client connection
+   * Reconnect current client connection
    */
   async reconnect() {
     warning("Client reconnection has been triggered.");
-
     await this.close();
     return this._makeConnection();
   }
