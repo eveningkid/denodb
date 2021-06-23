@@ -1,9 +1,15 @@
-import { configMySQLLogger, MySQLClient, MySQLConnection } from "../../deps.ts";
+import {
+  configMySQLLogger,
+  MySQLClient,
+  MySQLConnection,
+  MySQLReponseTimeoutError,
+} from "../../deps.ts";
 import type { LoggerConfig } from "../../deps.ts";
 import type { Connector, ConnectorOptions } from "./connector.ts";
 import { SQLTranslator } from "../translators/sql-translator.ts";
 import type { SupportedSQLDatabaseDialect } from "../translators/sql-translator.ts";
 import type { QueryDescription } from "../query-builder.ts";
+import { warning } from "../helpers/log.ts";
 
 export interface MySQLOptions extends ConnectorOptions {
   database: string;
@@ -13,6 +19,8 @@ export interface MySQLOptions extends ConnectorOptions {
   port?: number;
   charset?: string;
   logger?: LoggerConfig;
+  idleTimeout?: number;
+  reconnectOnTimeout?: boolean;
 }
 
 export class MySQLConnector implements Connector {
@@ -46,6 +54,7 @@ export class MySQLConnector implements Connector {
       password: this._options.password,
       port: this._options.port ?? 3306,
       charset: this._options.charset ?? "utf8",
+      idleTimeout: this._options.idleTimeout,
     });
 
     this._connected = true;
@@ -62,6 +71,11 @@ export class MySQLConnector implements Connector {
     }
   }
 
+  /**
+   * Executing query
+   * @param queryDescription {QueryDescription}
+   * @param client {MySQLClient | MySQLConnection}
+   */
   async query(
     queryDescription: QueryDescription,
     client?: MySQLClient | MySQLConnection,
@@ -76,7 +90,23 @@ export class MySQLConnector implements Connector {
       : "execute";
 
     for (let i = 0; i < subqueries.length; i++) {
-      const result = await queryClient[queryMethod](subqueries[i]);
+      let result = null;
+
+      try {
+        result = await queryClient[queryMethod](subqueries[i]);
+      } catch (error) {
+        //reconnect client on timeout error
+        if (
+          this._options.reconnectOnTimeout &&
+          error instanceof MySQLReponseTimeoutError
+        ) {
+          await this.reconnect();
+
+          return this.query(queryDescription, client);
+        }
+
+        throw error;
+      }
 
       if (i === subqueries.length - 1) {
         return result;
@@ -86,6 +116,15 @@ export class MySQLConnector implements Connector {
 
   transaction(queries: () => Promise<void>) {
     return this._client.transaction(queries);
+  }
+
+  /**
+   * Reconnect current client connection
+   */
+  async reconnect() {
+    warning("Client reconnection has been triggered.");
+    await this.close();
+    return this._makeConnection();
   }
 
   async close() {

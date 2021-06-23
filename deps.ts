@@ -11,6 +11,11 @@ export {
   configLogger as configMySQLLogger,
   Connection as MySQLConnection,
 } from "https://deno.land/x/mysql@v2.8.0/mod.ts";
+
+export {
+  ResponseTimeoutError as MySQLReponseTimeoutError
+} from "https://deno.land/x/mysql@v2.8.0/src/constant/errors.ts";
+
 export type { LoggerConfig } from "https://deno.land/x/mysql@v2.8.0/mod.ts";
 
 export { Client as PostgresClient } from "https://deno.land/x/postgres@v0.11.2/mod.ts";
