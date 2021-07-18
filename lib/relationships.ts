@@ -52,7 +52,7 @@ export const Relationships = {
   },
 
   /** Generate a many-to-many pivot model for two given models.
-   * 
+   *
    *     const AirportFlight = Relationships.manyToMany(Airport, Flight);
    */
   manyToMany(
