@@ -79,14 +79,6 @@ export class SQLTranslator implements Translator {
     if (query.wheres) {
       query.wheres.forEach((where) => {
         switch (where.method) {
-          case "none":
-            queryBuilder = queryBuilder.where(
-              where.field,
-              where.operator,
-              where.value,
-            );
-            break;
-
           case "and":
             queryBuilder = queryBuilder.andWhere(
               where.field,
@@ -102,6 +94,13 @@ export class SQLTranslator implements Translator {
               where.value,
             );
             break;
+
+          default:
+            queryBuilder = queryBuilder.where(
+              where.field,
+              where.operator,
+              where.value,
+            );
         }
       });
     }

@@ -18,7 +18,8 @@ export type QueryType =
   | "max"
   | "avg"
   | "sum";
-export type WhereMethod = "none" | "and" | "or";
+
+export type WhereMethod = "and" | "or" | undefined;
 
 export type JoinClause = {
   joinTable: string;
@@ -180,13 +181,13 @@ export class QueryBuilder {
     field: string,
     operator: Operator,
     value: FieldValue,
-    method: WhereMethod,
+    method?: WhereMethod,
   ) {
     if (!this._query.wheres) {
       this._query.wheres = [];
     }
 
-    const whereClause: WhereClause = {
+    const whereClause = {
       field,
       operator,
       value,

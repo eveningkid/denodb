@@ -17,7 +17,7 @@ class User extends Model {
 }
 
 async function createConnection() {
-  const connection = getSQLiteConnection("test.db", false);
+  const connection = getSQLiteConnection({}, false);
 
   connection.link([User]);
 

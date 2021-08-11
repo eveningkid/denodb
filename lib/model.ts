@@ -612,7 +612,6 @@ export class Model {
           this.formatFieldToDatabase(fieldOrFields) as string,
           whereOperator,
           whereValue,
-          "none",
         );
       }
     } else {
@@ -630,7 +629,6 @@ export class Model {
           this.formatFieldToDatabase(field) as string,
           "=",
           value,
-          "none",
         );
       }
     }
@@ -796,7 +794,7 @@ export class Model {
     return this._runQuery(
       this._currentQuery
         .table(this.table)
-        .where(this.getComputedPrimaryKey(), "=", id, "none")
+        .where(this.getComputedPrimaryKey(), "=", id)
         .delete()
         .toDescription(),
     );
