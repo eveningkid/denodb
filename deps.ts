@@ -17,6 +17,9 @@ export { Client as PostgresClient } from "https://deno.land/x/postgres@v0.11.2/m
 
 export { DB as SQLiteClient } from "https://deno.land/x/sqlite@v2.3.1/mod.ts";
 
+// NOTE(eveningkid): upgrading to 0.24.0 would raise an issue asking for the --unstable flag.
+// This would be asked to anyone using denodb, not only mongodb users.
+// Should wait on a version that isn't using any unstable API
 export { MongoClient as MongoDBClient, Bson } from "https://deno.land/x/mongo@v0.22.0/mod.ts";
 export type { ConnectOptions as MongoDBClientOptions } from "https://deno.land/x/mongo@v0.22.0/mod.ts";
 export type { Database as MongoDBDatabase } from "https://deno.land/x/mongo@v0.22.0/src/database.ts";
