@@ -13,3 +13,4 @@ examples/
 .deno_plugins
 .nova/*
 tsconfig.json
+.env

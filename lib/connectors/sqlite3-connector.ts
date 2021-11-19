@@ -48,27 +48,24 @@ export class SQLite3Connector implements Connector {
     }
   }
 
+  // deno-lint-ignore no-explicit-any
   query(queryDescription: QueryDescription): Promise<any | any[]> {
     this._makeConnection();
 
     const query = this._translator.translateToQuery(queryDescription);
     const subqueries = query.split(/;(?=(?:[^'"]|'[^']*'|"[^"]*")*$)/);
 
+    // deno-lint-ignore require-await
     const results = subqueries.map(async (subquery, index) => {
-      const response = this._client.query(subquery + ";", []);
+      const preparedQuery = this._client.prepareQuery(subquery + ";");
+      const response = preparedQuery.allEntries();
+      preparedQuery.finalize();
 
       if (index < subqueries.length - 1) {
-        response.return();
         return [];
       }
 
-      const results = [];
-      let columns;
-
-      try {
-        columns = response.columns();
-      } catch {
-        // If there are no matching records, .columns will throw an error
+      if (response.length === 0) {
         if (queryDescription.type === "insert" && queryDescription.values) {
           return {
             affectedRows: this._client.changes,
@@ -83,33 +80,25 @@ export class SQLite3Connector implements Connector {
         return { affectedRows: this._client.changes };
       }
 
-      for (const row of response) {
-        const result: { [k: string]: FieldValue } = {};
-
-        let i = 0;
-        for (const column of row!) {
-          const columnName = columns[i].name;
+      return response.map(row => {
+        const result: Record<string, FieldValue> = {};
+        for (const [columnName, value] of Object.entries(row)) {
           if (columnName === "count(*)") {
-            result.count = column;
+            result.count = row[columnName] as FieldValue;
           } else if (columnName.startsWith("max(")) {
-            result.max = column;
+            result.max = value as FieldValue;
           } else if (columnName.startsWith("min(")) {
-            result.min = column;
+            result.min = value as FieldValue;
           } else if (columnName.startsWith("sum(")) {
-            result.sum = column;
+            result.sum = value as FieldValue;
           } else if (columnName.startsWith("avg(")) {
-            result.avg = column;
+            result.avg = value as FieldValue;
           } else {
-            result[columns[i].name] = column;
+            result[columnName] = value as FieldValue;
           }
-
-          i++;
         }
-
-        results.push(result);
-      }
-
-      return results;
+        return result;
+      });
     });
 
     return results[results.length - 1];

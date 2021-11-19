@@ -12,7 +12,7 @@ const defaultMySQLOptions = {
 };
 
 const defaultSQLiteOptions = {
-  filepath: "test.db",
+  filepath: "test.sqlite",
 };
 
 const getMySQLConnection = (options = {}, debug = true): Database => {

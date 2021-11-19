@@ -59,7 +59,7 @@ export class PostgresConnector implements Connector {
     await this._makeConnection();
 
     try {
-      const [{ result }] = (
+      const [result] = (
         await this._client.queryObject("SELECT 1 + 1 as result")
       ).rows;
       return result === 2;
@@ -68,6 +68,7 @@ export class PostgresConnector implements Connector {
     }
   }
 
+  // deno-lint-ignore no-explicit-any
   async query(queryDescription: QueryDescription): Promise<any | any[]> {
     await this._makeConnection();
 
