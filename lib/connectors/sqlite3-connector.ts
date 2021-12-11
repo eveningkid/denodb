@@ -55,8 +55,7 @@ export class SQLite3Connector implements Connector {
     const query = this._translator.translateToQuery(queryDescription);
     const subqueries = query.split(/;(?=(?:[^'"]|'[^']*'|"[^"]*")*$)/);
 
-    // deno-lint-ignore require-await
-    const results = subqueries.map(async (subquery, index) => {
+    const results = subqueries.map((subquery, index) => {
       const preparedQuery = this._client.prepareQuery(subquery + ";");
       const response = preparedQuery.allEntries();
       preparedQuery.finalize();
@@ -84,7 +83,7 @@ export class SQLite3Connector implements Connector {
         const result: Record<string, FieldValue> = {};
         for (const [columnName, value] of Object.entries(row)) {
           if (columnName === "count(*)") {
-            result.count = row[columnName] as FieldValue;
+            result.count = value as FieldValue;
           } else if (columnName.startsWith("max(")) {
             result.max = value as FieldValue;
           } else if (columnName.startsWith("min(")) {
@@ -101,7 +100,7 @@ export class SQLite3Connector implements Connector {
       });
     });
 
-    return results[results.length - 1];
+    return Promise.resolve(results[results.length - 1]);
   }
 
   async transaction(queries: () => Promise<void>) {
