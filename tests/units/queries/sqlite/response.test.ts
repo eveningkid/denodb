@@ -84,6 +84,10 @@ Deno.test("SQLite: Response model", async () => {
     "Update many records response",
   );
 
+  const articleCount = await Article.where({ title: "hola mundo!" }).count();
+
+  assertEquals(articleCount, 2, "Return article count");
+
   const deleteManyResponse = await Article.where({ title: "hola mundo!" })
     .delete();
 

@@ -65,6 +65,7 @@ export class MySQLConnector implements Connector {
   async query(
     queryDescription: QueryDescription,
     client?: MySQLClient | MySQLConnection,
+  // deno-lint-ignore no-explicit-any
   ): Promise<any | any[]> {
     await this._makeConnection();
 
