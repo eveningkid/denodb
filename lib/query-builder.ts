@@ -7,7 +7,7 @@ export type Operator = ">" | ">=" | "<" | "<=" | "=" | "like";
 export type OrderDirection = "desc" | "asc";
 export type QueryType =
   | "create"
-  | "alter table"
+  | "alter"
   | "drop"
   | "truncate"
   | "select"
@@ -92,13 +92,8 @@ export class QueryBuilder {
     return this;
   }
 
-  alterTable(table: string) {
-    this._query.type = "alter table";
-    this._query.table = table;
-    return this;
-  }
-
   addColumn(columnName: string) {
+    this._query.type = "alter";
     this._query.addColumn = columnName;
     return this;
   }
@@ -118,35 +113,25 @@ export class QueryBuilder {
   }
 
   createTable(
-    fields: ModelFields,
-    fieldsDefaults: ModelDefaults,
     {
+      fields,
+      fieldsDefaults,
       withTimestamps,
       ifNotExists,
     }: {
+      fields?: ModelFields;
+      fieldsDefaults?: ModelDefaults;
       withTimestamps: boolean;
       ifNotExists: boolean;
-    }
+    },
   ) {
     this._query.type = "create";
     this._query.ifExists = ifNotExists ? false : true;
-    this._query.fields = fields;
-    this._query.fieldsDefaults = fieldsDefaults;
     this._query.timestamps = withTimestamps;
-    return this;
-  }
 
-  createTableOnlyTable({
-    withTimestamps,
-    ifNotExists,
-  }: {
-    withTimestamps: boolean;
-    ifNotExists: boolean;
-  }) {
-    this._query.type = "create";
-    this._query.ifExists = ifNotExists ? false : true;
-    this._query.fields = {};
-    this._query.timestamps = withTimestamps;
+    this._query.fields = fields ? fields : {};
+    this._query.fieldsDefaults = fieldsDefaults ? fieldsDefaults : {};
+
     return this;
   }
 
@@ -221,7 +206,7 @@ export class QueryBuilder {
     };
 
     const existingWhereForFieldIndex = this._query.wheres.findIndex(
-      (where) => where.field === field
+      (where) => where.field === field,
     );
 
     if (existingWhereForFieldIndex === -1) {

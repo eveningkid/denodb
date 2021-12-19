@@ -224,14 +224,14 @@ export class Database {
     for (const model of this._models) {
       try {
         console.log('[experimentalAutoMigrate] migrating table', model.table);
-        await model.createTableOnlyTable();
+        await model.createTable({withFields: false});
       } catch (e) {
         console.log('[experimentalAutoMigrate]', e);
       }
       
 
       if (dialect === "mongo") {
-        throw ("Auto-migration only works on SQL.");
+        throw new Error("Auto-migration only works on SQL.");
       }
 
       await model.autoMigrate();

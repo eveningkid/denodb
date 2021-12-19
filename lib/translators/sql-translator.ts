@@ -36,35 +36,18 @@ export class SQLTranslator implements Translator {
     });
 
     // Alter table for auto-migration
-    if (query.table && query.type === "alter table") {
-      // [autoMigrate] don't use queryBuilder but just use schema.alterTAble
+    if (query.table && query.type === "alter") {
+      // [autoMigrate] don't use queryBuilder but just use schema.alterTable
       const alterTableQuery = (SQLQueryBuilder as any)({
         client: this._dialect,
         useNullAsDefault: this._dialect === "sqlite3",
       }).schema.alterTable(query.table, (table: any) => {
-        // [TODO] [FATAL] find a way to match dex's column type to query's column type (query.columnType)
-        // For example, do I have to do this?
-        // switch (query.columnType) {
-        //   case "text":
-        //     table.text(query.addColumn);
-        //     break;
-
-        //   case "string":
-        //     table.string(query.addColumn);
-        //     break;
-
-        //   case "integer":
-        //     table.integer(query.addColumn);
-        //     break;
-        //   default:
-        //     break;
-        // }
-
-        table.text(query.addColumn);
+        console.log(query.columnType);
+        table[query.columnType || "text"](query.addColumn);
       });
 
       console.log(
-        `[autoMigrate] QUERY DETECTED AS ALTER TABLE: ${query.addColumn} ${query.columnType} ${this._dialect}`
+        `[autoMigrate] QUERY DETECTED AS ALTER TABLE: ${query.table} ${query.addColumn} ${query.columnType} ${this._dialect}`,
       );
 
       return alterTableQuery.toString();
@@ -83,7 +66,7 @@ export class SQLTranslator implements Translator {
     if (query.whereIn) {
       queryBuilder = queryBuilder.whereIn(
         query.whereIn.field,
-        query.whereIn.possibleValues
+        query.whereIn.possibleValues,
       );
     }
 
@@ -92,7 +75,7 @@ export class SQLTranslator implements Translator {
         Object.entries(query.orderBy).map(([field, orderDirection]) => ({
           column: field,
           order: orderDirection,
-        }))
+        })),
       );
     }
 
@@ -113,7 +96,7 @@ export class SQLTranslator implements Translator {
         queryBuilder = queryBuilder.where(
           where.field,
           where.operator,
-          where.value
+          where.value,
         );
       });
     }
@@ -124,7 +107,7 @@ export class SQLTranslator implements Translator {
           join.joinTable,
           join.originField,
           "=",
-          join.targetField
+          join.targetField,
         );
       });
     }
@@ -134,7 +117,7 @@ export class SQLTranslator implements Translator {
         queryBuilder = queryBuilder.leftOuterJoin(
           join.joinTable,
           join.originField,
-          join.targetField
+          join.targetField,
         );
       });
     }
@@ -144,19 +127,19 @@ export class SQLTranslator implements Translator {
         queryBuilder = queryBuilder.leftJoin(
           join.joinTable,
           join.originField,
-          join.targetField
+          join.targetField,
         );
       });
     }
 
     switch (query.type) {
-      case "alter table":
+      case "alter":
         console.log(
-          `[autoMigrate] QUERY DETECTED AS ALTER TABLE: ${query.addColumn} ${query.columnType}`
+          `[autoMigrate] QUERY DETECTED AS ALTER TABLE: ${query.addColumn} ${query.columnType}`,
         );
         console.log(
           "[autoMigrate]",
-          queryBuilder?.toString()
+          queryBuilder?.toString(),
           // ?.schema
           // queryBuilder?.createTable
           // ?.alterTable(query.table, (table: any) => {})
@@ -180,7 +163,7 @@ export class SQLTranslator implements Translator {
       case "create":
         if (!query.fields) {
           throw new Error(
-            "Fields were not provided for creating a new instance."
+            "Fields were not provided for creating a new instance.",
           );
         }
 
@@ -205,14 +188,14 @@ export class SQLTranslator implements Translator {
               // Adds `createdAt` and `updatedAt` fields
               table.timestamps(null, true);
             }
-          }
+          },
         );
         break;
 
       case "insert":
         if (!query.values) {
           throw new Error(
-            "Trying to make an insert query, but no values were provided."
+            "Trying to make an insert query, but no values were provided.",
           );
         }
 
@@ -222,7 +205,7 @@ export class SQLTranslator implements Translator {
       case "update":
         if (!query.values) {
           throw new Error(
-            "Trying to make an update query, but no values were provided."
+            "Trying to make an update query, but no values were provided.",
           );
         }
 
@@ -235,31 +218,31 @@ export class SQLTranslator implements Translator {
 
       case "count":
         queryBuilder = queryBuilder.count(
-          query.aggregatorField ? query.aggregatorField : "*"
+          query.aggregatorField ? query.aggregatorField : "*",
         );
         break;
 
       case "avg":
         queryBuilder = queryBuilder.avg(
-          query.aggregatorField ? query.aggregatorField : "*"
+          query.aggregatorField ? query.aggregatorField : "*",
         );
         break;
 
       case "min":
         queryBuilder = queryBuilder.min(
-          query.aggregatorField ? query.aggregatorField : "*"
+          query.aggregatorField ? query.aggregatorField : "*",
         );
         break;
 
       case "max":
         queryBuilder = queryBuilder.max(
-          query.aggregatorField ? query.aggregatorField : "*"
+          query.aggregatorField ? query.aggregatorField : "*",
         );
         break;
 
       case "sum":
         queryBuilder = queryBuilder.sum(
-          query.aggregatorField ? query.aggregatorField : "*"
+          query.aggregatorField ? query.aggregatorField : "*",
         );
         break;
     }
@@ -268,7 +251,7 @@ export class SQLTranslator implements Translator {
   }
 
   formatFieldNameToDatabase(
-    fieldName: string | FieldAlias
+    fieldName: string | FieldAlias,
   ): string | FieldAlias {
     if (typeof fieldName === "string") {
       const dotIndex = fieldName.indexOf(".");
@@ -288,7 +271,7 @@ export class SQLTranslator implements Translator {
           prev[alias] = this.formatFieldNameToDatabase(fullName);
           return prev;
         },
-        {}
+        {},
       );
     }
   }
