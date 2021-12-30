@@ -79,7 +79,7 @@ export class SQLite3Connector implements Connector {
         return { affectedRows: this._client.changes };
       }
 
-      return response.map(row => {
+      return response.map((row) => {
         const result: Record<string, FieldValue> = {};
         for (const [columnName, value] of Object.entries(row)) {
           if (columnName === "count(*)") {

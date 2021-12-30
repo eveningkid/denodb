@@ -1,5 +1,10 @@
 import type { SQLQueryBuilder } from "../deps.ts";
-import type { FieldAlias, FieldValue, Values } from "./data-types.ts";
+import type {
+  FieldAlias,
+  FieldType,
+  FieldValue,
+  Values,
+} from "./data-types.ts";
 import { Model, ModelDefaults, ModelFields, ModelSchema } from "./model.ts";
 
 export type Query = string;
@@ -20,6 +25,7 @@ export type QueryType =
   | "avg"
   | "sum";
 
+export type AlterType = "add" | "drop";
 export type JoinClause = {
   joinTable: string;
   originField: string;
@@ -61,8 +67,9 @@ export type QueryDescription = {
   fieldsDefaults?: ModelDefaults;
   timestamps?: boolean;
   values?: Values | Values[];
-  addColumn?: string;
-  columnType?: string;
+  columnType?: FieldType;
+  columnName?: string;
+  alterType?: AlterType;
 };
 
 export type QueryResult = {};
@@ -92,14 +99,23 @@ export class QueryBuilder {
     return this;
   }
 
-  addColumn(columnName: string) {
+  addColumn(
+    columnName: string,
+    columnType: FieldType,
+    fieldsDefaults: ModelDefaults,
+  ) {
     this._query.type = "alter";
-    this._query.addColumn = columnName;
+    this._query.columnName = columnName;
+    this._query.columnType = columnType;
+    this._query.alterType = "add";
+    this._query.fieldsDefaults = fieldsDefaults;
     return this;
   }
 
-  columnType(columnType: string) {
-    this._query.columnType = columnType;
+  removeColumn(columnName: string) {
+    this._query.type = "alter";
+    this._query.columnName = columnName;
+    this._query.alterType = "drop";
     return this;
   }
 
@@ -128,10 +144,8 @@ export class QueryBuilder {
     this._query.type = "create";
     this._query.ifExists = ifNotExists ? false : true;
     this._query.timestamps = withTimestamps;
-
     this._query.fields = fields ? fields : {};
     this._query.fieldsDefaults = fieldsDefaults ? fieldsDefaults : {};
-
     return this;
   }
 
@@ -148,11 +162,6 @@ export class QueryBuilder {
 
   select(...fields: (string | FieldAlias)[]) {
     this._query.select = fields;
-    return this;
-  }
-
-  removeSelect() {
-    delete this._query.select;
     return this;
   }
 

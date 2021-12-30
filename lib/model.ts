@@ -177,21 +177,54 @@ export class Model {
     this._isCreatedInDatabase = true;
   }
 
-  /** Auto-migrate */
+  static async tableExists() {
+    const columnsQuery = this._options.queryBuilder
+      .queryForSchema(this)
+      .table(this.table)
+      .limit(1)
+      .get();
+    try {
+      await this._options.database.query(
+        columnsQuery.toDescription(),
+      );
+    } catch (err) {
+      if (err.message === `no such table: ${this.table}`) return false;
+      throw new Error(err);
+    }
+
+    return true;
+  }
+
+  /**
+   * Sync all fields for a particular table. Existing fields no longer
+   * included in the models will removed, and new fields that are not currently
+   * in the table will be added
+   */
   static async autoMigrate() {
     console.log(`[experimentalAutoMigrate] syncing table ${this.table}`);
     console.log(`[experimentalAutoMigrate] fields:`, this.fields);
 
     const fieldsToCreate: { [key: string]: boolean } = {};
+    const fieldsToRemove: string[] = [];
 
-    Object.keys(this.fields).map((f) => {
-      fieldsToCreate[f] = true;
-    });
+    if (this.timestamps) {
+      fieldsToCreate.createdAt = true;
+      fieldsToCreate.updatedAt = true;
+    }
+
+    for (const field in this.fields) {
+      fieldsToCreate[field] = true;
+    }
+
+    const columnsQuery = this._options.queryBuilder
+      .queryForSchema(this)
+      .table(this.table)
+      .limit(1)
+      .get();
 
     // Let's pull all available fields
-    const colQuery = this._queryBuilder.table(this.table).limit(1).get();
     const columns = await this._options.database.query(
-      colQuery.toDescription(),
+      columnsQuery.toDescription(),
     ) as Model[];
 
     if (columns.length === 0) {
@@ -199,13 +232,20 @@ export class Model {
     } else {
       console.log("[autoMigrate] Removing existing field keys...");
 
-      Object.keys(columns[0]).map((existing) => {
-        delete fieldsToCreate[existing];
-      });
+      for (const existingField in columns[0]) {
+        if (fieldsToCreate[existingField] === undefined) {
+          fieldsToRemove.push(existingField);
+        }
+        delete fieldsToCreate[existingField];
+      }
     }
 
+    const fieldsDefaults = this.formatFieldToDatabase(
+      this.defaults,
+    ) as ModelDefaults;
+
     for (const field in fieldsToCreate) {
-      let fieldType = this.fields[field];
+      const fieldType = this.fields[field];
       console.log(
         "[autoMigrate] Creating:",
         this.formatFieldToDatabase(field),
@@ -216,26 +256,41 @@ export class Model {
       // Sometimes it's an object, if that's the case we need a little extra parsing
       if (typeof fieldType === "object") {
         if (fieldType.primaryKey) {
-          // Okay it's a primary key - use the existing logic
-          fieldType = fieldType.type ? fieldType.type : DataTypes.INTEGER;
-        } else {
-          // Try to use the type field
-          fieldType = fieldType.type as FieldType;
+          fieldType.type = fieldType.type ? fieldType.type : DataTypes.INTEGER;
         }
       }
 
-      try {
-        const addColumn = this._queryBuilder
-          .table(this.table)
-          .addColumn(this.formatFieldToDatabase(field) as string)
-          .columnType(fieldType.toString())
-          .toDescription();
+      const addColumn = this._options.queryBuilder
+        .table(this.table)
+        .addColumn(
+          this.formatFieldToDatabase(field) as string,
+          fieldType,
+          fieldsDefaults,
+        )
+        .toDescription();
 
-        await this._options.database.query(addColumn);
-      } catch (e) {
-        console.log("[autoMigrate] failed altering", e);
-      }
+      await this._options.database.query(addColumn);
     }
+
+    // NOTE: For some reason I couldn't get
+    // dropColumn to work for sqlite3, perhaps you
+    // have some input?
+
+    // for (const field of fieldsToRemove) {
+    //   console.log(
+    //     "[autoMigrate] Removing:",
+    //     this.formatFieldToDatabase(field),
+    //   );
+
+    //   const removeColumn = this._options.queryBuilder
+    //     .table(this.table)
+    //     .removeColumn(
+    //       this.formatFieldToDatabase(field) as string,
+    //     )
+    //     .toDescription();
+
+    //   await this._options.database.query(removeColumn);
+    // }
 
     console.log("[autoMigrate] All columns migrated!");
   }

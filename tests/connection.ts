@@ -1,5 +1,5 @@
 import { config } from "https://deno.land/x/dotenv/mod.ts";
-import { Database } from "../mod.ts";
+import { Database, SQLite3Connector } from "../mod.ts";
 
 const env = config();
 
@@ -27,16 +27,11 @@ const getMySQLConnection = (options = {}, debug = true): Database => {
   return connection;
 };
 
-const getSQLiteConnection = (options = {}, debug = true): Database => {
-  const connection: Database = new Database(
-    { dialect: "sqlite3", debug },
-    {
-      ...defaultSQLiteOptions,
-      ...options,
-    },
-  );
+const getSQLiteConnection = (debug = true): Database => {
+  const connection = new SQLite3Connector(defaultSQLiteOptions);
+  const db = new Database({ connector: connection, debug });
 
-  return connection;
+  return db;
 };
 
 export { getMySQLConnection, getSQLiteConnection };

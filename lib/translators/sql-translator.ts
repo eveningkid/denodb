@@ -37,23 +37,34 @@ export class SQLTranslator implements Translator {
 
     // Alter table for auto-migration
     if (query.table && query.type === "alter") {
-      // [autoMigrate] don't use queryBuilder but just use schema.alterTable
-      const alterTableQuery = (SQLQueryBuilder as any)({
-        client: this._dialect,
-        useNullAsDefault: this._dialect === "sqlite3",
-      }).schema.alterTable(query.table, (table: any) => {
-        console.log(query.columnType);
-        table[query.columnType || "text"](query.addColumn);
-      });
+      if (query.alterType === "drop") {
+        // TODO: for some reason this does not work...
+        queryBuilder = queryBuilder.schema.table(query.table, (table: any) => {
+          table.dropColumn(query.columnName);
+        });
+      } else {
+        queryBuilder = queryBuilder.schema.alterTable(
+          query.table,
+          (table: any) => {
+            const fieldDefaults = query.fieldsDefaults ?? {};
 
-      console.log(
-        `[autoMigrate] QUERY DETECTED AS ALTER TABLE: ${query.table} ${query.addColumn} ${query.columnType} ${this._dialect}`,
-      );
-
-      return alterTableQuery.toString();
-    }
-
-    if (query.table && query.type !== "drop" && query.type !== "create") {
+            if (
+              query.columnName && query.columnType && query.alterType === "add"
+            ) {
+              addFieldToSchema(table, {
+                name: query.columnName,
+                type: query.columnType,
+                defaultValue: fieldDefaults[query.columnName],
+              });
+            } else {
+              console.log("[autoMigrate]: ERR column name or type undefined");
+            }
+          },
+        );
+      }
+    } else if (
+      query.table && query.type !== "drop" && query.type !== "create"
+    ) {
       queryBuilder = queryBuilder.table(query.table);
     }
 
@@ -133,34 +144,20 @@ export class SQLTranslator implements Translator {
     }
 
     switch (query.type) {
-      case "alter":
-        console.log(
-          `[autoMigrate] QUERY DETECTED AS ALTER TABLE: ${query.addColumn} ${query.columnType}`,
-        );
-        console.log(
-          "[autoMigrate]",
-          queryBuilder?.toString(),
-          // ?.schema
-          // queryBuilder?.createTable
-          // ?.alterTable(query.table, (table: any) => {})
-          // ?.toString()
-        );
-
-        break;
-
-      case "drop":
+      case "drop": {
         const dropTableHelper = query.ifExists
           ? "dropTableIfExists"
           : "dropTable";
 
         queryBuilder = queryBuilder.schema[dropTableHelper](query.table);
         break;
+      }
 
-      case "truncate":
+      case "truncate": {
         queryBuilder = queryBuilder.truncate(query.table);
         break;
-
-      case "create":
+      }
+      case "create": {
         if (!query.fields) {
           throw new Error(
             "Fields were not provided for creating a new instance.",
@@ -191,7 +188,7 @@ export class SQLTranslator implements Translator {
           },
         );
         break;
-
+      }
       case "insert":
         if (!query.values) {
           throw new Error(
@@ -246,7 +243,6 @@ export class SQLTranslator implements Translator {
         );
         break;
     }
-
     return queryBuilder.toString();
   }
 
