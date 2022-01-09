@@ -234,6 +234,7 @@ export class SQLTranslator implements Translator {
       // Table.fieldName
       if (dotIndex !== -1) {
         return fieldName.slice(0, dotIndex + 1) +
+          // Don't change to snake_case, see #131
           camelCase(fieldName.slice(dotIndex + 1));
       }
 
