@@ -82,11 +82,11 @@ export function addFieldToSchema(
     }
 
     if (fieldOptions.type.primaryKey) {
-      instruction = instruction.primary(fieldOptions.name);
+      instruction = instruction.primary(`constraint_${table._tableName}_${fieldOptions.name}_primary`);
     }
 
     if (fieldOptions.type.unique) {
-      instruction = instruction.unique(fieldOptions.name);
+      instruction = instruction.unique(`constraint_${table._tableName}_${fieldOptions.name}_unique`);
     }
 
     if (!fieldOptions.type.allowNull) {
