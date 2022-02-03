@@ -86,6 +86,16 @@ export class SQLTranslator implements Translator {
       });
     }
 
+    if (query.whereNulls) {
+      query.whereNulls.forEach((whereNull) => {
+        if (whereNull.notNull) {
+          queryBuilder = queryBuilder.whereNotNull(whereNull.field);
+        } else {
+          queryBuilder = queryBuilder.whereNull(whereNull.field);
+        }
+      });
+    }
+
     if (query.joins) {
       query.joins.forEach((join) => {
         queryBuilder = queryBuilder.join(

@@ -107,3 +107,45 @@ Deno.test("SQLite: Response model", async () => {
 
   await connection.close();
 });
+
+Deno.test("SQLite: Response model, Query Null Fields", async () => {
+  const connection = getSQLiteConnection();
+  connection.link([Article]);
+  await connection.sync({ drop: true });
+
+  await Article.create([
+    { title: "hola" },
+    { title: "hola mundo!", content: "not the first article!" },
+  ]);
+
+  const selectNullFieldResponse = await Article.whereNull('content').all();
+
+  assertEquals(
+    selectNullFieldResponse.length,
+    1,
+    "Select expected only one record"
+  );
+
+  const selectNullFieldResponseChain = await Article.where('title', 'hola').whereNull('content').all();
+
+  assertEquals(
+    selectNullFieldResponseChain.length,
+    1,
+    "Select expected only one record"
+  );
+
+  assertEquals(
+    selectNullFieldResponse[0].title,
+    'hola',
+    "Select expected record with null content"
+  )
+
+  const selectNotNullFieldResponseChain = await Article.where('title', 'hola').whereNotNull('content').all();
+  assertEquals(
+    selectNotNullFieldResponseChain.length,
+    0,
+    "Select expected no record"
+  );
+  
+  await connection.close();
+});
