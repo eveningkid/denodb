@@ -1,6 +1,7 @@
 import { SQLiteClient } from "../../deps.ts";
 import type { Connector, ConnectorOptions } from "./connector.ts";
 import type { QueryDescription } from "../query-builder.ts";
+import { QueryLogger } from "../query-logger.ts";
 import type { FieldValue } from "../data-types.ts";
 import { SQLTranslator } from "../translators/sql-translator.ts";
 import type { SupportedSQLDatabaseDialect } from "../translators/sql-translator.ts";
@@ -50,6 +51,7 @@ export class SQLite3Connector implements Connector {
 
   // deno-lint-ignore no-explicit-any
   query(queryDescription: QueryDescription): Promise<any | any[]> {
+    const start = QueryLogger.start();
     this._makeConnection();
 
     const query = this._translator.translateToQuery(queryDescription);
@@ -65,6 +67,7 @@ export class SQLite3Connector implements Connector {
       }
 
       if (response.length === 0) {
+        QueryLogger.end(start, query);
         if (queryDescription.type === "insert" && queryDescription.values) {
           return {
             affectedRows: this._client.changes,
@@ -96,6 +99,7 @@ export class SQLite3Connector implements Connector {
             result[columnName] = value as FieldValue;
           }
         }
+        QueryLogger.end(start, query);
         return result;
       });
     });

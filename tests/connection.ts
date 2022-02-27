@@ -21,6 +21,9 @@ const getMySQLConnection = (options = {}, debug = true): Database => {
     {
       ...defaultMySQLOptions,
       ...options,
+      queryLogger : (query : string, execTime : number)=>{
+        console.log(`[${execTime} ms] ${query}`)
+      }
     },
   );
 
@@ -33,6 +36,9 @@ const getSQLiteConnection = (options = {}, debug = true): Database => {
     {
       ...defaultSQLiteOptions,
       ...options,
+      queryLogger : (query : string, execTime : number)=>{
+        console.log(`[${execTime} ms] ${query}`)
+      }
     },
   );
 

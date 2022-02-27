@@ -4,6 +4,7 @@ import type { Connector, ConnectorOptions } from "./connector.ts";
 import { SQLTranslator } from "../translators/sql-translator.ts";
 import type { SupportedSQLDatabaseDialect } from "../translators/sql-translator.ts";
 import type { QueryDescription } from "../query-builder.ts";
+import { QueryLogger } from "../query-logger.ts";
 
 export interface MySQLOptions extends ConnectorOptions {
   database: string;
@@ -67,6 +68,7 @@ export class MySQLConnector implements Connector {
     client?: MySQLClient | MySQLConnection,
   // deno-lint-ignore no-explicit-any
   ): Promise<any | any[]> {
+    const start = QueryLogger.start();
     await this._makeConnection();
 
     const queryClient = client ?? this._client;
@@ -80,6 +82,7 @@ export class MySQLConnector implements Connector {
       const result = await queryClient[queryMethod](subqueries[i]);
 
       if (i === subqueries.length - 1) {
+        QueryLogger.end(start, query);
         return result;
       }
     }

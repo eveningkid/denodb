@@ -3,6 +3,7 @@ import type { Connector, ConnectorOptions } from "./connector.ts";
 import { SQLTranslator } from "../translators/sql-translator.ts";
 import type { SupportedSQLDatabaseDialect } from "../translators/sql-translator.ts";
 import type { QueryDescription } from "../query-builder.ts";
+import { QueryLogger } from "../query-logger.ts";
 import type { Values } from "../data-types.ts";
 
 interface PostgresOptionsWithConfig extends ConnectorOptions {
@@ -70,11 +71,13 @@ export class PostgresConnector implements Connector {
 
   // deno-lint-ignore no-explicit-any
   async query(queryDescription: QueryDescription): Promise<any | any[]> {
+    const start = QueryLogger.start();
     await this._makeConnection();
 
     const query = this._translator.translateToQuery(queryDescription);
     const response = await this._client.queryObject(query);
     const results = response.rows as Values[];
+    QueryLogger.end(start, query);
 
     if (queryDescription.type === "insert") {
       return results.length === 1 ? results[0] : results;

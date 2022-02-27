@@ -6,6 +6,7 @@ import type {
   ModelSchema,
 } from "./model.ts";
 import { QueryBuilder, QueryDescription } from "./query-builder.ts";
+import { QueryLogger, LoggerOptions } from "./query-logger.ts";
 import { formatResultToModelInstance } from "./helpers/results.ts";
 import { Translator } from "./translators/translator.ts";
 import { connectorFactory } from "./connectors/factory.ts";
@@ -106,6 +107,10 @@ export class Database {
     }
 
     this._queryBuilder = new QueryBuilder();
+    const loggerOptions = connectionOptions as LoggerOptions;
+    if (typeof loggerOptions?.queryLogger === "function") {
+      QueryLogger.init(loggerOptions.queryLogger);
+    }
   }
 
   private static _isInDialectForm(
