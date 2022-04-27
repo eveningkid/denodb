@@ -892,12 +892,12 @@ export class Model {
   }
 
   /** Find associated values for the given model for one-to-one and one-to-many relationships. */
-  static async hasOne<T extends ModelSchema>(this: T, model: ModelSchema) {
+  static async hasOne<T extends ModelSchema>(this: T, model: ModelSchema, foreignKeyName?: string) {
     const currentWhereValue = this._findCurrentQueryWhereClause();
     const FKName = this._findModelForeignKeyField(model);
 
     if (!FKName) {
-      const currentModelFKName = this._findModelForeignKeyField(this, model);
+      const currentModelFKName = (foreignKeyName) ? foreignKeyName : this._findModelForeignKeyField(this, model);
       const currentModelValue = await this.where(
         this.getComputedPrimaryKey(),
         currentWhereValue,
