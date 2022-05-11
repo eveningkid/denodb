@@ -1,4 +1,4 @@
-import { PostgresClient } from "../../deps.ts";
+import { PostgresClient, PostgresTransaction } from "../../deps.ts";
 import type { Connector, ConnectorOptions } from "./connector.ts";
 import { SQLTranslator } from "../translators/sql-translator.ts";
 import type { SupportedSQLDatabaseDialect } from "../translators/sql-translator.ts";
@@ -28,6 +28,7 @@ export class PostgresConnector implements Connector {
   _options: PostgresOptions;
   _translator: SQLTranslator;
   _connected = false;
+  _transaction: PostgresTransaction | null = null;
 
   /** Create a PostgreSQL connection. */
   constructor(options: PostgresOptions) {
@@ -73,7 +74,8 @@ export class PostgresConnector implements Connector {
     await this._makeConnection();
 
     const query = this._translator.translateToQuery(queryDescription);
-    const response = await this._client.queryObject(query);
+    const querier = (this._transaction || this._client)
+    const response = await querier.queryObject(query);
     const results = response.rows as Values[];
 
     if (queryDescription.type === "insert") {
@@ -84,10 +86,11 @@ export class PostgresConnector implements Connector {
   }
 
   async transaction(queries: () => Promise<void>) {
-    const transaction = this._client.createTransaction("transaction");
-    await transaction.begin();
+    this._transaction = this._client.createTransaction("transaction");
+    await this._transaction.begin();
     await queries();
-    return transaction.commit();
+    await this._transaction.commit();
+    this._transaction = null;
   }
 
   async close() {
