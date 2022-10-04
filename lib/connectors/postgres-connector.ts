@@ -1,5 +1,5 @@
-import { PostgresClient } from "../../deps.ts";
-import type { Connector, ConnectorOptions } from "./connector.ts";
+import { PostgresClient, PostgresPool } from "../../deps.ts";
+import type { Connector, ConnectorOptions, ConnectorPoolOptions } from "./connector.ts";
 import { SQLTranslator } from "../translators/sql-translator.ts";
 import type { SupportedSQLDatabaseDialect } from "../translators/sql-translator.ts";
 import type { QueryDescription } from "../query-builder.ts";
@@ -17,24 +17,53 @@ interface PostgresOptionsWithURI extends ConnectorOptions {
   uri: string;
 }
 
+interface PostgresPoolOptions extends ConnectorPoolOptions {
+  connection_params: PostgresOptionsWithConfig | PostgresOptionsWithURI,
+  size: number,
+  lazy: boolean,
+}
+
 export type PostgresOptions =
+  PostgresPoolOptions
   | PostgresOptionsWithConfig
   | PostgresOptionsWithURI;
 
+
+
 export class PostgresConnector implements Connector {
   _dialect: SupportedSQLDatabaseDialect = "postgres";
-
-  _client: PostgresClient;
+  _pool: PostgresPool | undefined;
+  _client: PostgresClient | undefined;
   _options: PostgresOptions;
   _translator: SQLTranslator;
-  _connected = false;
+  _connected: boolean | undefined;
 
-  /** Create a PostgreSQL connection. */
+  /** Create a PostgreSQL connection
+   *  @example 
+   * //Direct connection usage:
+   * const connection = new PostgresConnector({
+   *    host: '...',
+   *    username: 'user',
+   *    password: 'password',
+   *    database: 'airlines',
+   * });
+   * //Pool connection usage:
+   * const connection = new PostgresConnector({
+   *    connection_params: {
+   *      host: '...',
+   *      username: 'user',
+   *      password: 'password',
+   *      database: 'airlines',
+   *    },
+   *    size: 5,
+   *    lazy: false
+   * });
+   */
   constructor(options: PostgresOptions) {
     this._options = options;
     if ("uri" in options) {
       this._client = new PostgresClient(options.uri);
-    } else {
+    } else if ("database" in options) {
       this._client = new PostgresClient({
         hostname: options.host,
         user: options.username,
@@ -43,24 +72,40 @@ export class PostgresConnector implements Connector {
         port: options.port ?? 5432,
       });
     }
+    else {
+      this._pool = new PostgresPool("uri" in options.connection_params ? options.connection_params.uri : {
+        ...options.connection_params
+      },
+        options.size,
+        options.lazy
+      );
+    }
     this._translator = new SQLTranslator(this._dialect);
   }
 
   async _makeConnection() {
-    if (this._connected) {
-      return;
+    if (this._client) {
+      if (this._connected) {
+        return;
+      }
+
+      await this._client.connect();
+      this._connected = true;
+      return this._client;
+    } else {
+      return await this._pool!.connect();
     }
 
-    await this._client.connect();
-    this._connected = true;
   }
 
   async ping() {
-    await this._makeConnection();
+    return await this.tryConnection(await this._makeConnection());
+  }
 
+  async tryConnection(client?: PostgresClient) {
     try {
       const [result] = (
-        await this._client.queryObject("SELECT 1 + 1 as result")
+        await client!.queryObject("SELECT 1 + 1 as result")
       ).rows;
       return result === 2;
     } catch {
@@ -70,32 +115,34 @@ export class PostgresConnector implements Connector {
 
   // deno-lint-ignore no-explicit-any
   async query(queryDescription: QueryDescription): Promise<any | any[]> {
-    await this._makeConnection();
-
+    const client = await this._makeConnection()
     const query = this._translator.translateToQuery(queryDescription);
-    const response = await this._client.queryObject(query);
+    const response = await client!.queryObject(query);
     const results = response.rows as Values[];
 
     if (queryDescription.type === "insert") {
       return results.length === 1 ? results[0] : results;
     }
-
     return results;
   }
 
   async transaction(queries: () => Promise<void>) {
-    const transaction = this._client.createTransaction("transaction");
+    const client = await this._makeConnection()
+    const transaction = client!.createTransaction("transaction");
     await transaction.begin();
     await queries();
     return transaction.commit();
   }
 
   async close() {
-    if (!this._connected) {
-      return;
+    if (this._client) {
+      if (!this._connected) {
+        return;
+      }
+      await this._client.end();
+      this._connected = false;
+    } else {
+      await this._pool?.end()!
     }
-
-    await this._client.end();
-    this._connected = false;
   }
 }

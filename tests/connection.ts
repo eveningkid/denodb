@@ -15,6 +15,18 @@ const defaultSQLiteOptions = {
   filepath: "test.sqlite",
 };
 
+const defaultPostgreSQLPoolOptions = {
+  connection_params: {
+    database: "test",
+    host: "127.0.0.1",
+    username: env.DB_USER,
+    password: env.DB_PASS,
+    port: Number(env.DB_PORT),
+  },
+  size: 5,
+  lazy: false
+};
+
 const getMySQLConnection = (options = {}, debug = true): Database => {
   const connection: Database = new Database(
     { dialect: "mysql", debug },
@@ -39,4 +51,16 @@ const getSQLiteConnection = (options = {}, debug = true): Database => {
   return connection;
 };
 
-export { getMySQLConnection, getSQLiteConnection };
+const getPostgreSQLPoolConnection = (options = {}, debug = true): Database => {
+  const connection: Database = new Database(
+    { dialect: "postgres", debug },
+    {
+      ...defaultPostgreSQLPoolOptions,
+      ...options,
+    },
+  );
+
+  return connection;
+};
+
+export { getMySQLConnection, getSQLiteConnection, getPostgreSQLPoolConnection };
