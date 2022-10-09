@@ -233,9 +233,9 @@ export class Database {
    *     await db.query("SELECT * FROM `flights`");
    */
   async query(query: QueryDescription): Promise<Model | Model[]> {
-    if (this._debug) {
-      console.log(query);
-    }
+    // if (this._debug) {
+    // }
+    console.log(query);
 
     const results = await this.getConnector().query(query);
 
