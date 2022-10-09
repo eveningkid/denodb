@@ -19,6 +19,8 @@ export type QueryType =
   | "avg"
   | "sum";
 
+export type WhereMethod = "and" | "or" | undefined;
+
 export type JoinClause = {
   joinTable: string;
   originField: string;
@@ -29,6 +31,7 @@ export type WhereClause = {
   field: string;
   operator: Operator;
   value: FieldValue;
+  method: WhereMethod;
 };
 
 export type WhereInClause = {
@@ -178,6 +181,7 @@ export class QueryBuilder {
     field: string,
     operator: Operator,
     value: FieldValue,
+    method?: WhereMethod,
   ) {
     if (!this._query.wheres) {
       this._query.wheres = [];
@@ -187,6 +191,7 @@ export class QueryBuilder {
       field,
       operator,
       value,
+      method,
     };
 
     const existingWhereForFieldIndex = this._query.wheres.findIndex((where) =>
