@@ -3,7 +3,7 @@ import type { FieldAlias, FieldValue, Values } from "./data-types.ts";
 import { Model, ModelDefaults, ModelFields, ModelSchema } from "./model.ts";
 
 export type Query = string;
-export type Operator = ">" | ">=" | "<" | "<=" | "=" | "like";
+export type Operator = ">" | ">=" | "<" | "<=" | "=" | "like" | "is" | "is not";
 export type OrderDirection = "desc" | "asc";
 export type QueryType =
   | "create"
@@ -19,6 +19,8 @@ export type QueryType =
   | "avg"
   | "sum";
 
+export type WhereMethod = "and" | "or" | undefined;
+
 export type JoinClause = {
   joinTable: string;
   originField: string;
@@ -26,6 +28,13 @@ export type JoinClause = {
 };
 
 export type WhereClause = {
+  field: string;
+  operator: Operator;
+  value: FieldValue;
+  method: WhereMethod;
+};
+
+export type WhereOr = {
   field: string;
   operator: Operator;
   value: FieldValue;
@@ -48,6 +57,7 @@ export type QueryDescription = {
   orderBy?: OrderByClauses;
   groupBy?: string;
   wheres?: WhereClause[];
+  orWhere?: WhereOr[];
   whereIn?: WhereInClause;
   joins?: JoinClause[];
   leftOuterJoins?: JoinClause[];
@@ -178,6 +188,7 @@ export class QueryBuilder {
     field: string,
     operator: Operator,
     value: FieldValue,
+    method?: WhereMethod,
   ) {
     if (!this._query.wheres) {
       this._query.wheres = [];
@@ -187,6 +198,7 @@ export class QueryBuilder {
       field,
       operator,
       value,
+      method,
     };
 
     const existingWhereForFieldIndex = this._query.wheres.findIndex((where) =>
@@ -197,6 +209,32 @@ export class QueryBuilder {
       this._query.wheres.push(whereClause);
     } else {
       this._query.wheres[existingWhereForFieldIndex] = whereClause;
+    }
+
+    return this;
+  }
+
+  orWhere(
+    field: string,
+    operator: Operator,
+    value: FieldValue,
+  ) {
+    this._query.orWhere = this._query.orWhere ?? [];
+      
+    const whereClause = {
+      field,
+      operator,
+      value,
+    };
+
+    const existingWhereForFieldIndex = this._query.orWhere.findIndex((where) =>
+      where.field === field
+    );
+
+    if (existingWhereForFieldIndex === -1) {
+      this._query.orWhere.push(whereClause);
+    } else {
+      this._query.orWhere[existingWhereForFieldIndex] = whereClause;
     }
 
     return this;

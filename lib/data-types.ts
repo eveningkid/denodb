@@ -1,5 +1,6 @@
 import type { ModelSchema } from "./model.ts";
 import { Bson } from "../deps.ts";
+import { Operator } from "./query-builder.ts";
 
 type ObjectId = Bson.ObjectId;
 
@@ -75,11 +76,16 @@ export type FieldProps = {
 export type FieldType = FieldTypeString | FieldProps;
 
 export type FieldAlias = { [k: string]: string };
-export type FieldValue = number | string | boolean | Date | ObjectId | null ;
+export type FieldValue = number | string | boolean | Date | ObjectId | null;
 export type FieldOptions = {
   name: string;
   type: FieldType;
   defaultValue: FieldValue | (() => FieldValue);
+};
+export type FieldOperatorOption = {
+  name: string;
+  operator: Operator;
+  valueToCompare: FieldValue;
 };
 
 export type Values = { [key: string]: FieldValue };

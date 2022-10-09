@@ -12,6 +12,7 @@ import { camelCase } from "../deps.ts";
 import {
   DataTypes,
   FieldAlias,
+  FieldOperatorOption,
   FieldOptions,
   FieldProps,
   FieldType,
@@ -19,6 +20,7 @@ import {
   FieldValue,
   Values,
 } from "./data-types.ts";
+import { constants } from "https://deno.land/std@0.156.0/node/buffer.ts";
 
 /** Represents a Model class, not an instance. */
 export type ModelSchema = typeof Model;
@@ -635,6 +637,125 @@ export class Model {
 
     return this;
   }
+
+  /** Add an `and` clause to your query when `where` is present.
+   *
+   *     await Flight.where("id", ">", "1").andWhere("id", "<", 10).get();
+   */
+  static andWhere<T extends ModelSchema>(
+    this: T,
+    field: string,
+    fieldValue: FieldValue,
+  ): T;
+  static andWhere<T extends ModelSchema>(
+    this: T,
+    field: string,
+    operator: Operator,
+    fieldValue: FieldValue,
+  ): T;
+  static andWhere<T extends ModelSchema>(this: T, fields: Values): T;
+  static andWhere<T extends ModelSchema>(
+    this: T,
+    fieldOrFields: string | Values,
+    operatorOrFieldValue?: Operator | FieldValue,
+    fieldValue?: FieldValue,
+  ) {
+    if (typeof fieldOrFields === "string") {
+      const whereOperator: Operator = typeof fieldValue !== "undefined"
+        ? (operatorOrFieldValue as Operator)
+        : "=";
+
+      const whereValue: FieldValue = typeof fieldValue !== "undefined"
+        ? fieldValue
+        : (operatorOrFieldValue as FieldValue);
+
+      if (whereValue !== undefined) {
+        this._currentQuery.where(
+          this.formatFieldToDatabase(fieldOrFields) as string,
+          whereOperator,
+          whereValue,
+          "and",
+        );
+      }
+    } else {
+      for (const [field, value] of Object.entries(fieldOrFields)) {
+        if (value === undefined) {
+          continue;
+        }
+
+        this._currentQuery.where(
+          this.formatFieldToDatabase(field) as string,
+          "=",
+          value,
+          "and",
+        );
+      }
+    }
+
+    return this;
+  }
+
+  /** Add an `or` clause to your query when `where` is present.
+   *
+   *     await Flight.where("id", ">", "1").orWhere("id", "<", 10).get();
+   */
+
+  static orWhere<T extends ModelSchema>(
+    this: T,
+    field: string,
+    fieldValue: FieldValue,
+  ): T;
+  static orWhere<T extends ModelSchema>(
+    this: T,
+    field: string,
+    operator: Operator,
+    fieldValue: FieldValue,
+  ): T;
+  static orWhere<T extends ModelSchema>(this: T, fields: Values): T;
+  static orWhere<T extends ModelSchema>(
+    this: T,
+
+    fieldOrFields: string | Values | FieldOperatorOption[],
+
+    operatorOrFieldValue?: Operator | FieldValue,
+    fieldValue?: FieldValue,
+  ) {
+    if (typeof fieldOrFields === "string") {
+      const whereOperator: Operator = typeof fieldValue !== "undefined"
+        ? (operatorOrFieldValue as Operator)
+        : "=";
+
+      const whereValue: FieldValue = typeof fieldValue !== "undefined"
+        ? fieldValue
+        : (operatorOrFieldValue as FieldValue);
+
+      if (whereValue !== undefined) {
+        this._currentQuery.where(
+          this.formatFieldToDatabase(fieldOrFields) as string,
+          whereOperator,
+          whereValue,
+          "or",
+        );
+      }
+    } else {
+
+      for (const [field, value] of Object.entries(fieldOrFields)) {
+        if (value === undefined) {
+          continue;
+        }
+
+        this._currentQuery.where(
+          this.formatFieldToDatabase(field) as string,
+          "=",
+          value,
+          "or",
+        );
+      }
+    }
+
+    return this;
+  }
+
 
   /** Update one or multiple records. Also update `updated_at` if `timestamps` is `true`.
    *

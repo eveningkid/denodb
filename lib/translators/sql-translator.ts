@@ -78,7 +78,36 @@ export class SQLTranslator implements Translator {
 
     if (query.wheres) {
       query.wheres.forEach((where) => {
-        queryBuilder = queryBuilder.where(
+        switch (where.method) {
+          case "and":
+            queryBuilder = queryBuilder.andWhere(
+              where.field,
+              where.operator,
+              where.value,
+            );
+            break;
+
+          case "or":
+            queryBuilder = queryBuilder.orWhere(
+              where.field,
+              where.operator,
+              where.value,
+            );
+            break;
+
+          default:
+            queryBuilder = queryBuilder.where(
+              where.field,
+              where.operator,
+              where.value,
+            );
+        }
+      });
+    }
+
+    if (query.orWhere) {
+      query.orWhere.forEach((where) => {
+        queryBuilder = queryBuilder.orWhere(
           where.field,
           where.operator,
           where.value,
