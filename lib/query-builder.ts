@@ -31,6 +31,12 @@ export type WhereClause = {
   value: FieldValue;
 };
 
+export type WhereOr = {
+  field: string;
+  operator: Operator;
+  value: FieldValue;
+};
+
 export type WhereInClause = {
   field: string;
   possibleValues: FieldValue[];
@@ -48,6 +54,7 @@ export type QueryDescription = {
   orderBy?: OrderByClauses;
   groupBy?: string;
   wheres?: WhereClause[];
+  orWhere?: WhereOr[];
   whereIn?: WhereInClause;
   joins?: JoinClause[];
   leftOuterJoins?: JoinClause[];
@@ -197,6 +204,32 @@ export class QueryBuilder {
       this._query.wheres.push(whereClause);
     } else {
       this._query.wheres[existingWhereForFieldIndex] = whereClause;
+    }
+
+    return this;
+  }
+
+  orWhere(
+    field: string,
+    operator: Operator,
+    value: FieldValue,
+  ) {
+    this._query.orWhere = this._query.orWhere ?? [];
+      
+    const whereClause = {
+      field,
+      operator,
+      value,
+    };
+
+    const existingWhereForFieldIndex = this._query.orWhere.findIndex((where) =>
+      where.field === field
+    );
+
+    if (existingWhereForFieldIndex === -1) {
+      this._query.orWhere.push(whereClause);
+    } else {
+      this._query.orWhere[existingWhereForFieldIndex] = whereClause;
     }
 
     return this;
