@@ -12,6 +12,7 @@ import { camelCase } from "../deps.ts";
 import {
   DataTypes,
   FieldAlias,
+  FieldOperatorOption,
   FieldOptions,
   FieldProps,
   FieldType,
@@ -19,6 +20,7 @@ import {
   FieldValue,
   Values,
 } from "./data-types.ts";
+import { constants } from "https://deno.land/std@0.156.0/node/buffer.ts";
 
 /** Represents a Model class, not an instance. */
 export type ModelSchema = typeof Model;
@@ -697,6 +699,7 @@ export class Model {
    *
    *     await Flight.where("id", ">", "1").orWhere("id", "<", 10).get();
    */
+
   static orWhere<T extends ModelSchema>(
     this: T,
     field: string,
@@ -711,7 +714,9 @@ export class Model {
   static orWhere<T extends ModelSchema>(this: T, fields: Values): T;
   static orWhere<T extends ModelSchema>(
     this: T,
-    fieldOrFields: string | Values,
+
+    fieldOrFields: string | Values | FieldOperatorOption[],
+
     operatorOrFieldValue?: Operator | FieldValue,
     fieldValue?: FieldValue,
   ) {
@@ -733,6 +738,7 @@ export class Model {
         );
       }
     } else {
+
       for (const [field, value] of Object.entries(fieldOrFields)) {
         if (value === undefined) {
           continue;
@@ -749,6 +755,7 @@ export class Model {
 
     return this;
   }
+
 
   /** Update one or multiple records. Also update `updated_at` if `timestamps` is `true`.
    *
