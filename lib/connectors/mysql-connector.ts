@@ -75,7 +75,7 @@ export class MySQLConnector implements Connector {
     const queryClient = client ?? this._client;
     const query = this._translator.translateToQuery(queryDescription);
     if (this.debug) {
-      console.log(query);
+      console.log(query.toLowerCase());
     }
     const subqueries = query.split(/;(?=(?:[^'"]|'[^']*'|"[^"]*")*$)/);
     const queryMethod = query.toLowerCase().startsWith("select")
