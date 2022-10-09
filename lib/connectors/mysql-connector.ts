@@ -13,6 +13,7 @@ export interface MySQLOptions extends ConnectorOptions {
   port?: number;
   charset?: string;
   logger?: LoggerConfig;
+  debug?: boolean;
 }
 
 export class MySQLConnector implements Connector {
@@ -22,12 +23,14 @@ export class MySQLConnector implements Connector {
   _options: MySQLOptions;
   _translator: SQLTranslator;
   _connected = false;
+  debug = false;
 
   /** Create a MySQL connection. */
   constructor(options: MySQLOptions) {
     this._options = options;
     this._client = new MySQLClient();
     this._translator = new SQLTranslator(this._dialect);
+    this.debug = options.debug ?? false;
   }
 
   async _makeConnection() {
@@ -71,7 +74,9 @@ export class MySQLConnector implements Connector {
 
     const queryClient = client ?? this._client;
     const query = this._translator.translateToQuery(queryDescription);
-    console.log(query);
+    if (this.debug) {
+      console.log(query);
+    }
     const subqueries = query.split(/;(?=(?:[^'"]|'[^']*'|"[^"]*")*$)/);
     const queryMethod = query.toLowerCase().startsWith("select")
       ? "query"
