@@ -189,6 +189,11 @@ export class Database {
     return this.getConnector()._client;
   }
 
+  /* Get the database pool if existent. */
+  getPool?() {
+    return this.getConnector()._pool;
+  }
+
   /** Create the given models in the current database.
    *
    *     await db.sync({ drop: true });

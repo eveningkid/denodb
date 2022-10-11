@@ -1,3 +1,4 @@
+import { PostgresPool } from "../../deps.ts";
 import type { QueryDescription } from "../query-builder.ts";
 import { Translator } from "../translators/translator.ts";
 
@@ -11,7 +12,7 @@ export interface ConnectorPoolOptions { }
 export interface ConnectorClient { }
 
 /** Default connector pool. */
-export interface ConnectionPool { }
+export interface ConnectionPool extends PostgresPool{ }
 
 /** Connector interface for a database provider connection. */
 export interface Connector {

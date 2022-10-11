@@ -17,14 +17,14 @@ const defaultSQLiteOptions = {
 
 const defaultPostgreSQLPoolOptions = {
   connection_params: {
-    database: "test",
-    host: "127.0.0.1",
-    username: env.DB_USER,
-    password: env.DB_PASS,
-    port: Number(env.DB_PORT),
+    uri: "postgres://postgres:user@localhost:5432/test"
   },
-  size: 5,
+  size: 2,
   lazy: false
+};
+
+const defaultPostgreSQLOptions = {
+  uri: "postgres://postgres:user@localhost:5432/test"
 };
 
 const getMySQLConnection = (options = {}, debug = true): Database => {
@@ -63,4 +63,16 @@ const getPostgreSQLPoolConnection = (options = {}, debug = true): Database => {
   return connection;
 };
 
-export { getMySQLConnection, getSQLiteConnection, getPostgreSQLPoolConnection };
+const getPostgreSQLConnection = (options = {}, debug = true): Database => {
+  const connection: Database = new Database(
+    { dialect: "postgres", debug },
+    {
+      ...defaultPostgreSQLOptions,
+      ...options,
+    },
+  );
+
+  return connection;
+};
+
+export { getMySQLConnection, getSQLiteConnection, getPostgreSQLPoolConnection, getPostgreSQLConnection };

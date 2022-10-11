@@ -1,13 +1,7 @@
 {
   "imports": {
-    "https://dev.jspm.io/npm:@jspm/core@1/nodelibs/timers.js": "https://ga.jspm.io/npm:@jspm/core@2.0.0-beta.24/nodelibs/deno/timers.ts",
-    "https://dev.jspm.io/inherits@2.0": "https://ga.jspm.io/npm:inherits@2.0.4/inherits.js",
-    "https://dev.jspm.io/npm:@jspm/core@1/nodelibs/url.js": "https://ga.jspm.io/npm:@jspm/core@2.0.0-beta.24/nodelibs/deno/url.ts",
-    "https://dev.jspm.io/npm:@jspm/core@1/nodelibs/events.js": "https://ga.jspm.io/npm:@jspm/core@1/nodelibs/node/events.ts"
-  },
-  "scopes": {
-    "https://ga.jspm.io/": {
-      "util": "https://ga.jspm.io/npm:@jspm/core@2.0.0-beta.24/nodelibs/deno/util.ts"
-    }
+    "https://dev.jspm.io/npm:@jspm/core@1/nodelibs/timers.js": "https://deno.land/std@0.159.0/node/timers.ts",
+    "https://dev.jspm.io/npm:@jspm/core@1/nodelibs/url.js": "https://deno.land/std@0.159.0/node/url.ts",
+    "https://dev.jspm.io/npm:@jspm/core@1/nodelibs/events.js": "https://deno.land/std@0.159.0/node/events.ts"
   }
 }

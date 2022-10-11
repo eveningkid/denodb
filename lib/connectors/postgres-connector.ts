@@ -74,7 +74,9 @@ export class PostgresConnector implements Connector {
     }
     else {
       this._pool = new PostgresPool("uri" in options.connection_params ? options.connection_params.uri : {
-        ...options.connection_params
+        hostname: options.connection_params.host,
+        user: options.connection_params.username,
+        ...options.connection_params,
       },
         options.size,
         options.lazy
@@ -105,8 +107,8 @@ export class PostgresConnector implements Connector {
   async tryConnection(client?: PostgresClient) {
     try {
       const [result] = (
-        await client!.queryObject("SELECT 1 + 1 as result")
-      ).rows;
+        await client!.queryArray("SELECT 1 + 1 as result")
+      ).rows[0];
       return result === 2;
     } catch {
       return false;
@@ -140,9 +142,10 @@ export class PostgresConnector implements Connector {
         return;
       }
       await this._client.end();
-      this._connected = false;
     } else {
       await this._pool?.end()!
     }
+    this._connected = false;
   }
+
 }
