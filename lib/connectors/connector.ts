@@ -12,7 +12,7 @@ export interface ConnectorPoolOptions { }
 export interface ConnectorClient { }
 
 /** Default connector pool. */
-export interface ConnectionPool extends PostgresPool{ }
+export interface ConnectionPool { }
 
 /** Connector interface for a database provider connection. */
 export interface Connector {
