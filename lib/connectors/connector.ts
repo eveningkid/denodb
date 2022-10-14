@@ -23,7 +23,7 @@ export interface Connector {
   _translator: Translator;
 
   /** Client that maintains an external database connection. */
-  _client?: ConnectorClient | undefined;
+  _client?: ConnectorClient;
 
   /** Options to connect to an external instance. */
   _options: ConnectorOptions;
