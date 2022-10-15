@@ -16,11 +16,9 @@ const defaultSQLiteOptions = {
 };
 
 const defaultPostgreSQLPoolOptions = {
-  connection_params: {
-    uri: "postgres://postgres:user@localhost:5432/test"
-  },
+  uri: "postgres://postgres:user@localhost:5432/test",
   size: 2,
-  lazy: false
+  lazy: true
 };
 
 const defaultPostgreSQLOptions = {

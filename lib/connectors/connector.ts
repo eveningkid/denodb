@@ -1,4 +1,3 @@
-import { PostgresPool } from "../../deps.ts";
 import type { QueryDescription } from "../query-builder.ts";
 import { Translator } from "../translators/translator.ts";
 
@@ -12,7 +11,7 @@ export interface ConnectorPoolOptions { }
 export interface ConnectorClient { }
 
 /** Default connector pool. */
-export interface ConnectionPool { }
+export interface ConnectorPool { }
 
 /** Connector interface for a database provider connection. */
 export interface Connector {
@@ -29,16 +28,25 @@ export interface Connector {
   _options: ConnectorOptions;
 
   /** Is the client connected to an external instance. */
-  _connected?: boolean | undefined;
+  _connected?: boolean
 
   /** Is the optional pool for making connections to an external instance. */
-  _pool?: ConnectionPool | undefined;
+  _pool?: ConnectorPool
+
+  /** Gets the client or the pool connected to the database*/
+  _getClientOrPool(): ConnectorPool | ConnectorClient
+
+  /** Connect to an external database instance. */
+  _makeConnection(): void | Promise<any>
+
+  /** Gets the client connected to the database */
+  getClient(): any
+
+  /** Gets the pool connected to the database */
+  getPool?(): any
 
   /** Test connection. */
   ping(): Promise<boolean>;
-
-  /** Connect to an external database instance. */
-  _makeConnection(): void | ConnectorClient | Promise<void> | Promise<ConnectorClient>;
 
   /** Execute a query on the external database instance. */
   query(queryDescription: QueryDescription): Promise<any | any[]>;

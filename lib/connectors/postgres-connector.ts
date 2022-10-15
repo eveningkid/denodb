@@ -17,98 +17,86 @@ interface PostgresOptionsWithURI extends ConnectorOptions {
   uri: string;
 }
 
-interface PostgresPoolOptions extends ConnectorPoolOptions {
-  connection_params: PostgresOptionsWithConfig | PostgresOptionsWithURI,
-  size: number,
-  lazy: boolean,
+interface PostgresPoolOptions extends ConnectorPoolOptions, PostgresOptionsWithConfig, PostgresOptionsWithURI {
+  size: number;
+  lazy: boolean;
 }
 
-export type PostgresOptions =
-  PostgresPoolOptions
-  | PostgresOptionsWithConfig
-  | PostgresOptionsWithURI;
-
-
+export type PostgresOptions = PostgresPoolOptions;
 
 export class PostgresConnector implements Connector {
   _dialect: SupportedSQLDatabaseDialect = "postgres";
-  _pool: PostgresPool | undefined;
-  _client: PostgresClient | undefined;
+  _pool?: PostgresPool;
+  _client?: PostgresClient;
   _options: PostgresOptions;
   _translator: SQLTranslator;
-  _connected: boolean | undefined;
+  _connected = false;
 
-  /** Create a PostgreSQL connection
-   *  @example 
-   * //Direct connection usage:
-   * const connection = new PostgresConnector({
-   *    host: '...',
-   *    username: 'user',
-   *    password: 'password',
-   *    database: 'airlines',
-   * });
-   * //Pool connection usage:
-   * const connection = new PostgresConnector({
-   *    connection_params: {
-   *      host: '...',
-   *      username: 'user',
-   *      password: 'password',
-   *      database: 'airlines',
-   *    },
-   *    size: 5,
-   *    lazy: false
-   * });
-   */
   constructor(options: PostgresOptions) {
     this._options = options;
-    if ("uri" in options) {
-      this._client = new PostgresClient(options.uri);
-    } else if ("database" in options) {
-      this._client = new PostgresClient({
+    if (this._isPoolConnector()) {
+      this._pool = new PostgresPool("uri" in options ? options.uri : {
         hostname: options.host,
         user: options.username,
-        password: options.password,
-        database: options.database,
-        port: options.port ?? 5432,
-      });
-    }
-    else {
-      this._pool = new PostgresPool("uri" in options.connection_params ? options.connection_params.uri : {
-        hostname: options.connection_params.host,
-        user: options.connection_params.username,
-        ...options.connection_params,
+        ...options,
       },
         options.size,
         options.lazy
       );
-    }
+    } else
+      if ("uri" in options) {
+        this._client = new PostgresClient(options.uri);
+      } else {
+        this._client = new PostgresClient({
+          hostname: options.host,
+          user: options.username,
+          password: options.password,
+          database: options.database,
+          port: options.port ?? 5432,
+        });
+      }
     this._translator = new SQLTranslator(this._dialect);
   }
 
+  _isPoolConnector() {
+    return "size" in this._options;
+  }
+
+  _getClientOrPool() {
+    return this._isPoolConnector() ? this.getPool()! : this.getClient()!;
+  }
+
   async _makeConnection() {
-    if (this._client) {
+    if (!this._isPoolConnector()) {
       if (this._connected) {
-        return;
+        return this._client!;
       }
-
-      await this._client.connect();
-      this._connected = true;
-      return this._client;
+      await this._client!.connect();
+      return this._client!;
+    } else if (this._pool?.available || !this._pool?.available) {
+      return await this.getPool()?.connect()
     } else {
-      return await this._pool!.connect();
+      throw new Error("no connections available")
     }
+  }
 
+  getClient() {
+    return this._client;
+  }
+
+  getPool() {
+    return this._pool;
   }
 
   async ping() {
-    return await this.tryConnection(await this._makeConnection());
-  }
-
-  async tryConnection(client?: PostgresClient) {
     try {
-      const [result] = (
-        await client!.queryArray("SELECT 1 + 1 as result")
-      ).rows[0];
+      const connection = await this._makeConnection();
+      console.log(connection)
+      const [result] =
+        (await connection!.queryArray("SELECT 1 + 1 as result")
+        ).rows[0];
+
+      console.log(result)
       return result === 2;
     } catch {
       return false;
@@ -141,9 +129,7 @@ export class PostgresConnector implements Connector {
       if (!this._connected) {
         return;
       }
-      await this._client.end();
-    } else {
-      await this._pool?.end()!
+      await this._getClientOrPool().end();
     }
     this._connected = false;
   }
