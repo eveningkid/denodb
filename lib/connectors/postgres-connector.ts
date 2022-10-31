@@ -22,7 +22,10 @@ interface PostgresPoolOptions extends ConnectorPoolOptions, PostgresOptionsWithC
   lazy: boolean;
 }
 
-export type PostgresOptions = PostgresPoolOptions;
+export type PostgresOptions = 
+  | PostgresOptionsWithConfig
+  | PostgresOptionsWithURI
+  | PostgresPoolOptions;
 
 export class PostgresConnector implements Connector {
   _dialect: SupportedSQLDatabaseDialect = "postgres";
