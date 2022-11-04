@@ -1,21 +1,15 @@
-name: tag-release
-run-name: Tag Release
+name: Tag Release
 on:
-  pull_request:
-    types:
-      - closed
+  push:
     branches:
       - master
 jobs:
-  build:
+  release-on-push:
     runs-on: ubuntu-latest
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
-      - uses: actions/checkout@v3
+      - name: Bump version and push release
+        uses: rymndhng/release-on-push-action@master
         with:
-          ref: ${{github.event.pull_request.head.sha}}
-          fetch-depth: "0"
-      - name: Bump version and push tag
-        uses: anothrNick/github-tag-action@v1
-        env:
-          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
-          WITH_V: true
+          bump_version_scheme: minor
