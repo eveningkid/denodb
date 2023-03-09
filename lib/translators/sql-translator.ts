@@ -1,4 +1,4 @@
-import { snakeCase, SQLQueryBuilder } from "../../deps.ts";
+import { camelCase, SQLQueryBuilder } from "../../deps.ts";
 import type { FieldAlias } from "../data-types.ts";
 import { addFieldToSchema } from "../helpers/fields.ts";
 import type { Query, QueryDescription } from "../query-builder.ts";
@@ -234,10 +234,11 @@ export class SQLTranslator implements Translator {
       // Table.fieldName
       if (dotIndex !== -1) {
         return fieldName.slice(0, dotIndex + 1) +
-          snakeCase(fieldName.slice(dotIndex + 1));
+          // Don't change to snake_case, see #131
+          camelCase(fieldName.slice(dotIndex + 1));
       }
 
-      return snakeCase(fieldName);
+      return camelCase(fieldName);
     } else {
       return Object.entries(fieldName).reduce(
         (prev: any, [alias, fullName]) => {
