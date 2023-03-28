@@ -211,6 +211,35 @@ export class Database {
     }
   }
 
+  /** Automatic migrate: Create the given models in the current database, and then sync all fields in the table.
+   *  Does not delete fields.
+   *
+   *     await db.experimentalAutoMigrate();
+   */
+  async experimentalAutoMigrate() {
+    const dialect = this.getDialect() as BuiltInDatabaseDialect;
+
+    console.log("[experimentalAutoMigrate] dialect:", dialect);
+
+    if (dialect === "mongo") {
+      throw new Error("Auto-migration only works on SQL.");
+    }
+
+    for (const model of this._models) {
+      // try {
+      //   console.log("[experimentalAutoMigrate] migrating table", model.table);
+      //   await model.createTable({ withFields: false });
+      // } catch (e) {
+      //   console.log("[experimentalAutoMigrate]", e);
+      // }
+      if (!await model.tableExists()) {
+        await model.createTable();
+      } else {
+        await model.autoMigrate();
+      }
+    }
+  }
+
   /** Associate all the required information for a model to connect to a database.
    *
    *     await db.link([Flight, Airport]);

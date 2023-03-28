@@ -10,19 +10,24 @@
 - [Read the documentation](https://eveningkid.github.io/denodb-docs)
 
 ```typescript
-import { DataTypes, Database, Model, PostgresConnector } from 'https://deno.land/x/denodb/mod.ts';
+import {
+  Database,
+  DataTypes,
+  Model,
+  PostgresConnector,
+} from "https://deno.land/x/denodb/mod.ts";
 
 const connection = new PostgresConnector({
-  host: '...',
-  username: 'user',
-  password: 'password',
-  database: 'airlines',
+  host: "...",
+  username: "user",
+  password: "password",
+  database: "airlines",
 });
 
 const db = new Database(connection);
 
 class Flight extends Model {
-  static table = 'flights';
+  static table = "flights";
   static timestamps = true;
 
   static fields = {
@@ -42,29 +47,29 @@ db.link([Flight]);
 await db.sync({ drop: true });
 
 await Flight.create({
-  departure: 'Paris',
-  destination: 'Tokyo',
+  departure: "Paris",
+  destination: "Tokyo",
 });
 
 // or
 
 const flight = new Flight();
-flight.departure = 'London';
-flight.destination = 'San Francisco';
+flight.departure = "London";
+flight.destination = "San Francisco";
 await flight.save();
 
-await Flight.select('destination').all();
+await Flight.select("destination").all();
 // [ { destination: "Tokyo" }, { destination: "San Francisco" } ]
 
-await Flight.where('destination', 'Tokyo').delete();
+await Flight.where("destination", "Tokyo").delete();
 
-const sfFlight = await Flight.select('destination').find(2);
+const sfFlight = await Flight.select("destination").find(2);
 // { destination: "San Francisco" }
 
 await Flight.count();
 // 1
 
-await Flight.select('id', 'destination').orderBy('id').get();
+await Flight.select("id", "destination").orderBy("id").get();
 // [ { id: "2", destination: "San Francisco" } ]
 
 await sfFlight.delete();
@@ -76,22 +81,24 @@ await db.close();
 
 Setting up your database with DenoDB is a four-step process:
 
-- **Create a database**, using `Database` (learn more [about clients](#clients)):
+- **Create a database**, using `Database` (learn more
+  [about clients](#clients)):
   ```typescript
   const connection = new PostgresConnector({
-    host: '...',
-    username: 'user',
-    password: 'password',
-    database: 'airlines',
+    host: "...",
+    username: "user",
+    password: "password",
+    database: "airlines",
   });
 
   const db = new Database(connection);
   ```
-- **Create models**, extending `Model`. `table` and `fields` are both required static attributes:
+- **Create models**, extending `Model`. `table` and `fields` are both required
+  static attributes:
 
   ```typescript
   class User extends Model {
-    static table = 'users';
+    static table = "users";
 
     static timestamps = true;
 
@@ -121,12 +128,13 @@ Setting up your database with DenoDB is a four-step process:
   ```
 - **Query your models!**
   ```typescript
-  await User.create({ name: 'Amelia' });
+  await User.create({ name: "Amelia" });
   await User.all();
-  await User.deleteById('1');
+  await User.deleteById("1");
   ```
 
 ## Migrate from previous versions
+
 - `v1.0.21`: [Migrate to connectors](docs/v1.0.21-migrations/connectors.md)
 
 ## License

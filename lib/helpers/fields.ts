@@ -30,7 +30,9 @@ export function addFieldToSchema(
         .model
         .getComputedPrimaryType();
 
-      if (relationshipPKType === "integer" || relationshipPKType === "bigInteger") {
+      if (
+        relationshipPKType === "integer" || relationshipPKType === "bigInteger"
+      ) {
         const foreignField = table[relationshipPKType](fieldOptions.name);
 
         if (!relationshipPKProps.allowNull) {
@@ -76,7 +78,9 @@ export function addFieldToSchema(
     }
 
     if (fieldOptions.type.autoIncrement) {
-      instruction = fieldOptions.type.type === "bigInteger" ? table.bigincrements(fieldOptions.name) : table.increments(fieldOptions.name);
+      instruction = fieldOptions.type.type === "bigInteger"
+        ? table.bigincrements(fieldOptions.name)
+        : table.increments(fieldOptions.name);
     } else {
       instruction = table[type](...fieldNameArgs);
     }
