@@ -7,6 +7,7 @@ export type Operator = ">" | ">=" | "<" | "<=" | "=" | "like";
 export type OrderDirection = "desc" | "asc";
 export type QueryType =
   | "create"
+  | "alter table"
   | "drop"
   | "truncate"
   | "select"
@@ -60,6 +61,8 @@ export type QueryDescription = {
   fieldsDefaults?: ModelDefaults;
   timestamps?: boolean;
   values?: Values | Values[];
+  addColumn?: string;
+  columnType?: string;
 };
 
 export type QueryResult = {};
@@ -89,6 +92,22 @@ export class QueryBuilder {
     return this;
   }
 
+  alterTable(table: string) {
+    this._query.type = "alter table";
+    this._query.table = table;
+    return this;
+  }
+
+  addColumn(columnName: string) {
+    this._query.addColumn = columnName;
+    return this;
+  }
+
+  columnType(columnType: string) {
+    this._query.columnType = columnType;
+    return this;
+  }
+
   get() {
     this._query.type = "select";
     return this;
@@ -107,12 +126,26 @@ export class QueryBuilder {
     }: {
       withTimestamps: boolean;
       ifNotExists: boolean;
-    },
+    }
   ) {
     this._query.type = "create";
     this._query.ifExists = ifNotExists ? false : true;
     this._query.fields = fields;
     this._query.fieldsDefaults = fieldsDefaults;
+    this._query.timestamps = withTimestamps;
+    return this;
+  }
+
+  createTableOnlyTable({
+    withTimestamps,
+    ifNotExists,
+  }: {
+    withTimestamps: boolean;
+    ifNotExists: boolean;
+  }) {
+    this._query.type = "create";
+    this._query.ifExists = ifNotExists ? false : true;
+    this._query.fields = {};
     this._query.timestamps = withTimestamps;
     return this;
   }
@@ -133,6 +166,11 @@ export class QueryBuilder {
     return this;
   }
 
+  removeSelect() {
+    delete this._query.select;
+    return this;
+  }
+
   create(values: Values[]) {
     this._query.type = "insert";
     this._query.values = values;
@@ -148,10 +186,7 @@ export class QueryBuilder {
     return this;
   }
 
-  orderBy(
-    field: string,
-    orderDirection: OrderDirection,
-  ) {
+  orderBy(field: string, orderDirection: OrderDirection) {
     if (!this._query.orderBy) {
       this._query.orderBy = {};
     }
@@ -174,11 +209,7 @@ export class QueryBuilder {
     return this;
   }
 
-  where(
-    field: string,
-    operator: Operator,
-    value: FieldValue,
-  ) {
+  where(field: string, operator: Operator, value: FieldValue) {
     if (!this._query.wheres) {
       this._query.wheres = [];
     }
@@ -189,8 +220,8 @@ export class QueryBuilder {
       value,
     };
 
-    const existingWhereForFieldIndex = this._query.wheres.findIndex((where) =>
-      where.field === field
+    const existingWhereForFieldIndex = this._query.wheres.findIndex(
+      (where) => where.field === field
     );
 
     if (existingWhereForFieldIndex === -1) {
@@ -213,11 +244,7 @@ export class QueryBuilder {
     return this;
   }
 
-  join(
-    joinTable: string,
-    originField: string,
-    targetField: string,
-  ) {
+  join(joinTable: string, originField: string, targetField: string) {
     if (!this._query.joins) {
       this._query.joins = [];
     }
@@ -231,11 +258,7 @@ export class QueryBuilder {
     return this;
   }
 
-  leftOuterJoin(
-    joinTable: string,
-    originField: string,
-    targetField: string,
-  ) {
+  leftOuterJoin(joinTable: string, originField: string, targetField: string) {
     if (!this._query.leftOuterJoins) {
       this._query.leftOuterJoins = [];
     }
@@ -249,11 +272,7 @@ export class QueryBuilder {
     return this;
   }
 
-  leftJoin(
-    joinTable: string,
-    originField: string,
-    targetField: string,
-  ) {
+  leftJoin(joinTable: string, originField: string, targetField: string) {
     if (!this._query.leftJoins) {
       this._query.leftJoins = [];
     }
