@@ -109,6 +109,19 @@ export class MongoDBConnector implements Connector {
       }, {});
     }
 
+    if (queryDescription.whereNulls) {
+      wheres = queryDescription.whereNulls.reduce((prev, curr) => {
+        const mongoOperator = "$exists";
+
+        return {
+          ...prev,
+          [curr.field]: {
+            [mongoOperator]: curr.notNull,
+          },
+        };
+      }, {});
+    }
+
     let results: any[] = [];
 
     switch (queryDescription.type) {

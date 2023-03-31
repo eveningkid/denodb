@@ -635,6 +635,32 @@ export class Model {
 
     return this;
   }
+  
+  /** Add a `where` clause to your query that gets a record if field is null
+   *
+   *     await Flight.whereNull("id").get();
+   *
+   */
+  static whereNull<T extends ModelSchema>(
+    this: T,
+    field: string
+  ) {
+    this._currentQuery.whereNull(this.formatFieldToDatabase(field) as string);
+    return this;
+  }
+
+  /** Add a `where` clause to your query that gets a record if field is not null
+   *
+   *     await Flight.whereNotNull("id").get();
+   *
+   */
+   static whereNotNull<T extends ModelSchema>(
+    this: T,
+    field: string
+  ) {
+    this._currentQuery.whereNotNull(this.formatFieldToDatabase(field) as string);
+    return this;
+  }
 
   /** Update one or multiple records. Also update `updated_at` if `timestamps` is `true`.
    *
