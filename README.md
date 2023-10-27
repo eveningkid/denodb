@@ -1,8 +1,5 @@
 <img src="./design/logo.png" height="150" />
 
-# FORKED!
-This is a forked version of denodb to fix the `dex` dependency issue
-
 # DenoDB
 
 **⛔️ This project is not actively maintained: expect issues, and delays in reviews**
