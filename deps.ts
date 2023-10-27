@@ -2,7 +2,7 @@ export * as ConsoleColor from "https://deno.land/x/colorlog@v1.0/mod.ts";
 
 // NOTE: Migrate to the official https://github.com/aghussb/dex when it's updated to the
 //       latest deno version.
-export { default as SQLQueryBuilder } from "https://raw.githubusercontent.com/Zhomart/dex/930253915093e1e08d48ec0409b4aee800d8bd0c/mod-dyn.ts";
+export { default as SQLQueryBuilder } from "https://deno.land/x/dex/mod.ts";
 
 export { camelCase, snakeCase } from "https://deno.land/x/case@v2.1.0/mod.ts";
 
